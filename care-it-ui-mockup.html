@@ -163,6 +163,43 @@
         font-weight: 760;
       }
 
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-4);
+        margin-bottom: 16px;
+      }
+
+      .section-head .section-title {
+        margin: 0;
+      }
+
+      .fullscreen-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-2);
+        height: 36px;
+        padding: 0 var(--space-4);
+        border: 0;
+        border-radius: var(--radius-sm);
+        background: var(--care-neutral);
+        color: var(--care-primary-dark);
+        font-family: inherit;
+        font-size: var(--font-caption);
+        font-weight: 850;
+        cursor: pointer;
+        transition:
+          background-color var(--motion-base) var(--motion-ease),
+          transform var(--motion-fast) var(--motion-ease);
+      }
+
+      .fullscreen-toggle:hover {
+        background: var(--care-mint-soft);
+        transform: translateY(-1px);
+      }
+
       .mobile-frame {
         width: 390px;
         height: 844px;
@@ -1124,6 +1161,21 @@
         border-radius: var(--radius-lg);
         background: #f8fafb;
         box-shadow: var(--shadow-soft);
+      }
+
+      body.desktop-fullscreen-active {
+        overflow: hidden;
+      }
+
+      .dashboard-frame.desktop-fullscreen {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        width: 100vw;
+        height: 100vh;
+        min-height: 0;
+        border-radius: 0;
+        box-shadow: none;
       }
 
       .dashboard-shell {
@@ -4299,7 +4351,13 @@
       </section>
 
       <section class="desktop-section">
-        <h2 class="section-title">PC / Naver Works-like Dashboard</h2>
+        <div class="section-head">
+          <h2 class="section-title">PC / Naver Works-like Dashboard</h2>
+          <button class="fullscreen-toggle" type="button" data-desktop-fullscreen-toggle aria-pressed="false">
+            <span aria-hidden="true">⛶</span>
+            <span data-desktop-fullscreen-label>PC 전체화면</span>
+          </button>
+        </div>
         <div class="dashboard-frame">
           <div class="dashboard-shell">
             <aside class="sidebar">
@@ -5757,7 +5815,41 @@
       const mobileEyebrow = document.querySelector(".mobile-title-row .eyebrow");
       const mobileDate = document.querySelector(".mobile-date");
       const mobileContent = document.querySelector(".mobile-content");
+      const desktopFrame = document.querySelector(".dashboard-frame");
+      const desktopFullscreenToggle = document.querySelector("[data-desktop-fullscreen-toggle]");
+      const desktopFullscreenLabel = document.querySelector("[data-desktop-fullscreen-label]");
       let refreshReportPage = () => {};
+
+      if (desktopFrame && desktopFullscreenToggle && desktopFullscreenLabel) {
+        const setDesktopFullscreen = (isFullscreen) => {
+          desktopFrame.classList.toggle("desktop-fullscreen", isFullscreen);
+          document.body.classList.toggle("desktop-fullscreen-active", isFullscreen);
+          desktopFullscreenToggle.setAttribute("aria-pressed", String(isFullscreen));
+          desktopFullscreenLabel.textContent = isFullscreen ? "전체화면 종료" : "PC 전체화면";
+        };
+
+        desktopFullscreenToggle.addEventListener("click", async () => {
+          const shouldOpen = !desktopFrame.classList.contains("desktop-fullscreen");
+          setDesktopFullscreen(shouldOpen);
+
+          try {
+            if (shouldOpen && desktopFrame.requestFullscreen && !document.fullscreenElement) {
+              await desktopFrame.requestFullscreen();
+            } else if (!shouldOpen && document.fullscreenElement === desktopFrame && document.exitFullscreen) {
+              await document.exitFullscreen();
+            }
+          } catch (error) {
+            // CSS fullscreen mode still works when browser fullscreen is unavailable.
+          }
+        });
+
+        document.addEventListener("fullscreenchange", () => {
+          if (!document.fullscreenElement && desktopFrame.classList.contains("desktop-fullscreen")) {
+            setDesktopFullscreen(false);
+          }
+        });
+      }
+
       const pageNavMap = {
         "journal-draft": "journal-write",
         "report-archive": "journals",
