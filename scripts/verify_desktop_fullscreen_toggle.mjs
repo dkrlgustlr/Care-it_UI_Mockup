@@ -2,7 +2,7 @@ import fs from "node:fs";
 import assert from "node:assert/strict";
 
 const html = fs.readFileSync("care-it-ui-mockup.html", "utf8");
-const logoPath = "output/logo/care-it-logo-c-transparent.png";
+const logoPath = "output/logo/care-it-logo-c-transparent-bold-wordmark-v2.png";
 
 assert.match(
   html,
@@ -27,8 +27,13 @@ assert.doesNotMatch(
 assert.ok(fs.existsSync(logoPath), "Care-it logo asset should exist");
 assert.match(
   html,
-  /<img class="brand-logo" src="output\/logo\/care-it-logo-c-transparent\.png" alt="Care-it" \/>/,
+  /<img class="brand-logo" src="output\/logo\/care-it-logo-c-transparent-bold-wordmark-v2\.png" alt="Care-it" \/>/,
   "desktop sidebar should use the Care-it logo image",
+);
+assert.match(
+  html,
+  /<img class="mobile-brand-logo" src="output\/logo\/care-it-logo-c-transparent-bold-wordmark-v2\.png" alt="Care-it" \/>/,
+  "mobile header should use the Care-it logo image",
 );
 
 const journalDevelopmentFields = [
