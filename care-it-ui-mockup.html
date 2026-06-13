@@ -5838,25 +5838,9 @@
           desktopFullscreenLabel.textContent = isFullscreen ? "전체화면 종료" : "PC 전체화면";
         };
 
-        desktopFullscreenToggle.addEventListener("click", async () => {
+        desktopFullscreenToggle.addEventListener("click", () => {
           const shouldOpen = !desktopFrame.classList.contains("desktop-fullscreen");
           setDesktopFullscreen(shouldOpen);
-
-          try {
-            if (shouldOpen && desktopFrame.requestFullscreen && !document.fullscreenElement) {
-              await desktopFrame.requestFullscreen();
-            } else if (!shouldOpen && document.fullscreenElement === desktopFrame && document.exitFullscreen) {
-              await document.exitFullscreen();
-            }
-          } catch (error) {
-            // CSS fullscreen mode still works when browser fullscreen is unavailable.
-          }
-        });
-
-        document.addEventListener("fullscreenchange", () => {
-          if (!document.fullscreenElement && desktopFrame.classList.contains("desktop-fullscreen")) {
-            setDesktopFullscreen(false);
-          }
         });
       }
 

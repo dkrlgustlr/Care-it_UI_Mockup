@@ -19,6 +19,11 @@ assert.match(
   /desktopFrame\.classList\.toggle\("desktop-fullscreen"/,
   "desktop fullscreen toggle behavior should exist",
 );
+assert.doesNotMatch(
+  html,
+  /requestFullscreen|exitFullscreen|fullscreenElement|fullscreenchange/,
+  "desktop fullscreen should stay inside the page and not call the browser Fullscreen API",
+);
 assert.ok(fs.existsSync(logoPath), "Care-it logo asset should exist");
 assert.match(
   html,
