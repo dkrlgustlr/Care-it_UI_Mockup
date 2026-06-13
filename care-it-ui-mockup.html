@@ -4490,7 +4490,7 @@
                             <div class="subject-detail-box"><span>다음 할 일</span><strong>리포트 작성</strong></div>
                           </div>
                           <div class="subject-panel-actions">
-                            <button class="outline-button" data-go-page="journals">일지 보기</button>
+                            <button class="solid-button" data-go-page="reports">리포트 작성</button>
                           </div>
                         </div>
                       </div>
@@ -4581,7 +4581,7 @@
                     <h1>대상자 관리</h1>
                   </div>
                   <div class="desktop-actions">
-                    <button class="solid-button" data-go-page="journal-write">대상자 추가</button>
+                    <button class="solid-button" data-open-profile-edit data-profile-modal-mode="add">대상자 추가</button>
                   </div>
                 </div>
 
@@ -5879,6 +5879,7 @@
       };
       let selectedJournalSubjectIndex = 0;
       let setJournalSubject = () => {};
+      let selectedProfileIndex = 0;
       const mockToast = document.querySelector("[data-mock-toast]");
       let mockToastTimer;
 
@@ -6662,7 +6663,57 @@
       });
 
       const profileEditModal = document.querySelector("[data-profile-edit-modal]");
-      const openProfileEdit = () => {
+      const profileModalModes = {
+        edit: {
+          title: "프로필 수정",
+          namePlaceholder: "이름",
+          ownerPlaceholder: "기록자",
+          notePlaceholder: "참고할 내용",
+        },
+        add: {
+          title: "대상자 추가",
+          name: "",
+          owner: "",
+          note: "",
+          summaryName: "새 대상자",
+          summaryOwner: "기록자 지정",
+          namePlaceholder: "예: 김도윤",
+          ownerPlaceholder: "예: 정민아 활동지원사",
+          notePlaceholder: "초기 참고 내용을 입력",
+        },
+      };
+      const setProfileModalMode = (mode = "edit") => {
+        const config = profileModalModes[mode] || profileModalModes.edit;
+        const title = document.querySelector("#profile-edit-title");
+        const nameSummary = document.querySelector(".profile-edit-name");
+        const ownerSummary = document.querySelector(".profile-edit-owner");
+        const nameInput = document.querySelector("#edit-profile-name");
+        const ownerInput = document.querySelector("#edit-profile-owner");
+        const noteInput = document.querySelector("#edit-profile-note");
+
+        if (title) title.textContent = config.title;
+
+        if (mode === "add") {
+          if (nameSummary) nameSummary.textContent = config.summaryName;
+          if (ownerSummary) ownerSummary.textContent = config.summaryOwner;
+          if (nameInput) nameInput.value = config.name;
+          if (ownerInput) ownerInput.value = config.owner;
+          if (noteInput) noteInput.value = config.note;
+        } else {
+          const selectedProfile = profileData[selectedProfileIndex] || profileData[0];
+          if (nameSummary) nameSummary.textContent = selectedProfile.name;
+          if (ownerSummary) ownerSummary.textContent = selectedProfile.owner;
+          if (nameInput) nameInput.value = selectedProfile.name;
+          if (ownerInput) ownerInput.value = selectedProfile.owner;
+          if (noteInput) noteInput.value = selectedProfile.note;
+        }
+
+        if (nameInput) nameInput.placeholder = config.namePlaceholder;
+        if (ownerInput) ownerInput.placeholder = config.ownerPlaceholder;
+        if (noteInput) noteInput.placeholder = config.notePlaceholder;
+      };
+      const openProfileEdit = (trigger) => {
+        setProfileModalMode(trigger?.dataset.profileModalMode || "edit");
         if (profileEditModal) profileEditModal.classList.add("active");
       };
       const closeProfileEdit = () => {
@@ -6670,7 +6721,7 @@
       };
 
       document.querySelectorAll("[data-open-profile-edit]").forEach((button) => {
-        button.addEventListener("click", openProfileEdit);
+        button.addEventListener("click", () => openProfileEdit(button));
       });
 
       document.querySelectorAll("[data-close-profile-edit]").forEach((button) => {
@@ -7171,6 +7222,7 @@
         const editNoteInput = document.querySelector("#edit-profile-note");
 
         const renderProfile = (index) => {
+          selectedProfileIndex = index;
           const data = profileData[index];
           profilePage.querySelector(".profile-title-text strong").textContent = data.name;
           profilePage.querySelector(".profile-title-text span").textContent = data.owner;

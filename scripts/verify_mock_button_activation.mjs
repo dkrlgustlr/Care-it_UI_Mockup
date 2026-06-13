@@ -8,7 +8,7 @@ const requiredPageButtons = [
   'data-go-page="journals">일지 보기',
   'data-go-page="journals">기록 확인',
   'data-go-page="journals">일지 확인',
-  'data-go-page="journal-write">대상자 추가',
+  'data-go-page="reports">리포트 작성',
   'data-go-page="journals">기록 보기',
   'data-go-page="report-archive">리포트 보기',
 ];
@@ -39,6 +39,11 @@ for (const action of requiredMockActions) {
 assert.match(html, /data-mock-toast/, "mock toast region should exist for button feedback");
 assert.match(html, /handleMockAction/, "mock action dispatcher should exist");
 assert.match(html, /mockActionMessages/, "mock action messages should exist");
+assert.match(html, /data-open-profile-edit[^>]*data-profile-modal-mode="add"[^>]*>대상자 추가/, "subject add button should open the add-profile modal");
+assert.doesNotMatch(html, /data-go-page="journal-write"[^>]*>대상자 추가/, "subject add button should not navigate to journal writing");
+assert.match(html, /profileModalModes/, "profile modal should support separate edit and add modes");
+assert.match(html, /let selectedProfileIndex = 0/, "profile modal should track the selected profile");
+assert.match(html, /selectedProfileIndex = index/, "profile selection should update the modal edit target");
 assert.match(html, /data-static-calendar/, "static report archive calendar should be selectable");
 assert.match(html, /closest\("\.mobile-chip"\)/, "mobile chips should be handled by event delegation");
 assert.match(html, /toggleMobileChip/, "mobile chip selection helper should exist");
