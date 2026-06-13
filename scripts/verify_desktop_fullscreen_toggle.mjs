@@ -46,3 +46,11 @@ for (const [label, placeholder] of journalDevelopmentFields) {
 for (const oldLabel of ["기분과 사람들과의 관계", "활동과 프로그램 참여", "건강과 안전", "전달할 내용"]) {
   assert.doesNotMatch(html, new RegExp(oldLabel), `${oldLabel} should be replaced in journal fields`);
 }
+
+for (const reportLabel of ["발달 영역별 기록", "기록 기반 발달 지원", "다음 발달 관찰 포인트"]) {
+  assert.match(html, new RegExp(reportLabel), `${reportLabel} report section should exist`);
+}
+
+for (const oldReportLabel of ["생활 및 활동 기록", "생활 영역별 기록", "기록 기반 참고 활동"]) {
+  assert.doesNotMatch(html, new RegExp(oldReportLabel), `${oldReportLabel} report section should be replaced`);
+}
