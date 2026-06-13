@@ -1494,6 +1494,33 @@
         color: #b42318;
       }
 
+      .mock-toast {
+        position: fixed;
+        right: 28px;
+        bottom: 28px;
+        z-index: 40;
+        max-width: min(360px, calc(100vw - 32px));
+        padding: 14px 16px;
+        border-radius: var(--radius-sm);
+        background: var(--care-text);
+        color: #ffffff;
+        font-size: var(--font-caption);
+        font-weight: 780;
+        line-height: 1.45;
+        box-shadow: 0 18px 44px rgba(0, 0, 0, 0.18);
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(10px);
+        transition:
+          opacity var(--motion-base) var(--motion-ease),
+          transform var(--motion-base) var(--motion-ease);
+      }
+
+      .mock-toast.active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
       .modal-backdrop {
         position: fixed;
         inset: 0;
@@ -4239,7 +4266,7 @@
                   <span class="mobile-brand-mark"></span>
                   <img class="mobile-brand-logo" src="output/logo/care-it-logo-c-transparent.png" alt="Care-it" />
                 </div>
-                <button class="icon-button" aria-label="알림">⋯</button>
+                <button class="icon-button" aria-label="알림" data-mock-action="show-notifications">⋯</button>
               </div>
 
               <div class="mobile-title-row">
@@ -4463,7 +4490,7 @@
                             <div class="subject-detail-box"><span>다음 할 일</span><strong>리포트 작성</strong></div>
                           </div>
                           <div class="subject-panel-actions">
-                            <button class="outline-button">일지 보기</button>
+                            <button class="outline-button" data-go-page="journals">일지 보기</button>
                           </div>
                         </div>
                       </div>
@@ -4481,8 +4508,8 @@
                             <div class="subject-detail-box"><span>다음 할 일</span><strong>일지 확인</strong></div>
                           </div>
                           <div class="subject-panel-actions">
-                            <button class="outline-button">기록 확인</button>
-                            <button class="solid-button">일지 확인</button>
+                            <button class="outline-button" data-go-page="journals">기록 확인</button>
+                            <button class="solid-button" data-go-page="journals">일지 확인</button>
                           </div>
                         </div>
                       </div>
@@ -4500,7 +4527,7 @@
                             <div class="subject-detail-box"><span>다음 할 일</span><strong>없음</strong></div>
                           </div>
                           <div class="subject-panel-actions">
-                            <button class="outline-button">일지 보기</button>
+                            <button class="outline-button" data-go-page="journals">일지 보기</button>
                           </div>
                         </div>
                       </div>
@@ -4554,7 +4581,7 @@
                     <h1>대상자 관리</h1>
                   </div>
                   <div class="desktop-actions">
-                    <button class="solid-button">대상자 추가</button>
+                    <button class="solid-button" data-go-page="journal-write">대상자 추가</button>
                   </div>
                 </div>
 
@@ -4657,8 +4684,8 @@
                       <div class="detail-line"><span>마지막 기록</span><strong>5월 14일</strong></div>
                     </div>
                     <div class="profile-actions">
-                      <button class="outline-button">기록 보기</button>
-                      <button class="solid-button">리포트 보기</button>
+                      <button class="outline-button" data-go-page="journals">기록 보기</button>
+                      <button class="solid-button" data-go-page="report-archive">리포트 보기</button>
                     </div>
                   </section>
                 </div>
@@ -4778,7 +4805,7 @@
                       </div>
                       <div class="profile-actions">
                         <button class="outline-button" data-go-page="journal-write">다시 수정</button>
-                        <button class="solid-button">확인 완료</button>
+                        <button class="solid-button" data-mock-action="confirm-journal">확인 완료</button>
                       </div>
                     </div>
                   </section>
@@ -4805,15 +4832,15 @@
                       <h2>달력</h2>
                     </div>
                     <div class="calendar-toolbar">
-                      <button class="calendar-month-button" type="button" aria-label="이전 달">‹</button>
+                      <button class="calendar-month-button" type="button" aria-label="이전 달" data-mock-action="archive-prev-month">‹</button>
                       <div class="month-picker">
-                        <button class="month-picker-button" type="button" aria-expanded="false">
+                        <button class="month-picker-button" type="button" aria-expanded="false" data-mock-action="archive-month-picker">
                           <span>2026년 5월</span>
                         </button>
                       </div>
-                      <button class="calendar-month-button" type="button" aria-label="다음 달">›</button>
+                      <button class="calendar-month-button" type="button" aria-label="다음 달" data-mock-action="archive-next-month">›</button>
                     </div>
-                    <div class="calendar-grid" aria-label="리포트 달력">
+                    <div class="calendar-grid" aria-label="리포트 달력" data-static-calendar>
                       <span class="calendar-weekday">일</span>
                       <span class="calendar-weekday">월</span>
                       <span class="calendar-weekday">화</span>
@@ -4981,7 +5008,7 @@
                     <h1>일지 작성</h1>
                   </div>
                   <div class="desktop-actions">
-                    <button class="outline-button">임시 보관</button>
+                    <button class="outline-button" data-mock-action="save-journal-draft">임시 보관</button>
                     <button class="solid-button" data-go-page="journal-draft">정리된 일지 확인</button>
                   </div>
                 </div>
@@ -5373,7 +5400,7 @@
                         </div>
                       </div>
                       <div class="profile-actions report-preview-actions">
-                        <button class="outline-button">내용 수정</button>
+                        <button class="outline-button" data-mock-action="edit-report-copy">내용 수정</button>
                         <button class="solid-button" data-go-page="report-result">리포트 작성</button>
                       </div>
                     </div>
@@ -5389,7 +5416,7 @@
                   </div>
                   <div class="desktop-actions">
                     <button class="outline-button" data-go-page="reports">리포트 수정</button>
-                    <button class="solid-button">PDF 저장</button>
+                    <button class="solid-button" data-mock-action="save-report-pdf">PDF 저장</button>
                   </div>
                 </div>
 
@@ -5479,9 +5506,9 @@
                         <strong>리포트 점검 1건</strong>
                       </div>
                       <div class="report-action-buttons">
-                        <button class="outline-button">점검 완료</button>
+                        <button class="outline-button" data-mock-action="complete-report-check">점검 완료</button>
                         <button class="outline-button" data-go-page="reports">다시 수정</button>
-                        <button class="solid-button">PDF 저장</button>
+                        <button class="solid-button" data-mock-action="save-report-pdf">PDF 저장</button>
                       </div>
                     </section>
 
@@ -5505,8 +5532,8 @@
                     <h1>요금제</h1>
                   </div>
                   <div class="desktop-actions">
-                    <button class="outline-button">결제 내역</button>
-                    <button class="solid-button">요금제 변경</button>
+                    <button class="outline-button" data-mock-action="view-billing-history">결제 내역</button>
+                    <button class="solid-button" data-mock-action="change-plan">요금제 변경</button>
                   </div>
                 </div>
 
@@ -5610,7 +5637,7 @@
                     <h1>설정</h1>
                   </div>
                   <div class="desktop-actions">
-                    <button class="solid-button">변경 저장</button>
+                    <button class="solid-button" data-mock-action="save-settings">변경 저장</button>
                   </div>
                 </div>
 
@@ -5637,7 +5664,7 @@
                         </span>
                       </div>
                       <div class="setting-actions">
-                        <button class="outline-button">비밀번호 변경</button>
+                        <button class="outline-button" data-mock-action="change-password">비밀번호 변경</button>
                         <button class="outline-button" data-go-page="billing">요금제 보기</button>
                       </div>
                     </div>
@@ -5742,8 +5769,8 @@
                         </span>
                       </label>
                       <div class="setting-actions">
-                        <button class="outline-button">데이터 내보내기</button>
-                        <button class="soft-danger-button">계정 데이터 삭제</button>
+                        <button class="outline-button" data-mock-action="export-data">데이터 내보내기</button>
+                        <button class="soft-danger-button" data-mock-action="delete-account">계정 데이터 삭제</button>
                       </div>
                     </div>
                   </section>
@@ -5816,6 +5843,7 @@
         </div>
       </section>
     </div>
+    <div class="mock-toast" role="status" aria-live="polite" data-mock-toast></div>
 
     <script>
       const navItems = document.querySelectorAll(".nav-item[data-page]");
@@ -5851,6 +5879,82 @@
       };
       let selectedJournalSubjectIndex = 0;
       let setJournalSubject = () => {};
+      const mockToast = document.querySelector("[data-mock-toast]");
+      let mockToastTimer;
+
+      const showMockToast = (message) => {
+        if (!mockToast || !message) return;
+        mockToast.textContent = message;
+        mockToast.classList.add("active");
+        window.clearTimeout(mockToastTimer);
+        mockToastTimer = window.setTimeout(() => {
+          mockToast.classList.remove("active");
+        }, 2200);
+      };
+
+      const mockActionMessages = {
+        "show-notifications": "새 알림 3건을 확인했습니다.",
+        "confirm-journal": "선택한 일지를 확인 완료 상태로 표시했습니다.",
+        "save-journal-draft": "작성 중인 일지를 임시 보관했습니다.",
+        "edit-report-copy": "리포트 본문을 바로 수정할 수 있는 상태로 열었습니다.",
+        "save-report-pdf": "현재 리포트를 PDF 저장 완료 상태로 표시했습니다.",
+        "complete-report-check": "리포트 점검 항목을 완료 처리했습니다.",
+        "view-billing-history": "최근 결제 내역을 확인했습니다.",
+        "change-plan": "선택한 요금제를 변경 예정 상태로 표시했습니다.",
+        "save-settings": "설정 변경사항을 저장했습니다.",
+        "change-password": "비밀번호 변경 화면을 여는 목업 동작입니다.",
+        "export-data": "계정 데이터를 내보내기 파일로 준비했습니다.",
+        "delete-account": "계정 데이터 삭제 요청 전 확인 단계입니다.",
+        "archive-prev-month": "이전 달 리포트 보관함을 확인하는 목업 동작입니다.",
+        "archive-next-month": "다음 달 리포트 보관함을 확인하는 목업 동작입니다.",
+        "archive-month-picker": "월 선택 패널을 여는 목업 동작입니다.",
+      };
+
+      const markReportReadyForPdf = () => {
+        document.querySelectorAll(".report-action-summary").forEach((summary) => {
+          summary.querySelector("span").textContent = "리포트 생성 완료";
+          summary.querySelector("strong").textContent = "PDF 저장 가능";
+        });
+        document.querySelectorAll(".report-action-list .badge.pending").forEach((badge) => {
+          setBadge(badge, "완료", "done");
+        });
+      };
+
+      const handleMockAction = (action, trigger) => {
+        if (!action) return;
+
+        if (action === "confirm-journal") {
+          const preview = trigger.closest(".preview-sheet");
+          preview?.querySelectorAll(".badge.pending").forEach((badge) => setBadge(badge, "완료", "done"));
+        }
+
+        if (action === "complete-report-check" || action === "save-report-pdf") {
+          markReportReadyForPdf();
+        }
+
+        if (action === "change-plan") {
+          const activePlan = document.querySelector('.desktop-page[data-page="billing"] .plan-card.active .plan-name strong');
+          if (activePlan) {
+            mockActionMessages[action] = `${activePlan.textContent} 요금제를 변경 예정 상태로 표시했습니다.`;
+          }
+        }
+
+        showMockToast(mockActionMessages[action]);
+      };
+
+      const toggleMobileChip = (chip) => {
+        const field = chip.closest(".mobile-field, .content-block, .mobile-preview-card");
+        const labelText = field?.querySelector("label, h4")?.textContent || "";
+        const allowMultiple = labelText.includes("기분");
+        if (allowMultiple) {
+          chip.classList.toggle("active");
+          return;
+        }
+        const chipScope = chip.parentElement;
+        chipScope?.querySelectorAll(".mobile-chip").forEach((item) => {
+          item.classList.toggle("active", item === chip);
+        });
+      };
 
       const mobileHomeContent = mobileContent ? mobileContent.innerHTML : "";
       const mobileViews = {
@@ -6477,6 +6581,11 @@
 
       if (mobileContent) {
         mobileContent.addEventListener("click", (event) => {
+          const mobileChip = event.target.closest(".mobile-chip");
+          if (mobileChip) {
+            toggleMobileChip(mobileChip);
+          }
+
           const openTabButton = event.target.closest("[data-mobile-open-tab]");
           if (openTabButton) activateMobileTab(openTabButton.dataset.mobileOpenTab);
 
@@ -6514,6 +6623,20 @@
         });
       });
 
+      document.addEventListener("click", (event) => {
+        const actionButton = event.target.closest("[data-mock-action]");
+        if (actionButton) {
+          handleMockAction(actionButton.dataset.mockAction, actionButton);
+        }
+
+        const calendarDay = event.target.closest("[data-static-calendar] .calendar-day");
+        if (calendarDay) {
+          const calendar = calendarDay.closest("[data-static-calendar]");
+          calendar.querySelectorAll(".calendar-day").forEach((day) => day.classList.toggle("active", day === calendarDay));
+          showMockToast(`${calendarDay.textContent.trim()}일 기록을 선택했습니다.`);
+        }
+      });
+
       document.querySelectorAll(".choice-chip").forEach((chip) => {
         chip.addEventListener("click", () => {
           const group = chip.closest("[data-choice-group]");
@@ -6534,6 +6657,7 @@
         button.addEventListener("click", () => {
           const item = button.closest(".archive-item");
           if (item) item.remove();
+          showMockToast(`${button.textContent.trim()} 처리했습니다.`);
         });
       });
 
