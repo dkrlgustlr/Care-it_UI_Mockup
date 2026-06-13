@@ -242,10 +242,15 @@
       }
 
       .mobile-brand-mark {
-        width: 28px;
+        display: none;
+      }
+
+      .mobile-brand-logo {
+        display: block;
+        width: 104px;
         height: 28px;
-        border-radius: var(--radius-sm);
-        background: var(--care-primary);
+        object-fit: contain;
+        object-position: left center;
       }
 
       .avatar {
@@ -1203,10 +1208,15 @@
       }
 
       .brand-mark {
-        width: 32px;
-        height: 32px;
-        border-radius: var(--radius-md);
-        background: var(--care-primary);
+        display: none;
+      }
+
+      .brand-logo {
+        display: block;
+        width: 132px;
+        height: 34px;
+        object-fit: contain;
+        object-position: left center;
       }
 
       .account-card {
@@ -4227,7 +4237,7 @@
               <div class="mobile-topbar">
                 <div class="mobile-brand">
                   <span class="mobile-brand-mark"></span>
-                  <span>Care-it</span>
+                  <img class="mobile-brand-logo" src="output/logo/care-it-logo-c-transparent.png" alt="Care-it" />
                 </div>
                 <button class="icon-button" aria-label="알림">⋯</button>
               </div>
@@ -4363,7 +4373,7 @@
             <aside class="sidebar">
               <div class="brand">
                 <span class="brand-mark"></span>
-                <span>Care-it</span>
+                <img class="brand-logo" src="output/logo/care-it-logo-c-transparent.png" alt="Care-it" />
               </div>
               <div class="account-card">
                 <div class="account-head">
