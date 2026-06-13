@@ -44,6 +44,12 @@ assert.doesNotMatch(html, /data-go-page="journal-write"[^>]*>대상자 추가/, 
 assert.match(html, /profileModalModes/, "profile modal should support separate edit and add modes");
 assert.match(html, /let selectedProfileIndex = 0/, "profile modal should track the selected profile");
 assert.match(html, /selectedProfileIndex = index/, "profile selection should update the modal edit target");
+assert.match(html, /data-save-profile/, "profile modal save should have a dedicated save handler");
+assert.match(html, /let currentProfileModalMode = "edit"/, "profile modal should remember whether it is adding or editing");
+assert.match(html, /const renderProfileCards = \(\) =>/, "profile list should be rendered from profile data");
+assert.match(html, /profileData\.push/, "saving a new subject should append to profile data");
+assert.match(html, /renderProfileCards\(\)/, "saving a subject should refresh the profile list");
+assert.match(html, /setJournalSubject\(selectedProfileIndex\)/, "saving a subject should make it available to journal subject selection");
 assert.match(html, /data-static-calendar/, "static report archive calendar should be selectable");
 assert.match(html, /closest\("\.mobile-chip"\)/, "mobile chips should be handled by event delegation");
 assert.match(html, /toggleMobileChip/, "mobile chip selection helper should exist");
@@ -60,6 +66,7 @@ while ((match = buttonPattern.exec(html))) {
   const text = match[2].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
   const wired =
     /data-(go-page|mobile-view|mobile-tab|mobile-open-tab|report-mode|calendar|month-picker|picker|subject-picker|open-profile-edit|close-profile-edit|desktop-fullscreen|mock-action)/.test(attrs) ||
+    /data-save-profile/.test(attrs) ||
     /class="[^"]*(choice-chip|mobile-chip|nav-item|report-kind-button|calendar-day)/.test(attrs) ||
     ["복원", "삭제"].includes(text);
 
