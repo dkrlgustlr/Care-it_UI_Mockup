@@ -98,6 +98,7 @@ assert.match(mobileTopbarStyles, /margin-bottom:\s*var\(--mobile-header-gap\);/,
 assert.match(mobileTitleRowStyles, /gap:\s*var\(--mobile-block-gap\);[\s\S]*margin-bottom:\s*var\(--mobile-section-gap\);/, "mobile title row should use block and section gap tokens");
 assert.match(mobileContentStyles, /gap:\s*var\(--mobile-section-gap\);[\s\S]*padding-bottom:\s*var\(--mobile-section-gap\);/, "mobile content should use the section gap token for vertical rhythm");
 assert.match(primaryActionStyles, /gap:\s*var\(--mobile-row-gap\);[\s\S]*padding:\s*var\(--mobile-control-padding-y\) var\(--mobile-card-padding-compact\);/, "mobile primary actions should use row and control spacing tokens");
+assert.match(bottomTabsStyles, /grid-template-columns:\s*repeat\(5,\s*1fr\);/, "mobile bottom tabs should fit home, records, reports, management, and settings");
 assert.match(parentSummaryStyles, /padding:\s*var\(--mobile-card-padding\);/, "mobile summary cards should use the standard card padding token");
 assert.match(subjectCardStyles, /gap:\s*var\(--mobile-row-gap\);[\s\S]*padding:\s*var\(--mobile-list-row-y\) var\(--mobile-list-row-x\);/, "mobile list rows should use row gap and list row padding tokens");
 assert.match(settingCardStyles, /gap:\s*var\(--mobile-row-gap\);[\s\S]*padding:\s*var\(--mobile-list-row-y\) var\(--mobile-list-row-x\);/, "mobile setting rows should use the same row spacing tokens");
@@ -160,7 +161,7 @@ assert.doesNotMatch(mobileSection, /<h3>관리<\/h3>|mobile-manage-card|data-mob
 assert.match(mobileSection, /data-mobile-tab="journal"[\s\S]*<span>기록<\/span>/, "mobile bottom tabs should contain the journal management entry");
 assert.match(mobileSection, /data-mobile-tab="report"[\s\S]*<span>리포트<\/span>/, "mobile bottom tabs should contain the report management entry");
 assert.match(mobileSection, /data-mobile-tab="manage"[\s\S]*<span>관리<\/span>/, "mobile bottom tabs should include a dedicated management tab");
-assert.doesNotMatch(mobileSection, /data-mobile-tab="settings"[\s\S]*<span>설정<\/span>/, "mobile bottom tabs should not expose settings instead of management");
+assert.match(mobileSection, /data-mobile-tab="settings"[\s\S]*<span>설정<\/span>/, "mobile bottom tabs should keep settings as a fifth tab");
 assert.match(mobileSection, /김도윤 오늘 요약/, "mobile summary should use a short subject label");
 assert.match(mobileSection, /점심 완식 · 휴식 후 재참여/, "mobile summary should expose a short concrete daily status");
 assert.match(mobileSection, /<div class="mobile-summary-meta">[\s\S]*<span>오늘 상태<\/span>[\s\S]*<strong>평온<\/strong>[\s\S]*<span>이번 주 기록<\/span>[\s\S]*<strong>3건<\/strong>/, "mobile home should keep related summary stats inside the same summary card");
@@ -186,7 +187,7 @@ assert.equal(homeQuickCardCount, 0, `mobile home should not split related summar
 assert.doesNotMatch(mobileSection, /<button class="primary-action"[^>]*data-mobile-view="journal-write"/, "mobile home should not show a large write CTA");
 assert.match(mobileViewsBlock, /class="mobile-subject-card mobile-create-card"[^>]*data-mobile-view="journal-write"[\s\S]*<span class="mobile-create-symbol" aria-hidden="true">\+<\/span>[\s\S]*<span class="mobile-action-label">\uC2DC\uC791<\/span>/, "mobile journal writing entry should open the same write flow as PC");
 assert.match(mobileViewsBlock, /class="mobile-subject-card mobile-create-card"[^>]*data-mobile-view="report-write"[\s\S]*<span class="mobile-create-symbol" aria-hidden="true">\+<\/span>[\s\S]*<span class="mobile-action-label">\uC2DC\uC791<\/span>/, "mobile report writing entry should open the same report flow as PC");
-assert.match(manageContent, /data-mobile-view="journal-write"[\s\S]*<strong>일지 작성<\/strong>[\s\S]*data-mobile-view="report-write"[\s\S]*<strong>리포트 작성<\/strong>/, "mobile management tab should expose journal and report writing");
+assert.doesNotMatch(manageContent, /mobile-create-card|data-mobile-view="journal-write"|data-mobile-view="report-write"|<h3>작성<\/h3>/, "mobile management tab should not duplicate journal/report writing buttons");
 assert.match(manageContent, /data-mobile-view="journal"[\s\S]*<strong>일지 관리<\/strong>[\s\S]*data-mobile-view="report"[\s\S]*<strong>리포트 관리<\/strong>/, "mobile management tab should group journal and report management links");
 assert.doesNotMatch(mobileViewsBlock, /data-mobile-view="journal-create"|data-mobile-view="report-create"/, "mobile write entry cards should not route to simplified create-only flows");
 assert.doesNotMatch(mobileSection, /<button class="mobile-text-action"[^>]*>관리<\/button>/, "mobile home should not expose management actions");
