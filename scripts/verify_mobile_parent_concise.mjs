@@ -17,6 +17,7 @@ assert.match(css, /--mobile-title-size:\s*22px;/, "mobile title font size token 
 assert.match(css, /--mobile-subtitle-size:\s*15px;/, "mobile subtitle font size token should be 15px");
 assert.match(css, /--mobile-content-size:\s*13px;/, "mobile content font size token should be 13px");
 assert.match(css, /\.mobile-title\s*\{[\s\S]*?font-size:\s*var\(--mobile-title-size\)/, "mobile page title should use the title token");
+assert.match(css, /\.mobile-screen\s*\{[\s\S]*?background:\s*#eef3f5;/, "mobile dashboard background should be one shade darker");
 assert.match(css, /\.block-head h3\s*\{[\s\S]*?font-size:\s*var\(--mobile-subtitle-size\)/, "mobile section headings should use the subtitle token");
 assert.match(css, /\.mobile-parent-summary strong\s*\{[\s\S]*?font-size:\s*var\(--mobile-subtitle-size\)/, "mobile summary headline should use the subtitle token");
 assert.match(css, /\.mobile-parent-summary p\s*\{[\s\S]*?font-size:\s*var\(--mobile-content-size\)/, "mobile summary body should use the content token");
@@ -30,7 +31,10 @@ assert.doesNotMatch(parentSummaryStyles, /--care-primary/, "mobile parent summar
 assert.match(mobileSection, /<h1 class="mobile-title">오늘 돌봄<\/h1>/, "mobile home should open as a parent-facing daily view");
 assert.match(mobileSection, />보호자 공유</, "mobile home eyebrow should speak to guardians");
 assert.match(mobileSection, /mobile-parent-summary/, "mobile home should lead with one concise parent summary");
-assert.match(mobileSection, /점심 완식/, "mobile summary should expose a concrete daily status");
+assert.match(mobileSection, /김도윤 오늘 요약/, "mobile summary should use a short subject label");
+assert.match(mobileSection, /점심 완식 · 휴식 후 재참여/, "mobile summary should expose a short concrete daily status");
+assert.match(mobileSection, />확인할 기록 1건</, "mobile summary metadata should be brief");
+assert.doesNotMatch(mobileSection, /점심은 완식했고/, "mobile summary should not use a long sentence");
 assert.match(mobileSection, /data-mobile-tab="journal"[\s\S]*<span>기록<\/span>/, "journal tab should be labeled as parent-friendly records");
 
 const homeQuickCardCount = (mobileSection.match(/class="quick-card"/g) || []).length;
