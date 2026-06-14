@@ -553,12 +553,12 @@
       .mobile-create-card {
         grid-template-columns: 32px minmax(0, 1fr) auto;
         gap: var(--space-3);
-        background: #e8f6f0;
-        box-shadow: 0 1px 0 rgba(5, 166, 107, 0.18), var(--shadow-hairline);
+        background: var(--care-primary);
+        box-shadow: 0 10px 18px rgba(5, 166, 107, 0.24);
       }
 
       .mobile-create-card:hover {
-        background: #dff3eb;
+        background: var(--care-primary-dark);
       }
 
       .mobile-create-symbol {
@@ -568,15 +568,23 @@
         width: 32px;
         height: 32px;
         border-radius: 50%;
-        background: var(--care-primary);
+        background: rgba(255, 255, 255, 0.18);
         color: #ffffff;
         font-size: var(--mobile-subtitle-size);
         font-weight: 850;
         line-height: 1;
       }
 
+      .mobile-create-card .mobile-subject-title strong {
+        color: #ffffff;
+      }
+
+      .mobile-create-card .mobile-subject-title span {
+        color: rgba(255, 255, 255, 0.82);
+      }
+
       .mobile-create-card .mobile-action-label {
-        color: var(--care-primary-dark);
+        color: #ffffff;
         font-weight: 900;
       }
 

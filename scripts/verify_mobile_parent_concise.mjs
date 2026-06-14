@@ -13,7 +13,11 @@ const mobileCss = css.match(/\.mobile-frame[\s\S]*?\.dashboard-frame/)?.[0] || "
 const mobileScreenStyles = css.match(/\.mobile-screen\s*\{[^}]*\}/)?.[0] || "";
 const quickCardStrongStyles = css.match(/\.quick-card strong\s*\{[^}]*\}/)?.[0] || "";
 const createCardStyles = css.match(/\.mobile-create-card\s*\{[^}]*\}/)?.[0] || "";
+const createCardHoverStyles = css.match(/\.mobile-create-card:hover\s*\{[^}]*\}/)?.[0] || "";
 const createSymbolStyles = css.match(/\.mobile-create-symbol\s*\{[^}]*\}/)?.[0] || "";
+const createTitleStyles = css.match(/\.mobile-create-card \.mobile-subject-title strong\s*\{[^}]*\}/)?.[0] || "";
+const createDetailStyles = css.match(/\.mobile-create-card \.mobile-subject-title span\s*\{[^}]*\}/)?.[0] || "";
+const createActionStyles = css.match(/\.mobile-create-card \.mobile-action-label\s*\{[^}]*\}/)?.[0] || "";
 
 assert.ok(mobileSection, "mobile mockup section should be present");
 assert.ok(mobileViewsBlock, "mobile parent view map should be present");
@@ -32,9 +36,14 @@ assert.match(css, /\.mobile-subject-title span,\s*\.mobile-activity-title span\s
 assert.doesNotMatch(mobileCss, /font-size:\s*var\(--font-/, "mobile typography should use the mobile title/subtitle/content tokens");
 assert.doesNotMatch(mobileCss, /font-size:\s*\d+px/, "mobile typography should avoid one-off pixel font sizes");
 assert.match(createCardStyles, /grid-template-columns:\s*32px minmax\(0,\s*1fr\) auto;/, "mobile write entry cards should have a dedicated icon-title-action layout");
-assert.match(createCardStyles, /background:\s*#e8f6f0;/, "mobile write entry cards should use a distinct mint action surface");
+assert.match(createCardStyles, /background:\s*var\(--care-primary\);/, "mobile write entry cards should use a full green action surface");
+assert.match(createCardHoverStyles, /background:\s*var\(--care-primary-dark\);/, "mobile write entry cards should keep a darker green hover state");
 assert.doesNotMatch(createCardStyles, /border-left/, "mobile write entry cards should not use the rejected vertical side accent");
-assert.match(createSymbolStyles, /background:\s*var\(--care-primary\);/, "mobile write entry cards should use a clear primary plus symbol");
+assert.match(createSymbolStyles, /background:\s*rgba\(255,\s*255,\s*255,\s*0\.18\);/, "mobile write entry plus symbols should sit on the green card without adding another green badge");
+assert.match(createSymbolStyles, /color:\s*#ffffff;/, "mobile write entry plus symbols should be white");
+assert.match(createTitleStyles, /color:\s*#ffffff;/, "mobile write entry titles should be white");
+assert.match(createDetailStyles, /color:\s*rgba\(255,\s*255,\s*255,\s*0\.82\);/, "mobile write entry helper text should be white with a softer emphasis");
+assert.match(createActionStyles, /color:\s*#ffffff;/, "mobile write entry action labels should be white");
 assert.doesNotMatch(parentSummaryStyles, /border-left/, "mobile parent summary should not use a vertical side accent");
 assert.doesNotMatch(parentSummaryStyles, /--care-primary/, "mobile parent summary should not use the green accent-card treatment");
 
