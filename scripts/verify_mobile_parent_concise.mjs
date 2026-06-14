@@ -31,6 +31,10 @@ const createSymbolStyles = css.match(/\.mobile-create-symbol\s*\{[^}]*\}/)?.[0] 
 const createTitleStyles = css.match(/\.mobile-create-card \.mobile-subject-title strong\s*\{[^}]*\}/)?.[0] || "";
 const createDetailStyles = css.match(/\.mobile-create-card \.mobile-subject-title span\s*\{[^}]*\}/)?.[0] || "";
 const createActionStyles = css.match(/\.mobile-create-card \.mobile-action-label\s*\{[^}]*\}/)?.[0] || "";
+const referenceFlowStyles = [...css.matchAll(/\.mobile-reference-flow\s*\{[^}]*\}/g)]
+  .map((match) => match[0])
+  .join("\n");
+const referenceFlowItemStyles = css.match(/\.mobile-reference-flow span\s*\{[^}]*\}/)?.[0] || "";
 
 assert.ok(mobileSection, "mobile mockup section should be present");
 assert.ok(mobileViewsBlock, "mobile parent view map should be present");
@@ -68,6 +72,10 @@ assert.match(createSymbolStyles, /color:\s*#ffffff;/, "mobile write entry plus s
 assert.match(createTitleStyles, /color:\s*#ffffff;/, "mobile write entry titles should be white");
 assert.match(createDetailStyles, /color:\s*rgba\(255,\s*255,\s*255,\s*0\.82\);/, "mobile write entry helper text should be white with a softer emphasis");
 assert.match(createActionStyles, /color:\s*#ffffff;/, "mobile write entry action labels should be white");
+assert.match(referenceFlowStyles, /grid-template-columns:\s*1fr;/, "mobile report support flow should stack as a calm list, not three mismatched pills");
+assert.match(referenceFlowStyles, /border-top:\s*1px solid var\(--care-border\);/, "mobile report support flow should use the same subtle divider language as nearby content");
+assert.match(referenceFlowItemStyles, /background:\s*transparent;/, "mobile report support flow items should not look like standalone green buttons");
+assert.doesNotMatch(referenceFlowItemStyles, /background:\s*var\(--care-mint-soft\)|place-items|border-radius/, "mobile report support flow items should avoid the mismatched pill treatment");
 assert.doesNotMatch(parentSummaryStyles, /border-left/, "mobile parent summary should not use a vertical side accent");
 assert.doesNotMatch(parentSummaryStyles, /--care-primary/, "mobile parent summary should not use the green accent-card treatment");
 

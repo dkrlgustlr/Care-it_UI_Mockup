@@ -1069,19 +1069,36 @@
       }
 
       .mobile-reference-flow {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: 1fr;
+        gap: 0;
+        border-top: 1px solid var(--care-border);
+        border-bottom: 1px solid var(--care-border);
       }
 
       .mobile-reference-flow span {
-        display: grid;
-        place-items: center;
+        display: flex;
+        align-items: center;
         min-height: 36px;
-        border-radius: var(--radius-sm);
-        background: var(--care-mint-soft);
-        color: var(--care-primary-dark);
+        background: transparent;
+        color: var(--care-muted);
         font-size: var(--mobile-content-size);
-        font-weight: 850;
-        text-align: center;
+        font-weight: 780;
+        text-align: left;
+      }
+
+      .mobile-reference-flow span:not(:last-child) {
+        border-bottom: 1px solid var(--care-border);
+      }
+
+      .mobile-reference-flow span::before {
+        content: "";
+        flex: 0 0 6px;
+        width: 6px;
+        height: 6px;
+        margin-right: var(--space-2);
+        border-radius: 999px;
+        background: var(--care-primary);
+        opacity: 0.72;
       }
 
       .mobile-note {
