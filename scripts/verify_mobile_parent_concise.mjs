@@ -33,6 +33,10 @@ const manageGridStyles = css.match(/\.mobile-manage-grid\s*\{[^}]*\}/)?.[0] || "
 const manageCardStyles = css.match(/\.mobile-manage-card\s*\{[^}]*\}/)?.[0] || "";
 const manageCardStrongStyles = css.match(/\.mobile-manage-card strong\s*\{[^}]*\}/)?.[0] || "";
 const manageCardSpanStyles = css.match(/\.mobile-manage-card span\s*\{[^}]*\}/)?.[0] || "";
+const groupedValueListStyles = css.match(/\.mobile-summary-grid,\s*\.mobile-report-meta,\s*\.mobile-check-list\s*\{[^}]*\}/)?.[0] || "";
+const summaryGridStyles = css.match(/\.mobile-summary-grid\s*\{[^}]*\}/)?.[0] || "";
+const summaryItemStyles = css.match(/\.mobile-summary-item,\s*\.mobile-check-row\s*\{[^}]*\}/)?.[0] || "";
+const reportMetaItemStyles = css.match(/\.mobile-report-meta div\s*\{[^}]*\}/)?.[0] || "";
 const subjectCardStyles = css.match(/\.mobile-subject-card,\s*\.mobile-activity-item\s*\{[^}]*\}/)?.[0] || "";
 const settingCardStyles = css.match(/\.mobile-setting-card\s*\{[^}]*\}/)?.[0] || "";
 const formCardStyles = css.match(/\.mobile-form-card\s*\{[^}]*\}/)?.[0] || "";
@@ -94,7 +98,7 @@ assert.match(mobileTopbarStyles, /margin-bottom:\s*var\(--mobile-header-gap\);/,
 assert.match(mobileTitleRowStyles, /gap:\s*var\(--mobile-block-gap\);[\s\S]*margin-bottom:\s*var\(--mobile-section-gap\);/, "mobile title row should use block and section gap tokens");
 assert.match(mobileContentStyles, /gap:\s*var\(--mobile-section-gap\);[\s\S]*padding-bottom:\s*var\(--mobile-section-gap\);/, "mobile content should use the section gap token for vertical rhythm");
 assert.match(primaryActionStyles, /gap:\s*var\(--mobile-row-gap\);[\s\S]*padding:\s*var\(--mobile-control-padding-y\) var\(--mobile-card-padding-compact\);/, "mobile primary actions should use row and control spacing tokens");
-assert.match(manageCardStyles, /gap:\s*var\(--space-1\);[\s\S]*padding:\s*var\(--mobile-card-padding-compact\);/, "mobile management cards should use the compact card padding token");
+assert.match(manageCardStyles, /grid-template-columns:\s*minmax\(0,\s*1fr\) auto;[\s\S]*padding:\s*var\(--mobile-list-row-y\) var\(--mobile-list-row-x\);/, "mobile management actions should use list-row spacing inside one grouped card");
 assert.match(parentSummaryStyles, /padding:\s*var\(--mobile-card-padding\);/, "mobile summary cards should use the standard card padding token");
 assert.match(subjectCardStyles, /gap:\s*var\(--mobile-row-gap\);[\s\S]*padding:\s*var\(--mobile-list-row-y\) var\(--mobile-list-row-x\);/, "mobile list rows should use row gap and list row padding tokens");
 assert.match(settingCardStyles, /gap:\s*var\(--mobile-row-gap\);[\s\S]*padding:\s*var\(--mobile-list-row-y\) var\(--mobile-list-row-x\);/, "mobile setting rows should use the same row spacing tokens");
@@ -119,10 +123,15 @@ assert.match(css, /\.mobile-parent-summary p\s*\{[\s\S]*?font-size:\s*var\(--mob
 assert.match(summaryMetaStyles, /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/, "mobile home summary stats should stay inside the same summary card as a two-column row");
 assert.match(summaryStatStyles, /background:\s*transparent;/, "mobile home summary stats should not look like separate cards");
 assert.match(summaryStatStrongStyles, /font-size:\s*var\(--mobile-subtitle-size\)/, "mobile home summary stat values should use the subtitle token");
-assert.match(manageGridStyles, /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/, "mobile home management shortcuts should use a compact two-column grid");
-assert.match(manageCardStyles, /background:\s*var\(--care-surface-raised\);/, "mobile home management shortcuts should read as cards");
+assert.match(manageGridStyles, /gap:\s*0;[\s\S]*background:\s*var\(--care-surface-raised\);[\s\S]*box-shadow:\s*var\(--shadow-hairline\);/, "mobile home management shortcuts should be one grouped card");
+assert.doesNotMatch(manageGridStyles, /grid-template-columns:\s*repeat\(2/, "mobile home management shortcuts should not be split into two separate card columns");
+assert.match(manageCardStyles, /background:\s*transparent;/, "mobile home management rows should not look like separate cards");
 assert.match(manageCardStrongStyles, /font-size:\s*var\(--mobile-subtitle-size\)/, "mobile management shortcut titles should use the subtitle token");
 assert.match(manageCardSpanStyles, /font-size:\s*var\(--mobile-content-size\)/, "mobile management shortcut helper text should use the content token");
+assert.match(groupedValueListStyles, /gap:\s*0;[\s\S]*background:\s*#f8fafb;/, "mobile value groups should be single list cards with internal dividers");
+assert.match(summaryGridStyles, /grid-template-columns:\s*1fr;/, "mobile summary values should stack as rows instead of separate cards");
+assert.match(summaryItemStyles, /grid-template-columns:\s*minmax\(0,\s*1fr\) auto;[\s\S]*background:\s*transparent;/, "mobile summary/check values should read as rows, not nested cards");
+assert.match(reportMetaItemStyles, /grid-template-columns:\s*minmax\(0,\s*1fr\) auto;[\s\S]*background:\s*transparent;/, "mobile report meta values should read as rows, not nested cards");
 assert.match(css, /\.mobile-subject-title strong,\s*\.mobile-activity-title strong\s*\{[\s\S]*?font-size:\s*var\(--mobile-subtitle-size\)/, "mobile list item titles should use the subtitle token");
 assert.match(css, /\.mobile-subject-title span,\s*\.mobile-activity-title span\s*\{[\s\S]*?font-size:\s*var\(--mobile-content-size\)/, "mobile list item details should use the content token");
 assert.doesNotMatch(mobileCss, /font-size:\s*var\(--font-/, "mobile typography should use the mobile title/subtitle/content tokens");

@@ -401,20 +401,23 @@
 
       .mobile-manage-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: var(--space-3);
+        gap: 0;
+        overflow: hidden;
+        border-radius: var(--radius-md);
+        background: var(--care-surface-raised);
+        box-shadow: var(--shadow-hairline);
       }
 
       .mobile-manage-card {
         display: grid;
-        align-content: center;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
         gap: var(--space-1);
-        min-height: 78px;
-        padding: var(--mobile-card-padding-compact);
+        min-height: 64px;
+        padding: var(--mobile-list-row-y) var(--mobile-list-row-x);
         border: 0;
-        border-radius: var(--radius-md);
-        background: var(--care-surface-raised);
-        box-shadow: var(--shadow-hairline);
+        border-radius: 0;
+        background: transparent;
         color: var(--care-text);
         text-align: left;
         font-family: inherit;
@@ -426,7 +429,20 @@
 
       .mobile-manage-card:hover {
         background: #eef3f5;
-        transform: translateY(-1px);
+      }
+
+      .mobile-manage-card:not(:last-child) {
+        position: relative;
+      }
+
+      .mobile-manage-card:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        left: var(--mobile-list-row-x);
+        right: var(--mobile-list-row-x);
+        bottom: 0;
+        height: 1px;
+        background: rgba(0, 0, 0, 0.06);
       }
 
       .mobile-manage-card strong {
@@ -1057,20 +1073,43 @@
       .mobile-report-meta,
       .mobile-check-list {
         display: grid;
-        gap: var(--space-2);
+        gap: 0;
+        overflow: hidden;
+        border-radius: var(--radius-md);
+        background: #f8fafb;
       }
 
       .mobile-summary-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
       }
 
       .mobile-summary-item,
       .mobile-check-row {
         display: grid;
-        gap: var(--space-1);
-        padding: var(--space-3);
-        border-radius: var(--radius-sm);
-        background: #f8fafb;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: var(--space-2);
+        align-items: center;
+        padding: var(--mobile-list-row-y) var(--mobile-list-row-x);
+        border-radius: 0;
+        background: transparent;
+      }
+
+      .mobile-summary-item:not(:last-child),
+      .mobile-check-row:not(:last-child),
+      .mobile-report-meta div:not(:last-child) {
+        position: relative;
+      }
+
+      .mobile-summary-item:not(:last-child)::after,
+      .mobile-check-row:not(:last-child)::after,
+      .mobile-report-meta div:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        left: var(--mobile-list-row-x);
+        right: var(--mobile-list-row-x);
+        bottom: 0;
+        height: 1px;
+        background: rgba(0, 0, 0, 0.06);
       }
 
       .mobile-summary-item span,
@@ -1085,11 +1124,6 @@
         color: var(--care-text);
         font-size: var(--mobile-subtitle-size);
         font-weight: 850;
-      }
-
-      .mobile-check-row {
-        grid-template-columns: minmax(0, 1fr) auto;
-        align-items: center;
       }
 
       .mobile-report-title {
@@ -1110,15 +1144,17 @@
       }
 
       .mobile-report-meta {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
       }
 
       .mobile-report-meta div {
         display: grid;
-        gap: var(--space-1);
-        padding: var(--space-3);
-        border-radius: var(--radius-sm);
-        background: #f8fafb;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: var(--space-2);
+        align-items: center;
+        padding: var(--mobile-list-row-y) var(--mobile-list-row-x);
+        border-radius: 0;
+        background: transparent;
       }
 
       .mobile-report-meta span {
