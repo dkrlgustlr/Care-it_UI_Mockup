@@ -400,64 +400,6 @@
         font-weight: 600;
       }
 
-      .mobile-manage-grid {
-        display: grid;
-        gap: 0;
-        overflow: hidden;
-        border-radius: var(--radius-md);
-        background: var(--care-surface-raised);
-        box-shadow: var(--shadow-hairline);
-      }
-
-      .mobile-manage-card {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        align-items: center;
-        gap: var(--space-1);
-        min-height: 64px;
-        padding: var(--mobile-list-row-y) var(--mobile-list-row-x);
-        border: 0;
-        border-radius: 0;
-        background: transparent;
-        color: var(--care-text);
-        text-align: left;
-        font-family: inherit;
-        cursor: pointer;
-        transition:
-          background-color var(--motion-base) var(--motion-ease),
-          transform var(--motion-fast) var(--motion-ease);
-      }
-
-      .mobile-manage-card:hover {
-        background: #eef3f5;
-      }
-
-      .mobile-manage-card:not(:last-child) {
-        position: relative;
-      }
-
-      .mobile-manage-card:not(:last-child)::after {
-        content: "";
-        position: absolute;
-        left: var(--mobile-list-row-x);
-        right: var(--mobile-list-row-x);
-        bottom: 0;
-        height: 1px;
-        background: rgba(0, 0, 0, 0.06);
-      }
-
-      .mobile-manage-card strong {
-        font-size: var(--mobile-subtitle-size);
-        line-height: 1.25;
-        font-weight: 850;
-      }
-
-      .mobile-manage-card span {
-        color: var(--care-muted);
-        font-size: var(--mobile-content-size);
-        font-weight: 700;
-      }
-
       .mobile-parent-summary {
         display: grid;
         gap: var(--space-2);
@@ -4566,22 +4508,6 @@
 
                 <section class="content-block">
                   <div class="block-head">
-                    <h3>관리</h3>
-                  </div>
-                  <div class="mobile-manage-grid">
-                    <button class="mobile-manage-card" type="button" data-mobile-open-tab="journal">
-                      <strong>일지 관리</strong>
-                      <span>작성·확인</span>
-                    </button>
-                    <button class="mobile-manage-card" type="button" data-mobile-open-tab="report">
-                      <strong>리포트 관리</strong>
-                      <span>작성·보기</span>
-                    </button>
-                  </div>
-                </section>
-
-                <section class="content-block">
-                  <div class="block-head">
                     <h3>오늘 한눈에</h3>
                   </div>
                   <div class="mobile-group-list">
@@ -7476,9 +7402,6 @@
           if (mobileChip) {
             toggleMobileChip(mobileChip);
           }
-
-          const openTabButton = event.target.closest("[data-mobile-open-tab]");
-          if (openTabButton) activateMobileTab(openTabButton.dataset.mobileOpenTab);
 
           const openViewButton = event.target.closest("[data-mobile-view]");
           if (openViewButton) activateMobileTab(openViewButton.dataset.mobileView);
