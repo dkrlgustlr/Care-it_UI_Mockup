@@ -6639,6 +6639,15 @@
               <strong>기록 5건 중 1건은 보호자 확인이 필요합니다.</strong>
             </section>
             <section class="content-block">
+              <div class="block-head"><h3>작성</h3></div>
+              <div class="mobile-group-list">
+                <div class="mobile-subject-card" data-mobile-view="journal-create">
+                  <span class="mobile-subject-title"><strong>일지 작성</strong><span>오늘 기록 직접 입력</span></span>
+                  <span class="mobile-action-label">작성</span>
+                </div>
+              </div>
+            </section>
+            <section class="content-block">
               <div class="block-head"><h3>최근 기록</h3></div>
               <div class="mobile-group-list">
                 <div class="mobile-subject-card" data-mobile-view="journal-draft">
@@ -6655,6 +6664,48 @@
                 </div>
               </div>
             </section>
+          `,
+        },
+        "journal-create": {
+          tab: "journal",
+          eyebrow: "기록",
+          title: "일지 작성",
+          date: "오늘",
+          content: `
+            <section class="content-block">
+              <div class="block-head"><h3>대상자</h3></div>
+              <div class="mobile-form-card">
+                <div class="mobile-check-list">
+                  <div class="mobile-check-row"><span>이름</span><strong>김도윤</strong></div>
+                  <div class="mobile-check-row"><span>작성일</span><strong>5월 16일</strong></div>
+                </div>
+              </div>
+            </section>
+            <section class="content-block">
+              <div class="block-head"><h3>오늘 기록 직접 입력</h3></div>
+              <div class="mobile-form-card">
+                <div class="mobile-field">
+                  <label>신체·운동 발달</label>
+                  <textarea class="mobile-textarea" placeholder="대근육, 소근육, 감각, 건강, 기본생활 움직임"></textarea>
+                </div>
+                <div class="mobile-field">
+                  <label>인지 발달</label>
+                  <textarea class="mobile-textarea" placeholder="탐색, 문제해결, 기억, 분류, 수·공간 개념, 주의집중"></textarea>
+                </div>
+                <div class="mobile-field">
+                  <label>언어·의사소통 발달</label>
+                  <textarea class="mobile-textarea" placeholder="듣기, 말하기, 어휘, 문장, 비언어 표현, 상호작용 대화"></textarea>
+                </div>
+                <div class="mobile-field">
+                  <label>사회·정서 발달</label>
+                  <textarea class="mobile-textarea" placeholder="또래관계, 애착, 자기조절, 감정표현, 규칙, 협동"></textarea>
+                </div>
+              </div>
+            </section>
+            <div class="mobile-action-row">
+              <button class="mobile-secondary-action" type="button" data-mobile-view="journal">취소</button>
+              <button class="mobile-primary-action" type="button" data-mobile-view="journal-draft">저장 후 확인</button>
+            </div>
           `,
         },
         "journal-write": {
@@ -6720,6 +6771,15 @@
               <strong>이번 주는 안내 후 참여가 이어진 기록이 반복되었습니다.</strong>
             </section>
             <section class="content-block">
+              <div class="block-head"><h3>작성</h3></div>
+              <div class="mobile-group-list">
+                <div class="mobile-subject-card" data-mobile-view="report-create">
+                  <span class="mobile-subject-title"><strong>리포트 작성</strong><span>확인된 기록으로 작성</span></span>
+                  <span class="mobile-action-label">작성</span>
+                </div>
+              </div>
+            </section>
+            <section class="content-block">
               <div class="block-head"><h3>리포트 목록</h3></div>
               <div class="mobile-group-list">
                 <div class="mobile-subject-card" data-mobile-view="report-write">
@@ -6732,6 +6792,41 @@
                 </div>
               </div>
             </section>
+          `,
+        },
+        "report-create": {
+          tab: "report",
+          eyebrow: "리포트",
+          title: "리포트 작성",
+          date: "5월 2주차",
+          content: `
+            <section class="content-block">
+              <div class="block-head"><h3>리포트 기준</h3></div>
+              <div class="mobile-form-card">
+                <div class="mobile-check-list">
+                  <div class="mobile-check-row"><span>대상자</span><strong>김도윤</strong></div>
+                  <div class="mobile-check-row"><span>기간</span><strong>5월 2주차</strong></div>
+                  <div class="mobile-check-row"><span>포함 기록</span><strong>5건</strong></div>
+                </div>
+              </div>
+            </section>
+            <section class="content-block">
+              <div class="block-head"><h3>리포트 내용</h3></div>
+              <div class="mobile-form-card">
+                <div class="mobile-field">
+                  <label>주간 요약</label>
+                  <textarea class="mobile-textarea" placeholder="이번 주 관찰 흐름과 지원 포인트를 입력합니다."></textarea>
+                </div>
+                <div class="mobile-field">
+                  <label>가정 연계</label>
+                  <textarea class="mobile-textarea" placeholder="가정에서 이어볼 내용을 입력합니다."></textarea>
+                </div>
+              </div>
+            </section>
+            <div class="mobile-action-row">
+              <button class="mobile-secondary-action" type="button" data-mobile-view="report">취소</button>
+              <button class="mobile-primary-action" type="button" data-mobile-view="report-write">미리보기</button>
+            </div>
           `,
         },
         "report-write": {

@@ -64,9 +64,7 @@ assert.doesNotMatch(mobileSection, /<button class="mobile-text-action"[^>]*>관�
 const adminCopy = [
   "대상자 관리",
   "프로필 수정",
-  "일지 작성",
   "새 일지 작성",
-  "리포트 작성",
   "정리된 일지 확인",
   "임시 보관",
   "다시 수정",
@@ -82,7 +80,11 @@ for (const label of ["신체·운동 발달", "인지 발달", "언어·의사�
 }
 
 assert.match(mobileViewsBlock, /title: "기록 모아보기"/, "mobile records tab should be a read-only record collection");
+assert.match(mobileViewsBlock, /data-mobile-view="journal-create"[\s\S]*<strong>일지 작성<\/strong>/, "mobile records tab should include a journal writing entry point");
+assert.match(mobileViewsBlock, /"journal-create":\s*\{[\s\S]*?title: "일지 작성"/, "mobile should include a journal writing view");
 assert.match(mobileViewsBlock, /title: "리포트 미리보기"/, "mobile report preview should be read-only");
+assert.match(mobileViewsBlock, /data-mobile-view="report-create"[\s\S]*<strong>리포트 작성<\/strong>/, "mobile reports tab should include a report writing entry point");
+assert.match(mobileViewsBlock, /"report-create":\s*\{[\s\S]*?title: "리포트 작성"/, "mobile should include a report writing view");
 assert.match(mobileViewsBlock, /title: "리포트 확인"/, "mobile report result should be readable by parents");
 assert.match(mobileViewsBlock, /title: "가정 메모"/, "mobile parent flow should allow a simple home note instead of profile editing");
 assert.match(mobileViewsBlock, />가정 메모 남기기</, "mobile parent flow should provide a parent-friendly note action");
