@@ -4309,7 +4309,7 @@
 
               <div class="mobile-title-row">
                 <div>
-                  <p class="eyebrow">보호자 공유</p>
+                  <p class="eyebrow" hidden></p>
                   <h1 class="mobile-title">오늘 돌봄</h1>
                 </div>
                 <span class="mobile-date">5월 16일 (토)</span>
@@ -6564,7 +6564,7 @@
       const mobileParentViews = {
         home: {
           tab: "home",
-          eyebrow: "보호자 공유",
+          eyebrow: "",
           title: "오늘 돌봄",
           date: "5월 16일 (토)",
           content: mobileHomeContent,
@@ -6893,7 +6893,10 @@
         mobileTabs.forEach((tab) => {
           tab.classList.toggle("active", tab.dataset.mobileTab === activeTab);
         });
-        if (mobileEyebrow) mobileEyebrow.textContent = view.eyebrow;
+        if (mobileEyebrow) {
+          mobileEyebrow.textContent = view.eyebrow;
+          mobileEyebrow.hidden = !view.eyebrow;
+        }
         if (mobileTitle) mobileTitle.textContent = view.title;
         if (mobileDate) mobileDate.textContent = view.date;
         mobileContent.innerHTML = view.content;

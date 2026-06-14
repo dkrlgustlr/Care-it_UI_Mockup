@@ -33,7 +33,9 @@ assert.doesNotMatch(parentSummaryStyles, /border-left/, "mobile parent summary s
 assert.doesNotMatch(parentSummaryStyles, /--care-primary/, "mobile parent summary should not use the green accent-card treatment");
 
 assert.match(mobileSection, /<h1 class="mobile-title">오늘 돌봄<\/h1>/, "mobile home should open as a parent-facing daily view");
-assert.match(mobileSection, />보호자 공유</, "mobile home eyebrow should speak to guardians");
+assert.doesNotMatch(mobileSection, />보호자 공유</, "mobile home dashboard should not show the guardian-sharing eyebrow");
+assert.match(mobileViewsBlock, /home:\s*\{[\s\S]*?eyebrow:\s*""/, "mobile home view should keep the dashboard eyebrow empty");
+assert.match(html, /mobileEyebrow\.hidden\s*=\s*!view\.eyebrow/, "mobile view renderer should hide an empty eyebrow");
 assert.match(mobileSection, /mobile-parent-summary/, "mobile home should lead with one concise parent summary");
 assert.match(mobileSection, /김도윤 오늘 요약/, "mobile summary should use a short subject label");
 assert.match(mobileSection, /점심 완식 · 휴식 후 재참여/, "mobile summary should expose a short concrete daily status");

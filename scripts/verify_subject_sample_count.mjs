@@ -17,7 +17,7 @@ for (const removedName of ["정하민", "오시우", "한유진", "서지호", "
 
 const mobileSection = html.match(/<section class="mobile-section">[\s\S]*?<section class="desktop-section">/)?.[0] || "";
 
-assert.match(mobileSection, /보호자 공유/, "mobile home should now be a guardian-facing single-child summary");
+assert.doesNotMatch(mobileSection, />보호자 공유</, "mobile home should not show the guardian-sharing eyebrow");
 assert.match(mobileSection, /김도윤 오늘 요약/, "mobile home should focus on the selected child instead of the full subject roster");
 assert.match(html, /5명 중 2명 완료/, "desktop completion metric should use five current subjects");
 assert.doesNotMatch(html, /전체 15명 중 1명 선택/, "subject picker initial copy should not mention 15 current subjects");
