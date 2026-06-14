@@ -11,6 +11,7 @@ const parentSummaryStyles = [...html.matchAll(/\.mobile-parent-summary[^{]*\{[^}
 const css = html.match(/<style>([\s\S]*?)<\/style>/)?.[1] || "";
 const mobileCss = css.match(/\.mobile-frame[\s\S]*?\.dashboard-frame/)?.[0] || "";
 const mobileScreenStyles = css.match(/\.mobile-screen\s*\{[^}]*\}/)?.[0] || "";
+const quickCardStrongStyles = css.match(/\.quick-card strong\s*\{[^}]*\}/)?.[0] || "";
 
 assert.ok(mobileSection, "mobile mockup section should be present");
 assert.ok(mobileViewsBlock, "mobile parent view map should be present");
@@ -22,6 +23,8 @@ assert.match(mobileScreenStyles, /background:\s*#f4f7f8;/, "mobile dashboard bac
 assert.match(css, /\.block-head h3\s*\{[\s\S]*?font-size:\s*var\(--mobile-subtitle-size\)/, "mobile section headings should use the subtitle token");
 assert.match(css, /\.mobile-parent-summary strong\s*\{[\s\S]*?font-size:\s*var\(--mobile-subtitle-size\)/, "mobile summary headline should use the subtitle token");
 assert.match(css, /\.mobile-parent-summary p\s*\{[\s\S]*?font-size:\s*var\(--mobile-content-size\)/, "mobile summary body should use the content token");
+assert.match(quickCardStrongStyles, /font-size:\s*var\(--mobile-subtitle-size\)/, "mobile quick metric values should use the subtitle token");
+assert.doesNotMatch(quickCardStrongStyles, /font-size:\s*var\(--mobile-title-size\)/, "mobile quick metric values should not use the page title token");
 assert.match(css, /\.mobile-subject-title strong,\s*\.mobile-activity-title strong\s*\{[\s\S]*?font-size:\s*var\(--mobile-subtitle-size\)/, "mobile list item titles should use the subtitle token");
 assert.match(css, /\.mobile-subject-title span,\s*\.mobile-activity-title span\s*\{[\s\S]*?font-size:\s*var\(--mobile-content-size\)/, "mobile list item details should use the content token");
 assert.doesNotMatch(mobileCss, /font-size:\s*var\(--font-/, "mobile typography should use the mobile title/subtitle/content tokens");
@@ -39,12 +42,14 @@ assert.doesNotMatch(mobileSection, /활동 보통 · 수면 보통/, "mobile sta
 assert.doesNotMatch(mobileSection, /리포트는 준비 중/, "mobile weekly card should not show extra helper detail text");
 assert.doesNotMatch(mobileSection, /점심은 완식했고/, "mobile summary should not use a long sentence");
 assert.match(mobileSection, /data-mobile-tab="journal"[\s\S]*<span>기록<\/span>/, "journal tab should be labeled as parent-friendly records");
-assert.match(mobileSection, /class="mobile-activity-item mobile-report-card"[^>]*data-mobile-view="report-write"/, "mobile weekly report should use the cleaner report card treatment");
-assert.match(mobileSection, /<span class="time">준비 중<\/span>/, "mobile weekly report status should read as a compact status badge");
-assert.match(mobileSection, /기록 5건 중 1건 확인 필요/, "mobile weekly report helper text should be shorter");
-assert.doesNotMatch(mobileSection, /리포트 보기/, "mobile weekly report action should be shortened");
-assert.match(css, /\.mobile-report-card\s*\{[\s\S]*?grid-template-areas:/, "mobile weekly report card should have an explicit compact layout");
-assert.match(css, /\.mobile-report-card \.time\s*\{[\s\S]*?border-radius:\s*999px;/, "mobile weekly report status should render as a pill");
+const weeklyReportCard = mobileSection.match(/<div class="mobile-subject-card" data-mobile-view="report-write">[\s\S]*?<\/div>/)?.[0] || "";
+assert.ok(weeklyReportCard, "mobile weekly report should use the same subject-card treatment as the surrounding list");
+assert.match(weeklyReportCard, /<strong>5월 2주차 리포트<\/strong>/, "mobile weekly report should keep the report title");
+assert.match(weeklyReportCard, /준비 중 · 기록 5건 중 1건 확인 필요/, "mobile weekly report status should sit in the helper line");
+assert.match(weeklyReportCard, /기록 5건 중 1건 확인 필요/, "mobile weekly report helper text should be shorter");
+assert.match(weeklyReportCard, /<span class="mobile-action-label">보기<\/span>/, "mobile weekly report action should be shortened");
+assert.doesNotMatch(mobileSection, /<span class="time">준비 중<\/span>|mobile-report-card|리포트 보기/, "mobile weekly report should not use a unique pill-card treatment");
+assert.doesNotMatch(css, /\.mobile-report-card/, "mobile weekly report should not define a separate visual treatment");
 
 const homeQuickCardCount = (mobileSection.match(/class="quick-card"/g) || []).length;
 assert.ok(homeQuickCardCount <= 2, `mobile home should keep quick metrics concise, found ${homeQuickCardCount}`);
