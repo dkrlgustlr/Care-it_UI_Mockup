@@ -19,6 +19,7 @@
         --care-neutral-soft: #f4f7f8;
         --care-surface-soft: #f8fafb;
         --care-surface-raised: #ffffff;
+        --care-border: rgba(0, 0, 0, 0.08);
 
         /* Radius rule: controls/cards/inner containers use 8px; large device shells are the only rounded exception. */
         --radius-sm: 8px;
@@ -491,7 +492,9 @@
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: var(--space-3);
-        margin-top: var(--space-1);
+        margin-top: var(--space-2);
+        padding-top: var(--space-3);
+        border-top: 1px solid var(--care-border);
       }
 
       .mobile-summary-stat {

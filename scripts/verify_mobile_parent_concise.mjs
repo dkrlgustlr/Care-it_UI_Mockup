@@ -72,6 +72,7 @@ assert.ok(reportWriteContent, "mobile report write flow should be present");
 assert.match(css, /--mobile-title-size:\s*22px;/, "mobile title font size token should be 22px");
 assert.match(css, /--mobile-subtitle-size:\s*15px;/, "mobile subtitle font size token should be 15px");
 assert.match(css, /--mobile-content-size:\s*13px;/, "mobile content font size token should be 13px");
+assert.match(rootStyles, /--care-border:\s*rgba\(0,\s*0,\s*0,\s*0\.08\);/, "shared divider color token should be defined for visible mobile separators");
 for (const token of [
   "--mobile-screen-gutter",
   "--mobile-frame-padding",
@@ -121,6 +122,7 @@ assert.match(css, /\.block-head h3\s*\{[\s\S]*?font-size:\s*var\(--mobile-subtit
 assert.match(css, /\.mobile-parent-summary strong\s*\{[\s\S]*?font-size:\s*var\(--mobile-subtitle-size\)/, "mobile summary headline should use the subtitle token");
 assert.match(css, /\.mobile-parent-summary p\s*\{[\s\S]*?font-size:\s*var\(--mobile-content-size\)/, "mobile summary body should use the content token");
 assert.match(summaryMetaStyles, /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/, "mobile home summary stats should stay inside the same summary card as a two-column row");
+assert.match(summaryMetaStyles, /border-top:\s*1px solid var\(--care-border\);/, "mobile home summary stats should be separated from the main summary by a subtle horizontal divider");
 assert.match(summaryStatStyles, /background:\s*transparent;/, "mobile home summary stats should not look like separate cards");
 assert.match(summaryStatStrongStyles, /font-size:\s*var\(--mobile-subtitle-size\)/, "mobile home summary stat values should use the subtitle token");
 assert.match(manageGridStyles, /gap:\s*0;[\s\S]*background:\s*var\(--care-surface-raised\);[\s\S]*box-shadow:\s*var\(--shadow-hairline\);/, "mobile home management shortcuts should be one grouped card");
