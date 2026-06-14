@@ -1351,27 +1351,22 @@
         border-radius: 2px 2px 0 0;
       }
 
-      .tab-icon.settings::before {
+      .tab-icon.manage::before {
         left: 4px;
-        top: 5px;
-        width: 12px;
-        height: 12px;
+        top: 3px;
+        width: 13px;
+        height: 16px;
         border: 2px solid currentColor;
-        border-radius: 50%;
-        box-shadow:
-          0 -5px 0 -3px currentColor,
-          0 5px 0 -3px currentColor,
-          5px 0 0 -3px currentColor,
-          -5px 0 0 -3px currentColor;
+        border-radius: 3px;
       }
 
-      .tab-icon.settings::after {
+      .tab-icon.manage::after {
         left: 8px;
-        top: 9px;
-        width: 4px;
-        height: 4px;
-        border-radius: 50%;
+        top: 8px;
+        width: 7px;
+        height: 2px;
         background: currentColor;
+        box-shadow: 0 5px 0 currentColor;
       }
 
       .dashboard-frame {
@@ -4555,7 +4550,7 @@
                 <button class="tab active" type="button" data-mobile-tab="home"><span class="tab-icon home"></span><span>홈</span></button>
                 <button class="tab" type="button" data-mobile-tab="journal"><span class="tab-icon journal"></span><span>기록</span></button>
                 <button class="tab" type="button" data-mobile-tab="report"><span class="tab-icon report"></span><span>리포트</span></button>
-                <button class="tab" type="button" data-mobile-tab="settings"><span class="tab-icon settings"></span><span>설정</span></button>
+                <button class="tab" type="button" data-mobile-tab="manage"><span class="tab-icon manage"></span><span>관리</span></button>
               </nav>
             </div>
           </div>
@@ -7240,6 +7235,42 @@
               <button class="mobile-secondary-action" type="button" data-mobile-view="report">목록으로</button>
               <button class="mobile-primary-action" type="button" data-mobile-view="profile-edit">가정 메모 남기기</button>
             </div>
+          `,
+        },
+        manage: {
+          tab: "manage",
+          eyebrow: "관리",
+          title: "관리",
+          date: "일지·리포트",
+          content: `
+            <section class="content-block">
+              <div class="block-head"><h3>작성</h3></div>
+              <div class="mobile-group-list">
+                <div class="mobile-subject-card mobile-create-card" data-mobile-view="journal-write">
+                  <span class="mobile-create-symbol" aria-hidden="true">+</span>
+                  <span class="mobile-subject-title"><strong>일지 작성</strong><span>빠른 체크와 관찰 기록 입력</span></span>
+                  <span class="mobile-action-label">시작</span>
+                </div>
+                <div class="mobile-subject-card mobile-create-card" data-mobile-view="report-write">
+                  <span class="mobile-create-symbol" aria-hidden="true">+</span>
+                  <span class="mobile-subject-title"><strong>리포트 작성</strong><span>주간·월간 리포트 생성</span></span>
+                  <span class="mobile-action-label">시작</span>
+                </div>
+              </div>
+            </section>
+            <section class="content-block">
+              <div class="block-head"><h3>모아보기</h3></div>
+              <div class="mobile-group-list">
+                <div class="mobile-subject-card" data-mobile-view="journal">
+                  <span class="mobile-subject-title"><strong>일지 관리</strong><span>작성·확인</span></span>
+                  <span class="mobile-action-label">보기</span>
+                </div>
+                <div class="mobile-subject-card" data-mobile-view="report">
+                  <span class="mobile-subject-title"><strong>리포트 관리</strong><span>작성·보기</span></span>
+                  <span class="mobile-action-label">보기</span>
+                </div>
+              </div>
+            </section>
           `,
         },
         billing: {
