@@ -443,6 +443,37 @@
         font-weight: 650;
       }
 
+      .mobile-parent-summary {
+        display: grid;
+        gap: var(--space-2);
+        padding: var(--space-4);
+        border-left: 4px solid var(--care-primary);
+        border-radius: var(--radius-md);
+        background: var(--care-surface-raised);
+        box-shadow: var(--shadow-hairline);
+      }
+
+      .mobile-parent-summary .mobile-kicker {
+        color: var(--care-primary-dark);
+        font-size: var(--font-micro);
+        font-weight: 850;
+      }
+
+      .mobile-parent-summary strong {
+        color: var(--care-text);
+        font-size: var(--font-body);
+        line-height: 1.45;
+        font-weight: 850;
+      }
+
+      .mobile-parent-summary p {
+        margin: 0;
+        color: var(--care-muted);
+        font-size: var(--font-caption);
+        line-height: 1.55;
+        font-weight: 680;
+      }
+
       .content-block {
         display: grid;
         gap: var(--space-3);
@@ -4262,7 +4293,7 @@
   <body>
     <main class="design-board">
       <section class="mobile-section">
-        <h2 class="section-title">Mobile / Toss-like Daily Care</h2>
+        <h2 class="section-title">Mobile / Parent Daily View</h2>
         <div class="mobile-frame">
           <div class="mobile-screen">
             <div class="mobile-page">
@@ -4276,106 +4307,73 @@
 
               <div class="mobile-title-row">
                 <div>
-                  <p class="eyebrow">개인 돌봄이</p>
-                  <h1 class="mobile-title">대시보드</h1>
+                  <p class="eyebrow">보호자 공유</p>
+                  <h1 class="mobile-title">오늘 돌봄</h1>
                 </div>
                 <span class="mobile-date">5월 16일 (토)</span>
               </div>
 
               <div class="mobile-content">
+                <section class="mobile-parent-summary">
+                  <span class="mobile-kicker">김도윤 · 정민아 활동지원사</span>
+                  <strong>점심은 완식했고, 오후 활동은 짧은 휴식 뒤 다시 참여했어요.</strong>
+                  <p>확인할 기록 1건 · 이번 주 리포트 준비 중</p>
+                </section>
+
                 <div class="quick-grid">
                   <div class="quick-card">
-                    <span>오늘 일지</span>
-                    <strong>2</strong>
-                    <span>완료 2 · 대기 3</span>
+                    <span>오늘 상태</span>
+                    <strong>평온</strong>
+                    <span>활동 보통 · 수면 보통</span>
                   </div>
                   <div class="quick-card">
-                    <span>작성 대기</span>
-                    <strong>3</strong>
-                    <span>오늘 마감 전 확인</span>
-                  </div>
-                  <div class="quick-card">
-                    <span>리포트 초안</span>
-                    <strong>2</strong>
-                    <span>검토 필요 1건</span>
-                  </div>
-                  <div class="quick-card">
-                    <span>일지 작성률</span>
-                    <strong>40%</strong>
-                    <span>대상자 5명 기준</span>
+                    <span>이번 주 기록</span>
+                    <strong>3건</strong>
+                    <span>리포트는 준비 중</span>
                   </div>
                 </div>
 
-                <button class="primary-action" data-mobile-view="journal-write">
-                  <span class="mic-dot">＋</span>
-                  <span>
-                    <span class="button-title">일지 작성</span>
-                    <span class="button-sub">음성 · 체크 · 텍스트</span>
-                  </span>
-                </button>
-
                 <section class="content-block">
                   <div class="block-head">
-                    <h3>대상자 기록 상태</h3>
-                    <button class="mobile-text-action" type="button" data-mobile-view="profiles">관리</button>
+                    <h3>오늘 한눈에</h3>
                   </div>
                   <div class="mobile-group-list">
                     <div class="mobile-subject-card" data-mobile-view="journal-write">
                       <span class="mobile-subject-title">
-                        <strong>김도윤</strong>
-                        <span>오늘 일지 작성 필요</span>
+                        <strong>식사</strong>
+                        <span>점심 완식 · 저녁은 아직 기록 전</span>
                       </span>
-                      <span class="mobile-action-label">일지 작성</span>
+                      <span class="mobile-action-label">보기</span>
                     </div>
-                    <div class="mobile-subject-card" data-mobile-view="report-write">
+                    <div class="mobile-subject-card" data-mobile-view="journal-write">
                       <span class="mobile-subject-title">
-                        <strong>이서준</strong>
-                        <span>오늘 일지 완료 · 리포트 대기</span>
+                        <strong>활동</strong>
+                        <span>활동 전 안내 후 참여가 이어짐</span>
                       </span>
-                      <span class="mobile-action-label">리포트 작성</span>
+                      <span class="mobile-action-label">보기</span>
                     </div>
                     <div class="mobile-subject-card" data-mobile-view="journal-draft">
                       <span class="mobile-subject-title">
-                        <strong>박하린</strong>
-                        <span>저장한 일지 확인 필요</span>
+                        <strong>확인할 기록</strong>
+                        <span>오늘 14:20 기록이 보호자 확인 대기</span>
                       </span>
-                      <span class="mobile-action-label">일지 확인</span>
-                    </div>
-                    <div class="mobile-subject-card" data-mobile-view="report-result">
-                      <span class="mobile-subject-title">
-                        <strong>최민준</strong>
-                        <span>이번 주 리포트 완료</span>
-                      </span>
-                      <span class="mobile-action-label">완료</span>
+                      <span class="mobile-action-label">확인</span>
                     </div>
                   </div>
                 </section>
 
                 <section class="content-block">
                   <div class="block-head">
-                    <h3>최근 활동</h3>
+                    <h3>이번 주 리포트</h3>
                   </div>
                   <div class="mobile-group-list">
-                    <div class="mobile-activity-item">
-                      <span class="time">14:20</span>
+                    <div class="mobile-activity-item" data-mobile-view="report-write">
+                      <span class="time">준비</span>
                       <span class="mobile-activity-title">
-                        <strong>박하린 일지 저장</strong>
-                        <span>정민아 기록 · 확인 필요</span>
+                        <strong>5월 2주차 리포트</strong>
+                        <span>기록 5건 중 1건 확인 후 공유 가능</span>
                       </span>
-                    </div>
-                    <div class="mobile-activity-item">
-                      <span class="time">13:10</span>
-                      <span class="mobile-activity-title">
-                        <strong>이서준 리포트 작성 대기</strong>
-                        <span>오늘 일지 완료</span>
-                      </span>
-                    </div>
-                    <div class="mobile-activity-item">
-                      <span class="time">11:00</span>
-                      <span class="mobile-activity-title">
-                        <strong>최민준 리포트 완료</strong>
-                        <span>PDF 저장</span>
-                      </span>
+                      <span class="mobile-action-label">리포트 보기</span>
                     </div>
                   </div>
                 </section>
@@ -4383,7 +4381,7 @@
 
               <nav class="bottom-tabs" aria-label="모바일 하단 메뉴">
                 <button class="tab active" type="button" data-mobile-tab="home"><span class="tab-icon home"></span><span>홈</span></button>
-                <button class="tab" type="button" data-mobile-tab="journal"><span class="tab-icon journal"></span><span>일지</span></button>
+                <button class="tab" type="button" data-mobile-tab="journal"><span class="tab-icon journal"></span><span>기록</span></button>
                 <button class="tab" type="button" data-mobile-tab="report"><span class="tab-icon report"></span><span>리포트</span></button>
                 <button class="tab" type="button" data-mobile-tab="settings"><span class="tab-icon settings"></span><span>설정</span></button>
               </nav>
@@ -6564,6 +6562,330 @@
           `,
         },
       };
+
+      const mobileParentViews = {
+        home: {
+          tab: "home",
+          eyebrow: "보호자 공유",
+          title: "오늘 돌봄",
+          date: "5월 16일 (토)",
+          content: mobileHomeContent,
+        },
+        profiles: {
+          tab: "home",
+          eyebrow: "보호자 공유",
+          title: "아이 기록",
+          date: "김도윤",
+          content: `
+            <section class="mobile-parent-summary">
+              <span class="mobile-kicker">김도윤 · 오늘 요약</span>
+              <strong>점심은 잘 먹었고, 활동 전 짧은 안내가 도움이 됐어요.</strong>
+              <p>가정에서 이어볼 내용은 리포트에서 한 번 더 정리됩니다.</p>
+            </section>
+            <section class="content-block">
+              <div class="block-head"><h3>이번 주 기록</h3></div>
+              <div class="mobile-group-list">
+                <div class="mobile-subject-card" data-mobile-view="journal-write">
+                  <span class="mobile-subject-title"><strong>월요일</strong><span>활동 전 안내 후 참여</span></span>
+                  <span class="mobile-action-label">보기</span>
+                </div>
+                <div class="mobile-subject-card" data-mobile-view="journal-draft">
+                  <span class="mobile-subject-title"><strong>오늘</strong><span>14:20 기록 확인 대기</span></span>
+                  <span class="mobile-action-label">확인</span>
+                </div>
+                <div class="mobile-subject-card" data-mobile-view="report-write">
+                  <span class="mobile-subject-title"><strong>주간 리포트</strong><span>기록 5건 중 1건 확인 필요</span></span>
+                  <span class="mobile-action-label">보기</span>
+                </div>
+              </div>
+            </section>
+          `,
+        },
+        "profile-detail": {
+          tab: "home",
+          eyebrow: "보호자 공유",
+          title: "오늘 기록",
+          date: "김도윤",
+          content: `
+            <section class="mobile-parent-summary">
+              <span class="mobile-kicker">오늘 14:20</span>
+              <strong>오후 활동 중 집중이 짧아졌지만, 쉬고 나서 다시 참여했어요.</strong>
+              <p>관찰한 사실 중심으로 정리된 기록입니다.</p>
+            </section>
+            <section class="content-block">
+              <div class="block-head"><h3>상태 요약</h3></div>
+              <div class="mobile-form-card">
+                <div class="mobile-check-list">
+                  <div class="mobile-check-row"><span>식사</span><strong>점심 완식</strong></div>
+                  <div class="mobile-check-row"><span>활동</span><strong>보통</strong></div>
+                  <div class="mobile-check-row"><span>수면/휴식</span><strong>보통</strong></div>
+                  <div class="mobile-check-row"><span>기분</span><strong>평온</strong></div>
+                </div>
+              </div>
+            </section>
+            <div class="mobile-action-row">
+              <button class="mobile-secondary-action" type="button" data-mobile-view="profile-edit">가정 메모 남기기</button>
+              <button class="mobile-primary-action" type="button" data-mobile-view="report-write">리포트 보기</button>
+            </div>
+          `,
+        },
+        "profile-edit": {
+          tab: "home",
+          eyebrow: "보호자 공유",
+          title: "가정 메모",
+          date: "선택 입력",
+          content: `
+            <section class="content-block">
+              <div class="block-head"><h3>가정에서 남길 내용</h3></div>
+              <div class="mobile-form-card">
+                <div class="mobile-field">
+                  <label>전달 메모</label>
+                  <textarea class="mobile-textarea" placeholder="집에서 이어서 본 모습이나 선생님께 전할 내용을 짧게 남깁니다."></textarea>
+                </div>
+              </div>
+            </section>
+            <section class="content-block">
+              <div class="block-head"><h3>예시</h3></div>
+              <div class="mobile-preview-card">
+                <h4>가정 관찰</h4>
+                <p>저녁에는 피곤해 보여서 활동 시간을 줄였습니다. 내일은 짧은 활동부터 시작하면 좋겠습니다.</p>
+              </div>
+            </section>
+            <div class="mobile-action-row">
+              <button class="mobile-secondary-action" type="button" data-mobile-view="profile-detail">취소</button>
+              <button class="mobile-primary-action" type="button" data-mobile-view="profile-detail">메모 저장</button>
+            </div>
+          `,
+        },
+        journal: {
+          tab: "journal",
+          eyebrow: "기록",
+          title: "기록 모아보기",
+          date: "최근 7일",
+          content: `
+            <section class="mobile-parent-summary">
+              <span class="mobile-kicker">이번 주 흐름</span>
+              <strong>기록 5건 중 1건은 보호자 확인이 필요합니다.</strong>
+              <p>긴 설명보다 오늘 상태와 변화만 먼저 볼 수 있게 모았습니다.</p>
+            </section>
+            <section class="content-block">
+              <div class="block-head"><h3>최근 기록</h3></div>
+              <div class="mobile-group-list">
+                <div class="mobile-subject-card" data-mobile-view="journal-draft">
+                  <span class="mobile-subject-title"><strong>오늘 14:20</strong><span>휴식 뒤 활동 재참여</span></span>
+                  <span class="mobile-action-label">확인</span>
+                </div>
+                <div class="mobile-subject-card" data-mobile-view="journal-write">
+                  <span class="mobile-subject-title"><strong>어제 17:20</strong><span>활동 전 안내가 도움이 됨</span></span>
+                  <span class="mobile-action-label">보기</span>
+                </div>
+                <div class="mobile-subject-card" data-mobile-view="report-write">
+                  <span class="mobile-subject-title"><strong>이번 주 요약</strong><span>주간 리포트 준비 중</span></span>
+                  <span class="mobile-action-label">보기</span>
+                </div>
+              </div>
+            </section>
+          `,
+        },
+        "journal-write": {
+          tab: "journal",
+          eyebrow: "기록",
+          title: "기록 상세",
+          date: "어제 17:20",
+          content: `
+            <section class="mobile-parent-summary">
+              <span class="mobile-kicker">어제 기록</span>
+              <strong>활동이 바뀔 때 한 번 더 안내를 받으면 참여가 이어졌어요.</strong>
+              <p>가정에서는 시작 전 순서를 짧게 알려주면 도움이 될 수 있습니다.</p>
+            </section>
+            <section class="content-block">
+              <div class="block-head"><h3>발달 영역</h3></div>
+              <div class="mobile-form-card">
+                <div class="mobile-preview-card"><h4>신체·운동 발달</h4><p>작은 물건을 집어 옮기는 활동에 짧게 참여했습니다.</p></div>
+                <div class="mobile-preview-card"><h4>인지 발달</h4><p>순서 안내를 보고 다음 활동으로 넘어갔습니다.</p></div>
+                <div class="mobile-preview-card"><h4>언어·의사소통 발달</h4><p>짧은 말과 손짓으로 원하는 활동을 표현했습니다.</p></div>
+                <div class="mobile-preview-card"><h4>사회·정서 발달</h4><p>휴식 뒤 감정이 안정되며 다시 참여했습니다.</p></div>
+              </div>
+            </section>
+            <div class="mobile-action-row single">
+              <button class="mobile-secondary-action" type="button" data-mobile-view="journal">목록으로</button>
+            </div>
+          `,
+        },
+        "journal-draft": {
+          tab: "journal",
+          eyebrow: "기록",
+          title: "확인할 기록",
+          date: "오늘 14:20",
+          content: `
+            <section class="mobile-parent-summary">
+              <span class="mobile-kicker">보호자 확인 대기</span>
+              <strong>오후 활동 중 쉬는 시간이 필요했고, 이후 다시 참여했습니다.</strong>
+              <p>확인하면 이번 주 리포트에 반영됩니다.</p>
+            </section>
+            <section class="content-block">
+              <div class="block-head"><h3>확인 내용</h3></div>
+              <div class="mobile-form-card">
+                <div class="mobile-check-list">
+                  <div class="mobile-check-row"><span>기록 시간</span><strong>오늘 14:20</strong></div>
+                  <div class="mobile-check-row"><span>상태</span><strong>확인 대기</strong></div>
+                  <div class="mobile-check-row"><span>리포트 반영</span><strong>확인 후 가능</strong></div>
+                </div>
+              </div>
+            </section>
+            <div class="mobile-action-row">
+              <button class="mobile-secondary-action" type="button" data-mobile-view="journal">나중에</button>
+              <button class="mobile-primary-action" type="button" data-mobile-view="journal">확인 완료</button>
+            </div>
+          `,
+        },
+        report: {
+          tab: "report",
+          eyebrow: "리포트",
+          title: "리포트",
+          date: "이번 주",
+          content: `
+            <section class="mobile-parent-summary">
+              <span class="mobile-kicker">5월 2주차</span>
+              <strong>이번 주는 안내 후 참여가 이어진 기록이 반복되었습니다.</strong>
+              <p>확인할 기록 1건을 마치면 리포트가 공유됩니다.</p>
+            </section>
+            <section class="content-block">
+              <div class="block-head"><h3>리포트 목록</h3></div>
+              <div class="mobile-group-list">
+                <div class="mobile-subject-card" data-mobile-view="report-write">
+                  <span class="mobile-subject-title"><strong>5월 2주차 리포트</strong><span>기록 5건 · 확인 필요 1건</span></span>
+                  <span class="mobile-action-label">미리보기</span>
+                </div>
+                <div class="mobile-subject-card" data-mobile-view="report-result">
+                  <span class="mobile-subject-title"><strong>5월 1주차 리포트</strong><span>저장 완료</span></span>
+                  <span class="mobile-action-label">보기</span>
+                </div>
+              </div>
+            </section>
+          `,
+        },
+        "report-write": {
+          tab: "report",
+          eyebrow: "리포트",
+          title: "리포트 미리보기",
+          date: "5월 2주차",
+          content: `
+            <section class="mobile-parent-summary">
+              <span class="mobile-kicker">김도윤 · 2026년 5월 2주차</span>
+              <strong>활동 전 안내와 짧은 휴식이 참여를 이어가는 데 도움이 됐어요.</strong>
+              <p>아래 내용은 보호자 확인용 요약입니다.</p>
+            </section>
+            <section class="content-block">
+              <div class="block-head"><h3>주간 요약</h3></div>
+              <div class="mobile-form-card">
+                <div class="mobile-report-meta">
+                  <div><span>기록</span><strong>5건</strong></div>
+                  <div><span>확인</span><strong>1건 대기</strong></div>
+                </div>
+                <div class="mobile-preview-card">
+                  <h4>핵심 변화</h4>
+                  <p>활동이 바뀔 때 짧게 안내하면 다시 참여하는 흐름이 반복되었습니다.</p>
+                </div>
+                <div class="mobile-preview-card">
+                  <h4>발달 영역별 보기</h4>
+                  <p>신체·운동 발달, 인지 발달, 언어·의사소통 발달, 사회·정서 발달 기록을 묶어 다음 지원 포인트를 확인합니다.</p>
+                </div>
+              </div>
+            </section>
+            <div class="mobile-action-row">
+              <button class="mobile-secondary-action" type="button" data-mobile-view="report">목록으로</button>
+              <button class="mobile-primary-action" type="button" data-mobile-view="report-result">리포트 확인</button>
+            </div>
+          `,
+        },
+        "report-result": {
+          tab: "report",
+          eyebrow: "리포트",
+          title: "리포트 확인",
+          date: "공유 완료",
+          content: `
+            <section class="mobile-parent-summary">
+              <span class="mobile-kicker">5월 2주차 리포트</span>
+              <strong>이번 주 지원 포인트는 활동 전 안내와 휴식 뒤 재참여입니다.</strong>
+              <p>가정에서도 짧은 순서 안내를 먼저 보여주는 방식이 도움이 될 수 있습니다.</p>
+            </section>
+            <section class="content-block">
+              <div class="block-head"><h3>발달 영역별 기록</h3></div>
+              <div class="mobile-form-card">
+                <div class="mobile-preview-card"><h4>신체·운동 발달</h4><p>손 조작과 이동 활동은 짧은 휴식 뒤 다시 이어졌습니다.</p></div>
+                <div class="mobile-preview-card"><h4>인지 발달</h4><p>순서표를 보면 다음 활동을 더 쉽게 기억했습니다.</p></div>
+                <div class="mobile-preview-card"><h4>언어·의사소통 발달</h4><p>말과 손짓으로 원하는 활동을 표현했습니다.</p></div>
+                <div class="mobile-preview-card"><h4>사회·정서 발달</h4><p>감정이 올라온 뒤 쉬고 다시 참여하는 흐름이 보였습니다.</p></div>
+              </div>
+            </section>
+            <section class="content-block">
+              <div class="block-head"><h3>다음에 보면 좋은 것</h3></div>
+              <div class="mobile-preview-card">
+                <h4>가정 연계</h4>
+                <p>활동을 시작하기 전에 그림이나 순서를 먼저 보여주고, 쉬는 시간이 끝난 뒤 다시 참여하기까지 걸리는 시간을 함께 봅니다.</p>
+              </div>
+            </section>
+            <div class="mobile-action-row">
+              <button class="mobile-secondary-action" type="button" data-mobile-view="report">목록으로</button>
+              <button class="mobile-primary-action" type="button" data-mobile-view="profile-edit">가정 메모 남기기</button>
+            </div>
+          `,
+        },
+        billing: {
+          tab: "settings",
+          eyebrow: "설정",
+          title: "서비스 정보",
+          date: "보호자",
+          content: `
+            <section class="content-block">
+              <div class="block-head"><h3>공유 범위</h3></div>
+              <div class="mobile-form-card">
+                <div class="mobile-check-list">
+                  <div class="mobile-check-row"><span>오늘 기록</span><strong>보기 가능</strong></div>
+                  <div class="mobile-check-row"><span>주간 리포트</span><strong>보기 가능</strong></div>
+                  <div class="mobile-check-row"><span>가정 메모</span><strong>남기기 가능</strong></div>
+                </div>
+              </div>
+            </section>
+            <div class="mobile-action-row single">
+              <button class="mobile-secondary-action" type="button" data-mobile-view="settings">설정으로</button>
+            </div>
+          `,
+        },
+        settings: {
+          tab: "settings",
+          eyebrow: "설정",
+          title: "내 설정",
+          date: "보호자",
+          content: `
+            <section class="content-block">
+              <div class="block-head"><h3>계정</h3></div>
+              <div class="mobile-group-list">
+                <div class="mobile-subject-card">
+                  <span class="mobile-subject-title"><strong>김도윤 보호자</strong><span>hyunsik@care-it.kr</span></span>
+                  <span class="mobile-action-label">확인</span>
+                </div>
+              </div>
+            </section>
+            <section class="content-block">
+              <div class="block-head"><h3>알림</h3></div>
+              <div class="mobile-group-list">
+                <div class="mobile-subject-card">
+                  <span class="mobile-subject-title"><strong>오늘 기록 알림</strong><span>새 기록이 올라오면 알려줍니다.</span></span>
+                  <span class="mobile-action-label">켜짐</span>
+                </div>
+                <div class="mobile-subject-card" data-mobile-view="billing">
+                  <span class="mobile-subject-title"><strong>공유 범위</strong><span>기록과 리포트 보기 권한</span></span>
+                  <span class="mobile-action-label">보기</span>
+                </div>
+              </div>
+            </section>
+          `,
+        },
+      };
+
+      Object.assign(mobileViews, mobileParentViews);
 
       const activateMobileTab = (targetTab) => {
         const view = mobileViews[targetTab];

@@ -15,6 +15,9 @@ for (const removedName of ["정하민", "오시우", "한유진", "서지호", "
   assert.doesNotMatch(profileDataBlock, new RegExp(removedName), `${removedName} should not remain in default profileData`);
 }
 
-assert.match(html, /대상자 5명 기준/, "mobile home summary should use five current subjects");
+const mobileSection = html.match(/<section class="mobile-section">[\s\S]*?<section class="desktop-section">/)?.[0] || "";
+
+assert.match(mobileSection, /보호자 공유/, "mobile home should now be a guardian-facing single-child summary");
+assert.match(mobileSection, /김도윤 · 정민아 활동지원사/, "mobile home should focus on the selected child instead of the full subject roster");
 assert.match(html, /5명 중 2명 완료/, "desktop completion metric should use five current subjects");
 assert.doesNotMatch(html, /전체 15명 중 1명 선택/, "subject picker initial copy should not mention 15 current subjects");
