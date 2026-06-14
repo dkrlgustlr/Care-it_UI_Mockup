@@ -57,6 +57,13 @@ assert.match(html, /setJournalSubject\(selectedProfileIndex\)/, "saving a subjec
 assert.match(html, /data-static-calendar/, "static report archive calendar should be selectable");
 assert.match(html, /closest\("\.mobile-chip"\)/, "mobile chips should be handled by event delegation");
 assert.match(html, /toggleMobileChip/, "mobile chip selection helper should exist");
+assert.match(html, /data-mobile-report-mode="weekly"[\s\S]*주간 리포트/, "mobile report writing should expose a weekly report mode button");
+assert.match(html, /data-mobile-report-mode="monthly"[\s\S]*월간 리포트/, "mobile report writing should expose a monthly report mode button");
+assert.match(html, /renderMobileReportState/, "mobile report mode selection should update the mobile report preview state");
+assert.match(html, /event\.target\.closest\("\[data-mobile-report-mode\]"\)/, "mobile report mode buttons should be handled by event delegation");
+assert.match(html, /data-mobile-report-period/, "mobile report mode selection should update the selected period");
+assert.match(html, /data-mobile-report-title/, "mobile report mode selection should update the preview title");
+assert.match(html, /data-mobile-report-summary-heading/, "mobile report mode selection should update weekly/monthly summary labels");
 assert.match(html, /\.archive-actions button/, "archive restore/delete buttons should be handled");
 
 const mobileViewKeys = new Set(
@@ -88,6 +95,7 @@ while ((match = buttonPattern.exec(html))) {
   const text = match[2].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
   const wired =
     /data-(go-page|mobile-view|mobile-tab|mobile-open-tab|report-mode|calendar|month-picker|picker|subject-picker|open-profile-edit|close-profile-edit|desktop-fullscreen|mock-action)/.test(attrs) ||
+    /data-mobile-report-mode/.test(attrs) ||
     /data-save-profile/.test(attrs) ||
     /class="[^"]*(choice-chip|mobile-chip|nav-item|report-kind-button|calendar-day)/.test(attrs) ||
     ["복원", "삭제"].includes(text);
