@@ -34,7 +34,9 @@ assert.match(mobileSection, />보호자 공유</, "mobile home eyebrow should sp
 assert.match(mobileSection, /mobile-parent-summary/, "mobile home should lead with one concise parent summary");
 assert.match(mobileSection, /김도윤 오늘 요약/, "mobile summary should use a short subject label");
 assert.match(mobileSection, /점심 완식 · 휴식 후 재참여/, "mobile summary should expose a short concrete daily status");
-assert.match(mobileSection, />확인할 기록 1건</, "mobile summary metadata should be brief");
+assert.doesNotMatch(mobileSection, />확인할 기록 1건</, "mobile summary should not show extra helper metadata");
+assert.doesNotMatch(mobileSection, /활동 보통 · 수면 보통/, "mobile status card should not show extra helper detail text");
+assert.doesNotMatch(mobileSection, /리포트는 준비 중/, "mobile weekly card should not show extra helper detail text");
 assert.doesNotMatch(mobileSection, /점심은 완식했고/, "mobile summary should not use a long sentence");
 assert.match(mobileSection, /data-mobile-tab="journal"[\s\S]*<span>기록<\/span>/, "journal tab should be labeled as parent-friendly records");
 
