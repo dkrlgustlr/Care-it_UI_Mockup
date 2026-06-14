@@ -7,6 +7,12 @@ const mobileViewsBlock = html.match(/const mobileParentViews = \{[\s\S]*?\n     
 const mobileSurface = `${mobileSection}\n${mobileViewsBlock}`;
 const settingsContent =
   mobileViewsBlock.match(/settings:\s*\{[\s\S]*?title: "내 설정"[\s\S]*?content:\s*`([\s\S]*?)`\s*,\s*\},/)?.[1] || "";
+const journalWriteContent =
+  mobileViewsBlock.match(/"journal-write":\s*\{[\s\S]*?title: "일지 작성"[\s\S]*?content:\s*`([\s\S]*?)`\s*,\s*\},/)?.[1] || "";
+const journalDraftContent =
+  mobileViewsBlock.match(/"journal-draft":\s*\{[\s\S]*?title: "정리된 일지 확인"[\s\S]*?content:\s*`([\s\S]*?)`\s*,\s*\},/)?.[1] || "";
+const reportWriteContent =
+  mobileViewsBlock.match(/"report-write":\s*\{[\s\S]*?title: "리포트 작성"[\s\S]*?content:\s*`([\s\S]*?)`\s*,\s*\},/)?.[1] || "";
 const parentSummaryStyles = [...html.matchAll(/\.mobile-parent-summary[^{]*\{[^}]*\}/g)]
   .map((match) => match[0])
   .join("\n");
@@ -29,6 +35,9 @@ const createActionStyles = css.match(/\.mobile-create-card \.mobile-action-label
 assert.ok(mobileSection, "mobile mockup section should be present");
 assert.ok(mobileViewsBlock, "mobile parent view map should be present");
 assert.ok(settingsContent, "mobile settings view should be present");
+assert.ok(journalWriteContent, "mobile journal write flow should be present");
+assert.ok(journalDraftContent, "mobile journal draft review flow should be present");
+assert.ok(reportWriteContent, "mobile report write flow should be present");
 assert.match(css, /--mobile-title-size:\s*22px;/, "mobile title font size token should be 22px");
 assert.match(css, /--mobile-subtitle-size:\s*15px;/, "mobile subtitle font size token should be 15px");
 assert.match(css, /--mobile-content-size:\s*13px;/, "mobile content font size token should be 13px");
@@ -92,18 +101,15 @@ const homeQuickCardCount = (mobileSection.match(/class="quick-card"/g) || []).le
 assert.ok(homeQuickCardCount <= 2, `mobile home should keep quick metrics concise, found ${homeQuickCardCount}`);
 
 assert.doesNotMatch(mobileSection, /<button class="primary-action"[^>]*data-mobile-view="journal-write"/, "mobile home should not show a large write CTA");
-assert.match(mobileViewsBlock, /class="mobile-subject-card mobile-create-card"[^>]*data-mobile-view="journal-create"[\s\S]*<span class="mobile-create-symbol" aria-hidden="true">\+<\/span>[\s\S]*<span class="mobile-action-label">\uC2DC\uC791<\/span>/, "mobile journal writing entry should stand out as a primary create action");
-assert.match(mobileViewsBlock, /class="mobile-subject-card mobile-create-card"[^>]*data-mobile-view="report-create"[\s\S]*<span class="mobile-create-symbol" aria-hidden="true">\+<\/span>[\s\S]*<span class="mobile-action-label">\uC2DC\uC791<\/span>/, "mobile report writing entry should stand out as a primary create action");
+assert.match(mobileViewsBlock, /class="mobile-subject-card mobile-create-card"[^>]*data-mobile-view="journal-write"[\s\S]*<span class="mobile-create-symbol" aria-hidden="true">\+<\/span>[\s\S]*<span class="mobile-action-label">\uC2DC\uC791<\/span>/, "mobile journal writing entry should open the same write flow as PC");
+assert.match(mobileViewsBlock, /class="mobile-subject-card mobile-create-card"[^>]*data-mobile-view="report-write"[\s\S]*<span class="mobile-create-symbol" aria-hidden="true">\+<\/span>[\s\S]*<span class="mobile-action-label">\uC2DC\uC791<\/span>/, "mobile report writing entry should open the same report flow as PC");
+assert.doesNotMatch(mobileViewsBlock, /data-mobile-view="journal-create"|data-mobile-view="report-create"/, "mobile write entry cards should not route to simplified create-only flows");
 assert.doesNotMatch(mobileSection, /<button class="mobile-text-action"[^>]*>관리<\/button>/, "mobile home should not expose management actions");
 
 const adminCopy = [
   "대상자 관리",
   "프로필 수정",
   "새 일지 작성",
-  "정리된 일지 확인",
-  "임시 보관",
-  "다시 수정",
-  "내용 수정",
 ];
 
 for (const label of adminCopy) {
@@ -115,11 +121,12 @@ for (const label of ["신체·운동 발달", "인지 발달", "언어·의사�
 }
 
 assert.match(mobileViewsBlock, /title: "기록 모아보기"/, "mobile records tab should be a read-only record collection");
-assert.match(mobileViewsBlock, /data-mobile-view="journal-create"[\s\S]*<strong>일지 작성<\/strong>/, "mobile records tab should include a journal writing entry point");
-assert.match(mobileViewsBlock, /"journal-create":\s*\{[\s\S]*?title: "일지 작성"/, "mobile should include a journal writing view");
-assert.match(mobileViewsBlock, /title: "리포트 미리보기"/, "mobile report preview should be read-only");
-assert.match(mobileViewsBlock, /data-mobile-view="report-create"[\s\S]*<strong>리포트 작성<\/strong>/, "mobile reports tab should include a report writing entry point");
-assert.match(mobileViewsBlock, /"report-create":\s*\{[\s\S]*?title: "리포트 작성"/, "mobile should include a report writing view");
+assert.match(mobileViewsBlock, /data-mobile-view="journal-write"[\s\S]*<strong>일지 작성<\/strong>/, "mobile records tab should include a journal writing entry point");
+assert.match(mobileViewsBlock, /"journal-write":\s*\{[\s\S]*?title: "일지 작성"/, "mobile should include a journal writing view");
+assert.match(mobileViewsBlock, /title: "리포트 작성"/, "mobile report writing should use the same page title as PC");
+assert.match(mobileViewsBlock, /data-mobile-view="report-write"[\s\S]*<strong>리포트 작성<\/strong>/, "mobile reports tab should include a report writing entry point");
+assert.match(mobileViewsBlock, /"report-write":\s*\{[\s\S]*?title: "리포트 작성"/, "mobile should include a report writing view");
+assert.doesNotMatch(mobileViewsBlock, /"journal-create":\s*\{|"report-create":\s*\{/, "mobile should not keep separate simplified write flows");
 assert.match(mobileViewsBlock, /title: "리포트 확인"/, "mobile report result should be readable by parents");
 assert.match(mobileViewsBlock, /title: "가정 메모"/, "mobile parent flow should allow a simple home note instead of profile editing");
 assert.match(mobileViewsBlock, />가정 메모 남기기</, "mobile parent flow should provide a parent-friendly note action");
@@ -128,3 +135,15 @@ assert.doesNotMatch(settingsContent, /mobile-form-card|mobile-check-row/, "mobil
 assert.match(settingsContent, /<div class="mobile-group-list">[\s\S]*?<div class="mobile-setting-card">[\s\S]*<strong>보호자<\/strong>[\s\S]*<span>김도윤 보호자<\/span>/, "mobile settings account should use the standard list-card treatment");
 assert.match(settingsContent, /<div class="mobile-group-list">[\s\S]*?<div class="mobile-setting-card">[\s\S]*<strong>오늘 기록 알림<\/strong>[\s\S]*<span>켜짐<\/span>/, "mobile settings notifications should use the standard list-card treatment");
 assert.match(settingsContent, /<div class="mobile-group-list">[\s\S]*?<div class="mobile-setting-card" data-mobile-view="billing">[\s\S]*<strong>공유 범위<\/strong>[\s\S]*<span>기록과 리포트 보기 권한<\/span>[\s\S]*<span class="mobile-action-label">보기<\/span>/, "mobile settings sharing should match the same list-card treatment");
+
+for (const required of ["작성 대상", "1. 빠른 체크", "식사", "오늘 상태", "2. 오늘 기록 직접 입력", "임시 보관", "정리된 일지 확인"]) {
+  assert.match(journalWriteContent, new RegExp(required), `mobile journal writing should match the PC step: ${required}`);
+}
+
+for (const required of ["내가 입력한 내용", "선택한 내용", "정리된 일지", "다시 수정", "일지 저장"]) {
+  assert.match(journalDraftContent, new RegExp(required), `mobile journal review should match the PC step: ${required}`);
+}
+
+for (const required of ["리포트 작성 대상", "리포트 종류", "주간 리포트", "월간 리포트", "리포트 미리보기", "내용 수정", "리포트 작성"]) {
+  assert.match(reportWriteContent, new RegExp(required), `mobile report writing should match the PC step: ${required}`);
+}
