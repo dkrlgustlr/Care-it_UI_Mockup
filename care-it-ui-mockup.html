@@ -590,6 +590,30 @@
         transform: translateY(-1px);
       }
 
+      .mobile-setting-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        min-height: 64px;
+        padding: 14px 16px;
+        color: var(--care-text);
+        text-align: left;
+        font-family: inherit;
+      }
+
+      .mobile-setting-card[data-mobile-view] {
+        cursor: pointer;
+        transition:
+          background-color var(--motion-base) var(--motion-ease),
+          transform var(--motion-fast) var(--motion-ease);
+      }
+
+      .mobile-setting-card[data-mobile-view]:hover {
+        background: #eef3f5;
+        transform: translateY(-1px);
+      }
+
       .mobile-create-card {
         grid-template-columns: 32px minmax(0, 1fr) auto;
         gap: var(--space-3);
@@ -7027,24 +7051,24 @@
           content: `
             <section class="content-block">
               <div class="block-head"><h3>계정</h3></div>
-              <div class="mobile-form-card">
-                <div class="mobile-check-list">
-                  <div class="mobile-check-row"><span>보호자</span><strong>김도윤 보호자</strong></div>
+              <div class="mobile-group-list">
+                <div class="mobile-setting-card">
+                  <span class="mobile-subject-title"><strong>보호자</strong><span>김도윤 보호자</span></span>
                 </div>
               </div>
             </section>
             <section class="content-block">
               <div class="block-head"><h3>알림</h3></div>
-              <div class="mobile-form-card">
-                <div class="mobile-check-list">
-                  <div class="mobile-check-row"><span>오늘 기록 알림</span><strong>켜짐</strong></div>
+              <div class="mobile-group-list">
+                <div class="mobile-setting-card">
+                  <span class="mobile-subject-title"><strong>오늘 기록 알림</strong><span>켜짐</span></span>
                 </div>
               </div>
             </section>
             <section class="content-block">
               <div class="block-head"><h3>공유</h3></div>
               <div class="mobile-group-list">
-                <div class="mobile-subject-card" data-mobile-view="billing">
+                <div class="mobile-setting-card" data-mobile-view="billing">
                   <span class="mobile-subject-title"><strong>공유 범위</strong><span>기록과 리포트 보기 권한</span></span>
                   <span class="mobile-action-label">보기</span>
                 </div>

@@ -5,6 +5,8 @@ const html = readFileSync("care-it-ui-mockup.html", "utf8");
 const mobileSection = html.match(/<section class="mobile-section">[\s\S]*?<section class="desktop-section">/)?.[0] || "";
 const mobileViewsBlock = html.match(/const mobileParentViews = \{[\s\S]*?\n      \};/)?.[0] || "";
 const mobileSurface = `${mobileSection}\n${mobileViewsBlock}`;
+const settingsContent =
+  mobileViewsBlock.match(/settings:\s*\{[\s\S]*?title: "내 설정"[\s\S]*?content:\s*`([\s\S]*?)`\s*,\s*\},/)?.[1] || "";
 const parentSummaryStyles = [...html.matchAll(/\.mobile-parent-summary[^{]*\{[^}]*\}/g)]
   .map((match) => match[0])
   .join("\n");
@@ -26,6 +28,7 @@ const createActionStyles = css.match(/\.mobile-create-card \.mobile-action-label
 
 assert.ok(mobileSection, "mobile mockup section should be present");
 assert.ok(mobileViewsBlock, "mobile parent view map should be present");
+assert.ok(settingsContent, "mobile settings view should be present");
 assert.match(css, /--mobile-title-size:\s*22px;/, "mobile title font size token should be 22px");
 assert.match(css, /--mobile-subtitle-size:\s*15px;/, "mobile subtitle font size token should be 15px");
 assert.match(css, /--mobile-content-size:\s*13px;/, "mobile content font size token should be 13px");
@@ -120,3 +123,8 @@ assert.match(mobileViewsBlock, /"report-create":\s*\{[\s\S]*?title: "리포트 �
 assert.match(mobileViewsBlock, /title: "리포트 확인"/, "mobile report result should be readable by parents");
 assert.match(mobileViewsBlock, /title: "가정 메모"/, "mobile parent flow should allow a simple home note instead of profile editing");
 assert.match(mobileViewsBlock, />가정 메모 남기기</, "mobile parent flow should provide a parent-friendly note action");
+
+assert.doesNotMatch(settingsContent, /mobile-form-card|mobile-check-row/, "mobile settings should not use the nested form/check-row card treatment");
+assert.match(settingsContent, /<div class="mobile-group-list">[\s\S]*?<div class="mobile-setting-card">[\s\S]*<strong>보호자<\/strong>[\s\S]*<span>김도윤 보호자<\/span>/, "mobile settings account should use the standard list-card treatment");
+assert.match(settingsContent, /<div class="mobile-group-list">[\s\S]*?<div class="mobile-setting-card">[\s\S]*<strong>오늘 기록 알림<\/strong>[\s\S]*<span>켜짐<\/span>/, "mobile settings notifications should use the standard list-card treatment");
+assert.match(settingsContent, /<div class="mobile-group-list">[\s\S]*?<div class="mobile-setting-card" data-mobile-view="billing">[\s\S]*<strong>공유 범위<\/strong>[\s\S]*<span>기록과 리포트 보기 권한<\/span>[\s\S]*<span class="mobile-action-label">보기<\/span>/, "mobile settings sharing should match the same list-card treatment");
