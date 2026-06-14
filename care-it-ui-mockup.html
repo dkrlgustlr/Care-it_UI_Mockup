@@ -53,6 +53,22 @@
         --space-7: 32px;
         --space-8: 40px;
         --space-9: 48px;
+        --mobile-screen-gutter: 18px;
+        --mobile-frame-padding: 20px;
+        --mobile-page-top: 22px;
+        --mobile-header-gap: 18px;
+        --mobile-section-gap: var(--space-5);
+        --mobile-block-gap: var(--space-3);
+        --mobile-card-padding: var(--space-4);
+        --mobile-card-padding-compact: 14px;
+        --mobile-list-row-y: 14px;
+        --mobile-list-row-x: var(--space-4);
+        --mobile-row-gap: var(--space-3);
+        --mobile-chip-gap: 6px;
+        --mobile-control-padding-y: 10px;
+        --mobile-control-padding-x: var(--space-3);
+        --mobile-tab-padding-y: var(--space-3);
+        --mobile-tab-padding-bottom: var(--space-4);
 
         /* Motion */
         --motion-fast: 150ms;
@@ -206,7 +222,7 @@
       .mobile-frame {
         width: 390px;
         height: 844px;
-        padding: 20px 18px 18px;
+        padding: var(--mobile-frame-padding) var(--mobile-screen-gutter) var(--mobile-screen-gutter);
         border-radius: 38px;
         background: linear-gradient(180deg, #ffffff 0%, #f7fafb 100%);
         box-shadow: var(--shadow-soft);
@@ -225,7 +241,7 @@
         flex-direction: column;
         height: 100%;
         min-height: 0;
-        padding: 22px 18px 0;
+        padding: var(--mobile-page-top) var(--mobile-screen-gutter) 0;
       }
 
       .mobile-topbar {
@@ -233,7 +249,7 @@
         align-items: center;
         justify-content: space-between;
         min-height: 36px;
-        margin-bottom: 18px;
+        margin-bottom: var(--mobile-header-gap);
       }
 
       .mobile-brand {
@@ -288,8 +304,8 @@
         display: flex;
         align-items: flex-end;
         justify-content: space-between;
-        gap: var(--space-3);
-        margin-bottom: var(--space-5);
+        gap: var(--mobile-block-gap);
+        margin-bottom: var(--mobile-section-gap);
       }
 
       .mobile-date {
@@ -301,13 +317,13 @@
 
       .mobile-content {
         display: grid;
-        gap: var(--space-5);
+        gap: var(--mobile-section-gap);
         align-content: start;
         flex: 1;
         min-height: 0;
         overflow-y: auto;
         overscroll-behavior: contain;
-        padding-bottom: var(--space-5);
+        padding-bottom: var(--mobile-section-gap);
         scrollbar-width: none;
         -ms-overflow-style: none;
       }
@@ -319,12 +335,12 @@
       .primary-action {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: var(--mobile-row-gap);
         width: 100%;
         height: 56px;
         min-height: 56px;
         margin: 0;
-        padding: 10px 14px;
+        padding: var(--mobile-control-padding-y) var(--mobile-card-padding-compact);
         border: 0;
         border-radius: var(--radius-sm);
         background: var(--care-primary);
@@ -391,7 +407,7 @@
 
       .quick-card {
         min-height: 78px;
-        padding: 14px;
+        padding: var(--mobile-card-padding-compact);
         border-radius: var(--radius-md);
         background: var(--care-surface-raised);
         box-shadow: var(--shadow-hairline);
@@ -431,7 +447,7 @@
         align-content: center;
         gap: var(--space-1);
         min-height: 78px;
-        padding: 14px;
+        padding: var(--mobile-card-padding-compact);
         border: 0;
         border-radius: var(--radius-md);
         background: var(--care-surface-raised);
@@ -465,7 +481,7 @@
       .mobile-parent-summary {
         display: grid;
         gap: var(--space-2);
-        padding: var(--space-4);
+        padding: var(--mobile-card-padding);
         border-radius: var(--radius-md);
         background: var(--care-surface-raised);
         box-shadow: var(--shadow-hairline);
@@ -568,10 +584,10 @@
       .mobile-activity-item {
         display: grid;
         grid-template-columns: 1fr auto;
-        gap: 12px;
+        gap: var(--mobile-row-gap);
         align-items: center;
         min-height: 64px;
-        padding: 14px 16px;
+        padding: var(--mobile-list-row-y) var(--mobile-list-row-x);
         border-radius: var(--radius-md);
         background: var(--care-surface-raised);
         box-shadow: var(--shadow-hairline);
@@ -593,10 +609,10 @@
       .mobile-setting-card {
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;
-        gap: 12px;
+        gap: var(--mobile-row-gap);
         align-items: center;
         min-height: 64px;
-        padding: 14px 16px;
+        padding: var(--mobile-list-row-y) var(--mobile-list-row-x);
         color: var(--care-text);
         text-align: left;
         font-family: inherit;
@@ -730,8 +746,8 @@
 
       .mobile-form-card {
         display: grid;
-        gap: var(--space-3);
-        padding: 14px;
+        gap: var(--mobile-block-gap);
+        padding: var(--mobile-card-padding);
         border-radius: var(--radius-md);
         background: var(--care-surface-raised);
         box-shadow: var(--shadow-hairline);
@@ -763,7 +779,7 @@
       .mobile-chip-row {
         display: flex;
         flex-wrap: wrap;
-        gap: var(--space-2);
+        gap: var(--mobile-chip-gap);
       }
 
       .mobile-chip {
@@ -830,7 +846,7 @@
       .mobile-preview-card {
         display: grid;
         gap: var(--space-2);
-        padding: 14px;
+        padding: var(--mobile-card-padding);
         border-radius: var(--radius-md);
         background: #f4f7f8;
       }
@@ -883,7 +899,7 @@
         grid-template-columns: 50px minmax(0, 1fr);
         gap: var(--space-2);
         align-items: center;
-        padding: 10px 12px;
+        padding: var(--mobile-control-padding-y) var(--mobile-control-padding-x);
         border-radius: var(--radius-md);
         background: #f8fafb;
       }
@@ -891,7 +907,7 @@
       .mobile-quick-row.meal-row .mobile-chip-row {
         flex-wrap: nowrap;
         justify-content: flex-end;
-        gap: 6px;
+        gap: var(--mobile-chip-gap);
         min-width: 0;
       }
 
@@ -905,7 +921,7 @@
       .mobile-quick-row:not(.meal-row) .mobile-chip-row {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 6px;
+        gap: var(--mobile-chip-gap);
       }
 
       .mobile-quick-row:not(.meal-row) {
@@ -1157,9 +1173,9 @@
       .bottom-tabs {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 6px;
-        margin: auto -18px 0;
-        padding: 12px 18px 16px;
+        gap: var(--mobile-chip-gap);
+        margin: auto calc(var(--mobile-screen-gutter) * -1) 0;
+        padding: var(--mobile-tab-padding-y) var(--mobile-screen-gutter) var(--mobile-tab-padding-bottom);
         border-radius: 0 0 28px 28px;
         background: #ffffff;
         box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.055);

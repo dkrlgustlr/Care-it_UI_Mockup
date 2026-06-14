@@ -17,13 +17,28 @@ const parentSummaryStyles = [...html.matchAll(/\.mobile-parent-summary[^{]*\{[^}
   .map((match) => match[0])
   .join("\n");
 const css = html.match(/<style>([\s\S]*?)<\/style>/)?.[1] || "";
+const rootStyles = css.match(/:root\s*\{[\s\S]*?\n\s*\}/)?.[0] || "";
 const mobileCss = css.match(/\.mobile-frame[\s\S]*?\.dashboard-frame/)?.[0] || "";
+const mobileFrameStyles = css.match(/\.mobile-frame\s*\{[^}]*\}/)?.[0] || "";
 const mobileScreenStyles = css.match(/\.mobile-screen\s*\{[^}]*\}/)?.[0] || "";
+const mobilePageStyles = css.match(/\.mobile-page\s*\{[^}]*\}/)?.[0] || "";
+const mobileTopbarStyles = css.match(/\.mobile-topbar\s*\{[^}]*\}/)?.[0] || "";
+const mobileTitleRowStyles = css.match(/\.mobile-title-row\s*\{[^}]*\}/)?.[0] || "";
+const mobileContentStyles = css.match(/\.mobile-content\s*\{[^}]*\}/)?.[0] || "";
+const primaryActionStyles = css.match(/\.primary-action\s*\{[^}]*\}/)?.[0] || "";
+const quickCardStyles = css.match(/\.quick-card\s*\{[^}]*\}/)?.[0] || "";
 const quickCardStrongStyles = css.match(/\.quick-card strong\s*\{[^}]*\}/)?.[0] || "";
 const manageGridStyles = css.match(/\.mobile-manage-grid\s*\{[^}]*\}/)?.[0] || "";
 const manageCardStyles = css.match(/\.mobile-manage-card\s*\{[^}]*\}/)?.[0] || "";
 const manageCardStrongStyles = css.match(/\.mobile-manage-card strong\s*\{[^}]*\}/)?.[0] || "";
 const manageCardSpanStyles = css.match(/\.mobile-manage-card span\s*\{[^}]*\}/)?.[0] || "";
+const subjectCardStyles = css.match(/\.mobile-subject-card,\s*\.mobile-activity-item\s*\{[^}]*\}/)?.[0] || "";
+const settingCardStyles = css.match(/\.mobile-setting-card\s*\{[^}]*\}/)?.[0] || "";
+const formCardStyles = css.match(/\.mobile-form-card\s*\{[^}]*\}/)?.[0] || "";
+const previewCardStyles = css.match(/\.mobile-preview-card\s*\{[^}]*\}/)?.[0] || "";
+const quickRowStyles = css.match(/\.mobile-quick-row\s*\{[^}]*\}/)?.[0] || "";
+const chipRowStyles = css.match(/\.mobile-chip-row\s*\{[^}]*\}/)?.[0] || "";
+const bottomTabsStyles = css.match(/\.bottom-tabs\s*\{[^}]*\}/)?.[0] || "";
 const createCardStyles = css.match(/\.mobile-create-card\s*\{[^}]*\}/)?.[0] || "";
 const groupCreateCardStyles = css.match(/\.mobile-group-list \.mobile-create-card\s*\{[^}]*\}/)?.[0] || "";
 const createCardHoverStyles = css.match(/\.mobile-create-card:hover\s*\{[^}]*\}/)?.[0] || "";
@@ -45,6 +60,42 @@ assert.ok(reportWriteContent, "mobile report write flow should be present");
 assert.match(css, /--mobile-title-size:\s*22px;/, "mobile title font size token should be 22px");
 assert.match(css, /--mobile-subtitle-size:\s*15px;/, "mobile subtitle font size token should be 15px");
 assert.match(css, /--mobile-content-size:\s*13px;/, "mobile content font size token should be 13px");
+for (const token of [
+  "--mobile-screen-gutter",
+  "--mobile-frame-padding",
+  "--mobile-page-top",
+  "--mobile-header-gap",
+  "--mobile-section-gap",
+  "--mobile-block-gap",
+  "--mobile-card-padding",
+  "--mobile-card-padding-compact",
+  "--mobile-list-row-y",
+  "--mobile-list-row-x",
+  "--mobile-row-gap",
+  "--mobile-chip-gap",
+  "--mobile-control-padding-y",
+  "--mobile-control-padding-x",
+  "--mobile-tab-padding-y",
+  "--mobile-tab-padding-bottom",
+]) {
+  assert.match(rootStyles, new RegExp(`${token}:`), `mobile spacing token should be defined: ${token}`);
+}
+assert.match(mobileFrameStyles, /padding:\s*var\(--mobile-frame-padding\) var\(--mobile-screen-gutter\) var\(--mobile-screen-gutter\);/, "mobile device frame should use the frame/gutter spacing tokens");
+assert.match(mobilePageStyles, /padding:\s*var\(--mobile-page-top\) var\(--mobile-screen-gutter\) 0;/, "mobile page should use page top and gutter spacing tokens");
+assert.match(mobileTopbarStyles, /margin-bottom:\s*var\(--mobile-header-gap\);/, "mobile topbar should use the header gap token");
+assert.match(mobileTitleRowStyles, /gap:\s*var\(--mobile-block-gap\);[\s\S]*margin-bottom:\s*var\(--mobile-section-gap\);/, "mobile title row should use block and section gap tokens");
+assert.match(mobileContentStyles, /gap:\s*var\(--mobile-section-gap\);[\s\S]*padding-bottom:\s*var\(--mobile-section-gap\);/, "mobile content should use the section gap token for vertical rhythm");
+assert.match(primaryActionStyles, /gap:\s*var\(--mobile-row-gap\);[\s\S]*padding:\s*var\(--mobile-control-padding-y\) var\(--mobile-card-padding-compact\);/, "mobile primary actions should use row and control spacing tokens");
+assert.match(quickCardStyles, /padding:\s*var\(--mobile-card-padding-compact\);/, "mobile quick cards should use the compact card padding token");
+assert.match(manageCardStyles, /gap:\s*var\(--space-1\);[\s\S]*padding:\s*var\(--mobile-card-padding-compact\);/, "mobile management cards should use the compact card padding token");
+assert.match(parentSummaryStyles, /padding:\s*var\(--mobile-card-padding\);/, "mobile summary cards should use the standard card padding token");
+assert.match(subjectCardStyles, /gap:\s*var\(--mobile-row-gap\);[\s\S]*padding:\s*var\(--mobile-list-row-y\) var\(--mobile-list-row-x\);/, "mobile list rows should use row gap and list row padding tokens");
+assert.match(settingCardStyles, /gap:\s*var\(--mobile-row-gap\);[\s\S]*padding:\s*var\(--mobile-list-row-y\) var\(--mobile-list-row-x\);/, "mobile setting rows should use the same row spacing tokens");
+assert.match(formCardStyles, /gap:\s*var\(--mobile-block-gap\);[\s\S]*padding:\s*var\(--mobile-card-padding\);/, "mobile form cards should use block gap and card padding tokens");
+assert.match(previewCardStyles, /gap:\s*var\(--space-2\);[\s\S]*padding:\s*var\(--mobile-card-padding\);/, "mobile preview cards should use the standard card padding token");
+assert.match(quickRowStyles, /gap:\s*var\(--space-2\);[\s\S]*padding:\s*var\(--mobile-control-padding-y\) var\(--mobile-control-padding-x\);/, "mobile quick rows should use control padding tokens");
+assert.match(chipRowStyles, /gap:\s*var\(--mobile-chip-gap\);/, "mobile chip rows should use the chip gap token");
+assert.match(bottomTabsStyles, /margin:\s*auto calc\(var\(--mobile-screen-gutter\) \* -1\) 0;[\s\S]*padding:\s*var\(--mobile-tab-padding-y\) var\(--mobile-screen-gutter\) var\(--mobile-tab-padding-bottom\);/, "mobile bottom tabs should use gutter and tab padding tokens");
 assert.match(css, /\.mobile-title\s*\{[\s\S]*?font-size:\s*var\(--mobile-title-size\)/, "mobile page title should use the title token");
 assert.match(mobileScreenStyles, /background:\s*#f4f7f8;/, "mobile dashboard background should stay subtle and lightly separated from cards");
 assert.match(css, /\.block-head h3\s*\{[\s\S]*?font-size:\s*var\(--mobile-subtitle-size\)/, "mobile section headings should use the subtitle token");
