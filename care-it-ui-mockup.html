@@ -579,6 +579,49 @@
         grid-template-columns: 54px minmax(0, 1fr);
       }
 
+      .mobile-report-card {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+          "copy status"
+          "copy action";
+        gap: var(--space-2) var(--space-3);
+        align-items: center;
+        min-height: 86px;
+      }
+
+      .mobile-report-card .mobile-activity-title {
+        grid-area: copy;
+        min-width: 0;
+        gap: 5px;
+      }
+
+      .mobile-report-card .time {
+        grid-area: status;
+        justify-self: end;
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 0 9px;
+        border-radius: 999px;
+        background: #e8f6f0;
+        color: var(--care-primary-dark);
+        font-size: var(--mobile-content-size);
+        line-height: 1;
+        font-weight: 850;
+      }
+
+      .mobile-report-card .mobile-action-label {
+        grid-area: action;
+        justify-self: end;
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: #f2f6f5;
+        color: var(--care-primary-dark);
+      }
+
       .mobile-subject-title,
       .mobile-activity-title {
         display: grid;
@@ -4366,13 +4409,13 @@
                     <h3>이번 주 리포트</h3>
                   </div>
                   <div class="mobile-group-list">
-                    <div class="mobile-activity-item" data-mobile-view="report-write">
-                      <span class="time">준비</span>
+                    <div class="mobile-activity-item mobile-report-card" data-mobile-view="report-write">
+                      <span class="time">준비 중</span>
                       <span class="mobile-activity-title">
                         <strong>5월 2주차 리포트</strong>
-                        <span>기록 5건 중 1건 확인 후 공유 가능</span>
+                        <span>기록 5건 중 1건 확인 필요</span>
                       </span>
-                      <span class="mobile-action-label">리포트 보기</span>
+                      <span class="mobile-action-label">보기</span>
                     </div>
                   </div>
                 </section>

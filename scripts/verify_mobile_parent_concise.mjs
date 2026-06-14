@@ -39,6 +39,12 @@ assert.doesNotMatch(mobileSection, /활동 보통 · 수면 보통/, "mobile sta
 assert.doesNotMatch(mobileSection, /리포트는 준비 중/, "mobile weekly card should not show extra helper detail text");
 assert.doesNotMatch(mobileSection, /점심은 완식했고/, "mobile summary should not use a long sentence");
 assert.match(mobileSection, /data-mobile-tab="journal"[\s\S]*<span>기록<\/span>/, "journal tab should be labeled as parent-friendly records");
+assert.match(mobileSection, /class="mobile-activity-item mobile-report-card"[^>]*data-mobile-view="report-write"/, "mobile weekly report should use the cleaner report card treatment");
+assert.match(mobileSection, /<span class="time">준비 중<\/span>/, "mobile weekly report status should read as a compact status badge");
+assert.match(mobileSection, /기록 5건 중 1건 확인 필요/, "mobile weekly report helper text should be shorter");
+assert.doesNotMatch(mobileSection, /리포트 보기/, "mobile weekly report action should be shortened");
+assert.match(css, /\.mobile-report-card\s*\{[\s\S]*?grid-template-areas:/, "mobile weekly report card should have an explicit compact layout");
+assert.match(css, /\.mobile-report-card \.time\s*\{[\s\S]*?border-radius:\s*999px;/, "mobile weekly report status should render as a pill");
 
 const homeQuickCardCount = (mobileSection.match(/class="quick-card"/g) || []).length;
 assert.ok(homeQuickCardCount <= 2, `mobile home should keep quick metrics concise, found ${homeQuickCardCount}`);
