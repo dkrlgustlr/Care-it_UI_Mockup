@@ -39,6 +39,9 @@
         --font-micro: 12px;
         --font-icon: 22px;
         --font-metric: 36px;
+        --mobile-title-size: 22px;
+        --mobile-subtitle-size: 15px;
+        --mobile-content-size: 13px;
 
         /* Spacing scale */
         --space-1: 4px;
@@ -237,7 +240,7 @@
         display: flex;
         align-items: center;
         gap: var(--space-2);
-        font-size: var(--font-body);
+        font-size: var(--mobile-subtitle-size);
         font-weight: 850;
       }
 
@@ -262,7 +265,7 @@
         border-radius: 50%;
         background: var(--care-mint-soft);
         color: var(--care-primary-dark);
-        font-size: var(--font-body-sm);
+        font-size: var(--mobile-content-size);
         font-weight: 800;
       }
 
@@ -276,7 +279,7 @@
         border-radius: 50%;
         background: var(--care-surface-soft);
         color: var(--care-muted);
-        font-size: 15px;
+        font-size: var(--mobile-subtitle-size);
         box-shadow: var(--shadow-hairline);
         cursor: pointer;
         transition:
@@ -293,13 +296,13 @@
       .eyebrow {
         margin: 0 0 8px;
         color: var(--care-muted);
-        font-size: var(--font-body-sm);
+        font-size: var(--mobile-content-size);
         font-weight: 650;
       }
 
       .mobile-title {
         margin: 0;
-        font-size: var(--font-h1-mobile);
+        font-size: var(--mobile-title-size);
         line-height: 1.24;
         font-weight: 850;
         letter-spacing: 0;
@@ -315,7 +318,7 @@
 
       .mobile-date {
         color: var(--care-text);
-        font-size: var(--font-body);
+        font-size: var(--mobile-content-size);
         font-weight: 850;
         white-space: nowrap;
       }
@@ -388,12 +391,12 @@
         border-radius: 50%;
         background: rgba(255, 255, 255, 0.18);
         color: #ffffff;
-        font-size: 20px;
+        font-size: var(--mobile-title-size);
       }
 
       .button-title {
         display: block;
-        font-size: var(--font-body);
+        font-size: var(--mobile-subtitle-size);
         font-weight: 800;
       }
 
@@ -401,7 +404,7 @@
         display: block;
         margin-top: 2px;
         color: rgba(255, 255, 255, 0.84);
-        font-size: var(--font-caption);
+        font-size: var(--mobile-content-size);
         font-weight: 600;
       }
 
@@ -432,14 +435,14 @@
       .quick-card strong {
         display: block;
         margin-top: var(--space-2);
-        font-size: 24px;
+        font-size: var(--mobile-title-size);
         line-height: 1;
         font-weight: 860;
       }
 
       .quick-card span {
         color: var(--care-muted);
-        font-size: var(--font-micro);
+        font-size: var(--mobile-content-size);
         font-weight: 650;
       }
 
@@ -454,13 +457,13 @@
 
       .mobile-parent-summary .mobile-kicker {
         color: var(--care-muted);
-        font-size: var(--font-micro);
+        font-size: var(--mobile-content-size);
         font-weight: 850;
       }
 
       .mobile-parent-summary strong {
         color: var(--care-text);
-        font-size: var(--font-body);
+        font-size: var(--mobile-subtitle-size);
         line-height: 1.45;
         font-weight: 850;
       }
@@ -468,7 +471,7 @@
       .mobile-parent-summary p {
         margin: 0;
         color: var(--care-muted);
-        font-size: var(--font-caption);
+        font-size: var(--mobile-content-size);
         line-height: 1.55;
         font-weight: 680;
       }
@@ -486,13 +489,13 @@
 
       .block-head h3 {
         margin: 0;
-        font-size: var(--font-h3);
+        font-size: var(--mobile-subtitle-size);
         font-weight: 820;
       }
 
       .block-head a {
         color: var(--care-primary-dark);
-        font-size: var(--font-caption);
+        font-size: var(--mobile-content-size);
         font-weight: 750;
         text-decoration: none;
       }
@@ -502,7 +505,7 @@
         background: transparent;
         color: var(--care-primary-dark);
         font-family: inherit;
-        font-size: var(--font-caption);
+        font-size: var(--mobile-content-size);
         font-weight: 850;
         cursor: pointer;
       }
@@ -584,21 +587,21 @@
 
       .mobile-subject-title strong,
       .mobile-activity-title strong {
-        font-size: var(--font-body);
+        font-size: var(--mobile-subtitle-size);
         font-weight: 850;
       }
 
       .mobile-subject-title span,
       .mobile-activity-title span {
         color: var(--care-muted);
-        font-size: var(--font-micro);
+        font-size: var(--mobile-content-size);
         line-height: 1.45;
         font-weight: 680;
       }
 
       .mobile-action-label {
         color: var(--care-primary-muted);
-        font-size: var(--font-body-sm);
+        font-size: var(--mobile-content-size);
         font-weight: 850;
         white-space: nowrap;
       }
@@ -619,7 +622,7 @@
         border: 0;
         border-radius: var(--radius-sm);
         font-family: inherit;
-        font-size: var(--font-caption);
+        font-size: var(--mobile-content-size);
         font-weight: 850;
         cursor: pointer;
         transition:
@@ -670,7 +673,7 @@
 
       .mobile-form-card h4 {
         margin: 0;
-        font-size: var(--font-body);
+        font-size: var(--mobile-subtitle-size);
         font-weight: 850;
       }
 
@@ -688,7 +691,7 @@
         background: #edf2f4;
         color: var(--care-text);
         font-family: inherit;
-        font-size: var(--font-caption);
+        font-size: var(--mobile-content-size);
         font-weight: 780;
       }
 
@@ -709,7 +712,7 @@
 
       .mobile-field label {
         color: var(--care-text);
-        font-size: var(--font-caption);
+        font-size: var(--mobile-content-size);
         font-weight: 850;
       }
 
@@ -723,7 +726,7 @@
         padding: var(--space-3);
         color: var(--care-text);
         font-family: inherit;
-        font-size: var(--font-caption);
+        font-size: var(--mobile-content-size);
         line-height: 1.55;
         font-weight: 650;
       }
@@ -737,7 +740,7 @@
         padding: 0 var(--space-3);
         color: var(--care-text);
         font-family: inherit;
-        font-size: var(--font-caption);
+        font-size: var(--mobile-content-size);
         font-weight: 750;
       }
 
@@ -751,14 +754,14 @@
 
       .mobile-preview-card h4 {
         margin: 0;
-        font-size: var(--font-body);
+        font-size: var(--mobile-subtitle-size);
         font-weight: 850;
       }
 
       .mobile-preview-card p {
         margin: 0;
         color: var(--care-muted);
-        font-size: var(--font-caption);
+        font-size: var(--mobile-content-size);
         line-height: 1.6;
         font-weight: 680;
       }
@@ -775,14 +778,14 @@
       .mobile-card-head h4 {
         margin: 0;
         color: var(--care-text);
-        font-size: var(--font-body);
+        font-size: var(--mobile-subtitle-size);
         font-weight: 850;
       }
 
       .mobile-section-head span,
       .mobile-card-head span {
         color: var(--care-muted);
-        font-size: var(--font-micro);
+        font-size: var(--mobile-content-size);
         font-weight: 720;
         white-space: nowrap;
       }
@@ -812,7 +815,7 @@
       .mobile-quick-row.meal-row .mobile-chip {
         min-height: 30px;
         padding: 0 8px;
-        font-size: 12px;
+        font-size: var(--mobile-content-size);
         white-space: nowrap;
       }
 
@@ -844,7 +847,7 @@
         width: 100%;
         min-height: 30px;
         padding: 0 6px;
-        font-size: 12px;
+        font-size: var(--mobile-content-size);
         white-space: nowrap;
       }
 
@@ -856,13 +859,13 @@
 
       .mobile-quick-title strong {
         color: var(--care-text);
-        font-size: var(--font-body-sm);
+        font-size: var(--mobile-subtitle-size);
         font-weight: 850;
       }
 
       .mobile-quick-title span {
         color: var(--care-muted);
-        font-size: var(--font-micro);
+        font-size: var(--mobile-content-size);
         font-weight: 680;
       }
 
@@ -889,14 +892,14 @@
       .mobile-summary-item span,
       .mobile-check-row span:first-child {
         color: var(--care-muted);
-        font-size: var(--font-micro);
+        font-size: var(--mobile-content-size);
         font-weight: 720;
       }
 
       .mobile-summary-item strong,
       .mobile-check-row strong {
         color: var(--care-text);
-        font-size: var(--font-body);
+        font-size: var(--mobile-subtitle-size);
         font-weight: 850;
       }
 
@@ -912,13 +915,13 @@
 
       .mobile-report-title span {
         color: var(--care-muted);
-        font-size: var(--font-micro);
+        font-size: var(--mobile-content-size);
         font-weight: 720;
       }
 
       .mobile-report-title strong {
         color: var(--care-text);
-        font-size: var(--font-h3);
+        font-size: var(--mobile-subtitle-size);
         font-weight: 850;
       }
 
@@ -936,13 +939,13 @@
 
       .mobile-report-meta span {
         color: var(--care-muted);
-        font-size: var(--font-micro);
+        font-size: var(--mobile-content-size);
         font-weight: 720;
       }
 
       .mobile-report-meta strong {
         color: var(--care-text);
-        font-size: var(--font-caption);
+        font-size: var(--mobile-content-size);
         font-weight: 850;
       }
 
@@ -964,20 +967,20 @@
 
       .mobile-reference-card span {
         color: var(--care-primary);
-        font-size: var(--font-micro);
+        font-size: var(--mobile-content-size);
         font-weight: 850;
       }
 
       .mobile-reference-card strong {
         color: var(--care-text);
-        font-size: var(--font-body-sm);
+        font-size: var(--mobile-subtitle-size);
         font-weight: 850;
       }
 
       .mobile-reference-card p {
         margin: 0;
         color: var(--care-muted);
-        font-size: var(--font-caption);
+        font-size: var(--mobile-content-size);
         line-height: 1.55;
         font-weight: 650;
       }
@@ -993,7 +996,7 @@
         border-radius: var(--radius-sm);
         background: var(--care-mint-soft);
         color: var(--care-primary-dark);
-        font-size: var(--font-micro);
+        font-size: var(--mobile-content-size);
         font-weight: 850;
         text-align: center;
       }
@@ -1003,20 +1006,20 @@
         border-radius: var(--radius-md);
         background: var(--care-mint-soft);
         color: var(--care-muted);
-        font-size: var(--font-caption);
+        font-size: var(--mobile-content-size);
         line-height: 1.6;
         font-weight: 680;
       }
 
       .time {
         color: var(--care-primary-dark);
-        font-size: var(--font-caption);
+        font-size: var(--mobile-content-size);
         font-weight: 820;
       }
 
       .item-title {
         display: block;
-        font-size: var(--font-body);
+        font-size: var(--mobile-subtitle-size);
         font-weight: 770;
       }
 
@@ -1024,7 +1027,7 @@
         display: block;
         margin-top: 4px;
         color: var(--care-muted);
-        font-size: var(--font-micro);
+        font-size: var(--mobile-content-size);
         font-weight: 620;
       }
 
@@ -1037,7 +1040,7 @@
         min-width: 58px;
         height: 28px;
         padding: 0;
-        font-size: var(--font-body-sm);
+        font-size: var(--mobile-content-size);
         line-height: 1;
         font-weight: 800;
         background: transparent;
@@ -1074,7 +1077,7 @@
         border: 0;
         background: transparent;
         font-family: inherit;
-        font-size: var(--font-micro);
+        font-size: var(--mobile-content-size);
         font-weight: 780;
         cursor: pointer;
         transition:
