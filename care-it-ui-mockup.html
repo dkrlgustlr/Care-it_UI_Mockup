@@ -420,6 +420,48 @@
         font-weight: 650;
       }
 
+      .mobile-manage-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-3);
+      }
+
+      .mobile-manage-card {
+        display: grid;
+        align-content: center;
+        gap: var(--space-1);
+        min-height: 78px;
+        padding: 14px;
+        border: 0;
+        border-radius: var(--radius-md);
+        background: var(--care-surface-raised);
+        box-shadow: var(--shadow-hairline);
+        color: var(--care-text);
+        text-align: left;
+        font-family: inherit;
+        cursor: pointer;
+        transition:
+          background-color var(--motion-base) var(--motion-ease),
+          transform var(--motion-fast) var(--motion-ease);
+      }
+
+      .mobile-manage-card:hover {
+        background: #eef3f5;
+        transform: translateY(-1px);
+      }
+
+      .mobile-manage-card strong {
+        font-size: var(--mobile-subtitle-size);
+        line-height: 1.25;
+        font-weight: 850;
+      }
+
+      .mobile-manage-card span {
+        color: var(--care-muted);
+        font-size: var(--mobile-content-size);
+        font-weight: 700;
+      }
+
       .mobile-parent-summary {
         display: grid;
         gap: var(--space-2);
@@ -4347,6 +4389,22 @@
                     <strong>3건</strong>
                   </div>
                 </div>
+
+                <section class="content-block">
+                  <div class="block-head">
+                    <h3>관리</h3>
+                  </div>
+                  <div class="mobile-manage-grid">
+                    <button class="mobile-manage-card" type="button" data-mobile-open-tab="journal">
+                      <strong>일지 관리</strong>
+                      <span>작성·확인</span>
+                    </button>
+                    <button class="mobile-manage-card" type="button" data-mobile-open-tab="report">
+                      <strong>리포트 관리</strong>
+                      <span>작성·보기</span>
+                    </button>
+                  </div>
+                </section>
 
                 <section class="content-block">
                   <div class="block-head">
