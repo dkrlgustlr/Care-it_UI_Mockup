@@ -205,20 +205,24 @@ assert.match(mobileViewsBlock, /title: "리포트 확인"/, "mobile report resul
 assert.match(mobileViewsBlock, /title: "가정 메모"/, "mobile parent flow should allow a simple home note instead of profile editing");
 assert.match(mobileViewsBlock, />가정 메모 남기기</, "mobile parent flow should provide a parent-friendly note action");
 
-assert.match(journalWriteContent, /class="mobile-step-card"[\s\S]*class="mobile-step-number">1<\/span>[\s\S]*빠른 체크/, "mobile journal writing should present the quick check as a readable step");
-assert.match(journalWriteContent, /class="mobile-step-card"[\s\S]*class="mobile-step-number">2<\/span>[\s\S]*오늘 기록 직접 입력/, "mobile journal writing should present direct input as a readable step");
+assert.match(journalWriteContent, /class="mobile-step-card"[\s\S]*class="mobile-step-number">1<\/span>[\s\S]*<strong>빠른 체크<\/strong>/, "mobile journal writing should present the quick check as a readable step");
+assert.match(journalWriteContent, /class="mobile-step-card"[\s\S]*class="mobile-step-number">2<\/span>[\s\S]*<strong>오늘 기록 직접 입력<\/strong>/, "mobile journal writing should present direct input as a readable step");
 assert.match(journalWriteContent, /class="[^"]*mobile-readable-field[^"]*"[\s\S]*<strong>신체·운동 발달<\/strong>[\s\S]*대근육, 소근육, 감각, 건강, 기본생활 움직임/, "mobile journal writing should split development textareas into readable field blocks");
 assert.match(journalDraftContent, /class="[^"]*mobile-readable-field[^"]*"[\s\S]*<strong>신체·운동 발달<\/strong>[\s\S]*수정 가능/, "mobile journal review should keep editable development fields readable");
-assert.match(reportWriteContent, /class="mobile-step-card"[\s\S]*class="mobile-step-number">1<\/span>[\s\S]*리포트 작성 대상/, "mobile report writing should present report setup as a readable step");
+assert.match(reportWriteContent, /class="mobile-step-card"[\s\S]*class="mobile-step-number">1<\/span>[\s\S]*<strong>리포트 작성 대상<\/strong>/, "mobile report writing should present report setup as a readable step");
 assert.match(reportWriteContent, /class="[^"]*mobile-report-mode-row[^"]*"[\s\S]*data-mobile-report-mode="weekly"[\s\S]*data-mobile-report-mode="monthly"/, "mobile report writing should show weekly and monthly report options as a clear segmented choice");
-assert.match(reportWriteContent, /class="mobile-step-card"[\s\S]*class="mobile-step-number">2<\/span>[\s\S]*리포트 미리보기/, "mobile report writing should present preview as the next readable step");
+assert.match(reportWriteContent, /class="mobile-step-card"[\s\S]*class="mobile-step-number">2<\/span>[\s\S]*<strong>리포트 미리보기<\/strong>/, "mobile report writing should present preview as the next readable step");
+assert.doesNotMatch(mobileSurface, /<span class="mobile-step-copy"><strong>[12]\./, "mobile step copy should not repeat the visible step number in the title");
+assert.doesNotMatch(mobileSurface, /PC와 같은/, "mobile user-facing helper copy should not reference the PC mockup");
+assert.doesNotMatch(reportWriteContent, /누락 기록|누락 1건/, "mobile report setup should use plain user-facing confirmation wording instead of missing-record jargon");
+assert.doesNotMatch(reportWriteContent, />내용 수정</, "mobile report secondary action should describe the actual back-to-selection behavior");
 
 assert.doesNotMatch(settingsContent, /mobile-form-card|mobile-check-row/, "mobile settings should not use the nested form/check-row card treatment");
 assert.match(settingsContent, /<div class="mobile-group-list">[\s\S]*?<div class="mobile-setting-card">[\s\S]*<strong>보호자<\/strong>[\s\S]*<span>김도윤 보호자<\/span>/, "mobile settings account should use the standard list-card treatment");
 assert.match(settingsContent, /<div class="mobile-group-list">[\s\S]*?<div class="mobile-setting-card">[\s\S]*<strong>오늘 기록 알림<\/strong>[\s\S]*<span>켜짐<\/span>/, "mobile settings notifications should use the standard list-card treatment");
 assert.match(settingsContent, /<div class="mobile-group-list">[\s\S]*?<div class="mobile-setting-card" data-mobile-view="billing">[\s\S]*<strong>공유 범위<\/strong>[\s\S]*<span>기록과 리포트 보기 권한<\/span>[\s\S]*<span class="mobile-action-label">보기<\/span>/, "mobile settings sharing should match the same list-card treatment");
 
-for (const required of ["작성 대상", "1. 빠른 체크", "식사", "오늘 상태", "2. 오늘 기록 직접 입력", "임시 보관", "정리된 일지 확인"]) {
+for (const required of ["작성 대상", "빠른 체크", "식사", "오늘 상태", "오늘 기록 직접 입력", "임시 보관", "정리된 일지 확인"]) {
   assert.match(journalWriteContent, new RegExp(required), `mobile journal writing should match the PC step: ${required}`);
 }
 
@@ -226,6 +230,6 @@ for (const required of ["내가 입력한 내용", "선택한 내용", "정리�
   assert.match(journalDraftContent, new RegExp(required), `mobile journal review should match the PC step: ${required}`);
 }
 
-for (const required of ["리포트 작성 대상", "리포트 종류", "주간 리포트", "월간 리포트", "리포트 미리보기", "내용 수정", "리포트 작성"]) {
+for (const required of ["리포트 작성 대상", "리포트 종류", "주간 리포트", "월간 리포트", "리포트 미리보기", "다시 선택", "리포트 작성"]) {
   assert.match(reportWriteContent, new RegExp(required), `mobile report writing should match the PC step: ${required}`);
 }
