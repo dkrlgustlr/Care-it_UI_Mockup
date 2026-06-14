@@ -269,30 +269,6 @@
         font-weight: 800;
       }
 
-      .icon-button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        border: 0;
-        border-radius: 50%;
-        background: var(--care-surface-soft);
-        color: var(--care-muted);
-        font-size: var(--mobile-subtitle-size);
-        box-shadow: var(--shadow-hairline);
-        cursor: pointer;
-        transition:
-          background-color var(--motion-base) var(--motion-ease),
-          transform var(--motion-fast) var(--motion-ease),
-          box-shadow var(--motion-base) var(--motion-ease);
-      }
-
-      .icon-button:hover {
-        background: #eef3f5;
-        transform: translateY(-1px);
-      }
-
       .eyebrow {
         margin: 0 0 8px;
         color: var(--care-muted);
@@ -376,8 +352,7 @@
         font-family: inherit;
       }
 
-      .primary-action:active,
-      .icon-button:active {
+      .primary-action:active {
         transform: translateY(0) scale(0.985);
       }
 
@@ -4304,7 +4279,6 @@
                   <span class="mobile-brand-mark"></span>
                   <img class="mobile-brand-logo" src="output/logo/care-it-logo-c-transparent-bold-wordmark-v2.png" alt="Care-it" />
                 </div>
-                <button class="icon-button" aria-label="알림" data-mock-action="show-notifications">⋯</button>
               </div>
 
               <div class="mobile-title-row">
@@ -5896,7 +5870,6 @@
       };
 
       const mockActionMessages = {
-        "show-notifications": "새 알림 3건을 확인했습니다.",
         "confirm-journal": "선택한 일지를 확인 완료 상태로 표시했습니다.",
         "save-journal-draft": "작성 중인 일지를 임시 보관했습니다.",
         "edit-report-copy": "리포트 본문을 바로 수정할 수 있는 상태로 열었습니다.",
@@ -6859,20 +6832,23 @@
           content: `
             <section class="content-block">
               <div class="block-head"><h3>계정</h3></div>
-              <div class="mobile-group-list">
-                <div class="mobile-subject-card">
-                  <span class="mobile-subject-title"><strong>김도윤 보호자</strong><span>hyunsik@care-it.kr</span></span>
-                  <span class="mobile-action-label">확인</span>
+              <div class="mobile-form-card">
+                <div class="mobile-check-list">
+                  <div class="mobile-check-row"><span>보호자</span><strong>김도윤 보호자</strong></div>
                 </div>
               </div>
             </section>
             <section class="content-block">
               <div class="block-head"><h3>알림</h3></div>
-              <div class="mobile-group-list">
-                <div class="mobile-subject-card">
-                  <span class="mobile-subject-title"><strong>오늘 기록 알림</strong><span>새 기록이 올라오면 알려줍니다.</span></span>
-                  <span class="mobile-action-label">켜짐</span>
+              <div class="mobile-form-card">
+                <div class="mobile-check-list">
+                  <div class="mobile-check-row"><span>오늘 기록 알림</span><strong>켜짐</strong></div>
                 </div>
+              </div>
+            </section>
+            <section class="content-block">
+              <div class="block-head"><h3>공유</h3></div>
+              <div class="mobile-group-list">
                 <div class="mobile-subject-card" data-mobile-view="billing">
                   <span class="mobile-subject-title"><strong>공유 범위</strong><span>기록과 리포트 보기 권한</span></span>
                   <span class="mobile-action-label">보기</span>

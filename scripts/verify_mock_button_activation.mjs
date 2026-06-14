@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 
 const html = readFileSync("care-it-ui-mockup.html", "utf8");
 const script = html.match(/<script>([\s\S]*)<\/script>/)?.[1] || "";
+const mobileSection = html.match(/<section class="mobile-section">[\s\S]*?<section class="desktop-section">/)?.[0] || "";
+const mobileParentViewsBlock = html.match(/const mobileParentViews = \{([\s\S]*?)\};\s+Object\.assign/)?.[1] || "";
 
 const requiredPageButtons = [
   'data-go-page="journals">일지 보기',
@@ -18,7 +20,6 @@ for (const marker of requiredPageButtons) {
 }
 
 const requiredMockActions = [
-  "show-notifications",
   "confirm-journal",
   "save-journal-draft",
   "edit-report-copy",
@@ -35,6 +36,9 @@ const requiredMockActions = [
 for (const action of requiredMockActions) {
   assert.match(html, new RegExp(`data-mock-action="${action}"`), `${action} mock action should be present`);
 }
+
+assert.doesNotMatch(html, /data-mock-action="show-notifications"/, "mobile topbar should not keep a placeholder notification action");
+assert.doesNotMatch(html, /class="icon-button"|\.icon-button/, "unused mobile ellipsis button and styles should be removed");
 
 assert.match(html, /data-mock-toast/, "mock toast region should exist for button feedback");
 assert.match(html, /handleMockAction/, "mock action dispatcher should exist");
@@ -54,6 +58,24 @@ assert.match(html, /data-static-calendar/, "static report archive calendar shoul
 assert.match(html, /closest\("\.mobile-chip"\)/, "mobile chips should be handled by event delegation");
 assert.match(html, /toggleMobileChip/, "mobile chip selection helper should exist");
 assert.match(html, /\.archive-actions button/, "archive restore/delete buttons should be handled");
+
+const mobileViewKeys = new Set(
+  [...mobileParentViewsBlock.matchAll(/\n\s{8}(?:"([^"]+)"|([a-zA-Z0-9_-]+)):\s*\{/g)].map((entry) => entry[1] || entry[2])
+);
+const mobileTargets = [
+  ...mobileSection.matchAll(/data-mobile-(?:view|tab)="([^"]+)"/g),
+  ...mobileParentViewsBlock.matchAll(/data-mobile-view="([^"]+)"/g),
+].map((entry) => entry[1]);
+const unknownMobileTargets = [...new Set(mobileTargets.filter((target) => !mobileViewKeys.has(target)))];
+const mobileSurface = `${mobileSection}\n${mobileParentViewsBlock}`;
+const inertMobileCards = [
+  ...mobileSurface.matchAll(/<div class="mobile-subject-card"(?![^>]*data-mobile-view)[\s\S]*?<\/div>/g),
+].map((entry) => entry[0].replace(/\s+/g, " ").trim());
+
+assert.ok(mobileParentViewsBlock, "parent mobile views should be present");
+assert.deepEqual(unknownMobileTargets, [], `mobile targets should point to implemented views:\n${unknownMobileTargets.join("\n")}`);
+assert.deepEqual(inertMobileCards, [], `mobile subject cards should either navigate or be rendered as plain info:\n${inertMobileCards.join("\n")}`);
+assert.match(html, /event\.target\.closest\("\[data-mobile-view\]"\)/, "mobile view buttons and cards should be handled by event delegation");
 
 assert.doesNotThrow(() => new Function(script), "inline script should parse");
 
