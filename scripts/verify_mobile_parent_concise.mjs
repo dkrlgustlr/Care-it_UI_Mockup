@@ -13,6 +13,7 @@ const mobileCss = css.match(/\.mobile-frame[\s\S]*?\.dashboard-frame/)?.[0] || "
 const mobileScreenStyles = css.match(/\.mobile-screen\s*\{[^}]*\}/)?.[0] || "";
 const quickCardStrongStyles = css.match(/\.quick-card strong\s*\{[^}]*\}/)?.[0] || "";
 const createCardStyles = css.match(/\.mobile-create-card\s*\{[^}]*\}/)?.[0] || "";
+const groupCreateCardStyles = css.match(/\.mobile-group-list \.mobile-create-card\s*\{[^}]*\}/)?.[0] || "";
 const createCardHoverStyles = css.match(/\.mobile-create-card:hover\s*\{[^}]*\}/)?.[0] || "";
 const createSymbolStyles = css.match(/\.mobile-create-symbol\s*\{[^}]*\}/)?.[0] || "";
 const createTitleStyles = css.match(/\.mobile-create-card \.mobile-subject-title strong\s*\{[^}]*\}/)?.[0] || "";
@@ -37,6 +38,8 @@ assert.doesNotMatch(mobileCss, /font-size:\s*var\(--font-/, "mobile typography s
 assert.doesNotMatch(mobileCss, /font-size:\s*\d+px/, "mobile typography should avoid one-off pixel font sizes");
 assert.match(createCardStyles, /grid-template-columns:\s*32px minmax\(0,\s*1fr\) auto;/, "mobile write entry cards should have a dedicated icon-title-action layout");
 assert.match(createCardStyles, /background:\s*var\(--care-primary\);/, "mobile write entry cards should use a full green action surface");
+assert.match(groupCreateCardStyles, /background:\s*var\(--care-primary\);/, "mobile grouped write entry cards should stay green before hover");
+assert.match(groupCreateCardStyles, /border-radius:\s*var\(--radius-md\);/, "mobile grouped write entry cards should keep the rounded action-card shape");
 assert.match(createCardHoverStyles, /background:\s*var\(--care-primary-dark\);/, "mobile write entry cards should keep a darker green hover state");
 assert.doesNotMatch(createCardStyles, /border-left/, "mobile write entry cards should not use the rejected vertical side accent");
 assert.match(createSymbolStyles, /background:\s*rgba\(255,\s*255,\s*255,\s*0\.18\);/, "mobile write entry plus symbols should sit on the green card without adding another green badge");
