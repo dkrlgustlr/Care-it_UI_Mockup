@@ -44,6 +44,7 @@ assert.doesNotMatch(mobileSection, /활동 보통 · 수면 보통/, "mobile sta
 assert.doesNotMatch(mobileSection, /리포트는 준비 중/, "mobile weekly card should not show extra helper detail text");
 assert.doesNotMatch(mobileSection, /점심은 완식했고/, "mobile summary should not use a long sentence");
 assert.doesNotMatch(mobileSurface, /긴 설명보다 오늘 상태와 변화만 먼저 볼 수 있게 모았습니다\./, "mobile records summary should not show the extra explanatory sentence");
+assert.doesNotMatch(mobileSurface, /확인할 기록 1건을 마치면 리포트가 공유됩니다\./, "mobile report summary should not show the extra explanatory sentence");
 assert.match(mobileSection, /data-mobile-tab="journal"[\s\S]*<span>기록<\/span>/, "journal tab should be labeled as parent-friendly records");
 const weeklyReportCard = mobileSection.match(/<div class="mobile-subject-card" data-mobile-view="report-write">[\s\S]*?<\/div>/)?.[0] || "";
 assert.ok(weeklyReportCard, "mobile weekly report should use the same subject-card treatment as the surrounding list");
