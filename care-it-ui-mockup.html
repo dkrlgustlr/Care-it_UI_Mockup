@@ -550,6 +550,36 @@
         transform: translateY(-1px);
       }
 
+      .mobile-create-card {
+        grid-template-columns: 32px minmax(0, 1fr) auto;
+        gap: var(--space-3);
+        background: #e8f6f0;
+        box-shadow: 0 1px 0 rgba(5, 166, 107, 0.18), var(--shadow-hairline);
+      }
+
+      .mobile-create-card:hover {
+        background: #dff3eb;
+      }
+
+      .mobile-create-symbol {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--care-primary);
+        color: #ffffff;
+        font-size: var(--mobile-subtitle-size);
+        font-weight: 850;
+        line-height: 1;
+      }
+
+      .mobile-create-card .mobile-action-label {
+        color: var(--care-primary-dark);
+        font-weight: 900;
+      }
+
       .mobile-activity-item {
         grid-template-columns: 54px minmax(0, 1fr);
       }
@@ -6641,9 +6671,10 @@
             <section class="content-block">
               <div class="block-head"><h3>작성</h3></div>
               <div class="mobile-group-list">
-                <div class="mobile-subject-card" data-mobile-view="journal-create">
+                <div class="mobile-subject-card mobile-create-card" data-mobile-view="journal-create">
+                  <span class="mobile-create-symbol" aria-hidden="true">+</span>
                   <span class="mobile-subject-title"><strong>일지 작성</strong><span>오늘 기록 직접 입력</span></span>
-                  <span class="mobile-action-label">작성</span>
+                  <span class="mobile-action-label">시작</span>
                 </div>
               </div>
             </section>
@@ -6773,9 +6804,10 @@
             <section class="content-block">
               <div class="block-head"><h3>작성</h3></div>
               <div class="mobile-group-list">
-                <div class="mobile-subject-card" data-mobile-view="report-create">
+                <div class="mobile-subject-card mobile-create-card" data-mobile-view="report-create">
+                  <span class="mobile-create-symbol" aria-hidden="true">+</span>
                   <span class="mobile-subject-title"><strong>리포트 작성</strong><span>확인된 기록으로 작성</span></span>
-                  <span class="mobile-action-label">작성</span>
+                  <span class="mobile-action-label">시작</span>
                 </div>
               </div>
             </section>

@@ -12,6 +12,8 @@ const css = html.match(/<style>([\s\S]*?)<\/style>/)?.[1] || "";
 const mobileCss = css.match(/\.mobile-frame[\s\S]*?\.dashboard-frame/)?.[0] || "";
 const mobileScreenStyles = css.match(/\.mobile-screen\s*\{[^}]*\}/)?.[0] || "";
 const quickCardStrongStyles = css.match(/\.quick-card strong\s*\{[^}]*\}/)?.[0] || "";
+const createCardStyles = css.match(/\.mobile-create-card\s*\{[^}]*\}/)?.[0] || "";
+const createSymbolStyles = css.match(/\.mobile-create-symbol\s*\{[^}]*\}/)?.[0] || "";
 
 assert.ok(mobileSection, "mobile mockup section should be present");
 assert.ok(mobileViewsBlock, "mobile parent view map should be present");
@@ -29,6 +31,10 @@ assert.match(css, /\.mobile-subject-title strong,\s*\.mobile-activity-title stro
 assert.match(css, /\.mobile-subject-title span,\s*\.mobile-activity-title span\s*\{[\s\S]*?font-size:\s*var\(--mobile-content-size\)/, "mobile list item details should use the content token");
 assert.doesNotMatch(mobileCss, /font-size:\s*var\(--font-/, "mobile typography should use the mobile title/subtitle/content tokens");
 assert.doesNotMatch(mobileCss, /font-size:\s*\d+px/, "mobile typography should avoid one-off pixel font sizes");
+assert.match(createCardStyles, /grid-template-columns:\s*32px minmax\(0,\s*1fr\) auto;/, "mobile write entry cards should have a dedicated icon-title-action layout");
+assert.match(createCardStyles, /background:\s*#e8f6f0;/, "mobile write entry cards should use a distinct mint action surface");
+assert.doesNotMatch(createCardStyles, /border-left/, "mobile write entry cards should not use the rejected vertical side accent");
+assert.match(createSymbolStyles, /background:\s*var\(--care-primary\);/, "mobile write entry cards should use a clear primary plus symbol");
 assert.doesNotMatch(parentSummaryStyles, /border-left/, "mobile parent summary should not use a vertical side accent");
 assert.doesNotMatch(parentSummaryStyles, /--care-primary/, "mobile parent summary should not use the green accent-card treatment");
 
@@ -59,6 +65,8 @@ const homeQuickCardCount = (mobileSection.match(/class="quick-card"/g) || []).le
 assert.ok(homeQuickCardCount <= 2, `mobile home should keep quick metrics concise, found ${homeQuickCardCount}`);
 
 assert.doesNotMatch(mobileSection, /<button class="primary-action"[^>]*data-mobile-view="journal-write"/, "mobile home should not show a large write CTA");
+assert.match(mobileViewsBlock, /class="mobile-subject-card mobile-create-card"[^>]*data-mobile-view="journal-create"[\s\S]*<span class="mobile-create-symbol" aria-hidden="true">\+<\/span>[\s\S]*<span class="mobile-action-label">\uC2DC\uC791<\/span>/, "mobile journal writing entry should stand out as a primary create action");
+assert.match(mobileViewsBlock, /class="mobile-subject-card mobile-create-card"[^>]*data-mobile-view="report-create"[\s\S]*<span class="mobile-create-symbol" aria-hidden="true">\+<\/span>[\s\S]*<span class="mobile-action-label">\uC2DC\uC791<\/span>/, "mobile report writing entry should stand out as a primary create action");
 assert.doesNotMatch(mobileSection, /<button class="mobile-text-action"[^>]*>관리<\/button>/, "mobile home should not expose management actions");
 
 const adminCopy = [
