@@ -36,6 +36,7 @@ assert.match(css, /\.mobile-subject-title strong,\s*\.mobile-activity-title stro
 assert.match(css, /\.mobile-subject-title span,\s*\.mobile-activity-title span\s*\{[\s\S]*?font-size:\s*var\(--mobile-content-size\)/, "mobile list item details should use the content token");
 assert.doesNotMatch(mobileCss, /font-size:\s*var\(--font-/, "mobile typography should use the mobile title/subtitle/content tokens");
 assert.doesNotMatch(mobileCss, /font-size:\s*\d+px/, "mobile typography should avoid one-off pixel font sizes");
+assert.doesNotMatch(mobileCss, /animation:\s*(?!none\b)[^;]+;/, "mobile UI should not use fade-in or entrance animations");
 assert.match(createCardStyles, /grid-template-columns:\s*32px minmax\(0,\s*1fr\) auto;/, "mobile write entry cards should have a dedicated icon-title-action layout");
 assert.match(createCardStyles, /background:\s*var\(--care-primary\);/, "mobile write entry cards should use a full green action surface");
 assert.match(groupCreateCardStyles, /background:\s*var\(--care-primary\);/, "mobile grouped write entry cards should stay green before hover");
