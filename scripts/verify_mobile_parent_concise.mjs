@@ -35,6 +35,13 @@ const manageCardSpanStyles = css.match(/\.mobile-manage-card span\s*\{[^}]*\}/)?
 const subjectCardStyles = css.match(/\.mobile-subject-card,\s*\.mobile-activity-item\s*\{[^}]*\}/)?.[0] || "";
 const settingCardStyles = css.match(/\.mobile-setting-card\s*\{[^}]*\}/)?.[0] || "";
 const formCardStyles = css.match(/\.mobile-form-card\s*\{[^}]*\}/)?.[0] || "";
+const stepCardStyles = css.match(/\.mobile-step-card\s*\{[^}]*\}/)?.[0] || "";
+const stepHeadStyles = css.match(/\.mobile-step-head\s*\{[^}]*\}/)?.[0] || "";
+const stepNumberStyles = css.match(/\.mobile-step-number\s*\{[^}]*\}/)?.[0] || "";
+const readableFieldStyles = css.match(/\.mobile-readable-field\s*\{[^}]*\}/)?.[0] || "";
+const readableFieldLabelStyles = css.match(/\.mobile-readable-field label\s*\{[^}]*\}/)?.[0] || "";
+const readableFieldTextStyles = css.match(/\.mobile-readable-field label span\s*\{[^}]*\}/)?.[0] || "";
+const reportModeRowStyles = css.match(/\.mobile-report-mode-row\s*\{[^}]*\}/)?.[0] || "";
 const previewCardStyles = css.match(/\.mobile-preview-card\s*\{[^}]*\}/)?.[0] || "";
 const quickRowStyles = css.match(/\.mobile-quick-row\s*\{[^}]*\}/)?.[0] || "";
 const chipRowStyles = css.match(/\.mobile-chip-row\s*\{[^}]*\}/)?.[0] || "";
@@ -92,6 +99,14 @@ assert.match(parentSummaryStyles, /padding:\s*var\(--mobile-card-padding\);/, "m
 assert.match(subjectCardStyles, /gap:\s*var\(--mobile-row-gap\);[\s\S]*padding:\s*var\(--mobile-list-row-y\) var\(--mobile-list-row-x\);/, "mobile list rows should use row gap and list row padding tokens");
 assert.match(settingCardStyles, /gap:\s*var\(--mobile-row-gap\);[\s\S]*padding:\s*var\(--mobile-list-row-y\) var\(--mobile-list-row-x\);/, "mobile setting rows should use the same row spacing tokens");
 assert.match(formCardStyles, /gap:\s*var\(--mobile-block-gap\);[\s\S]*padding:\s*var\(--mobile-card-padding\);/, "mobile form cards should use block gap and card padding tokens");
+assert.match(stepCardStyles, /gap:\s*var\(--mobile-block-gap\);[\s\S]*padding:\s*var\(--mobile-card-padding\);/, "mobile write steps should use the standard card spacing");
+assert.match(stepCardStyles, /background:\s*var\(--care-surface-raised\);/, "mobile write steps should read as clear cards");
+assert.match(stepHeadStyles, /grid-template-columns:\s*auto minmax\(0,\s*1fr\);/, "mobile write step headers should separate the number from the title");
+assert.match(stepNumberStyles, /background:\s*var\(--care-mint-soft\);[\s\S]*color:\s*var\(--care-primary-dark\);/, "mobile write step numbers should be visible without overpowering the page");
+assert.match(readableFieldStyles, /padding:\s*var\(--space-3\);[\s\S]*background:\s*var\(--care-surface-raised\);/, "mobile long text fields should be separated into readable field blocks");
+assert.match(readableFieldLabelStyles, /display:\s*grid;/, "mobile long text labels should support title and helper text");
+assert.match(readableFieldTextStyles, /font-size:\s*var\(--mobile-content-size\);/, "mobile long text helper copy should use the content type scale");
+assert.match(reportModeRowStyles, /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/, "mobile report mode selection should be a clear two-column segmented choice");
 assert.match(previewCardStyles, /gap:\s*var\(--space-2\);[\s\S]*padding:\s*var\(--mobile-card-padding\);/, "mobile preview cards should use the standard card padding token");
 assert.match(quickRowStyles, /gap:\s*var\(--space-2\);[\s\S]*padding:\s*var\(--mobile-control-padding-y\) var\(--mobile-control-padding-x\);/, "mobile quick rows should use control padding tokens");
 assert.match(chipRowStyles, /gap:\s*var\(--mobile-chip-gap\);/, "mobile chip rows should use the chip gap token");
@@ -189,6 +204,14 @@ assert.doesNotMatch(mobileViewsBlock, /"journal-create":\s*\{|"report-create":\s
 assert.match(mobileViewsBlock, /title: "리포트 확인"/, "mobile report result should be readable by parents");
 assert.match(mobileViewsBlock, /title: "가정 메모"/, "mobile parent flow should allow a simple home note instead of profile editing");
 assert.match(mobileViewsBlock, />가정 메모 남기기</, "mobile parent flow should provide a parent-friendly note action");
+
+assert.match(journalWriteContent, /class="mobile-step-card"[\s\S]*class="mobile-step-number">1<\/span>[\s\S]*빠른 체크/, "mobile journal writing should present the quick check as a readable step");
+assert.match(journalWriteContent, /class="mobile-step-card"[\s\S]*class="mobile-step-number">2<\/span>[\s\S]*오늘 기록 직접 입력/, "mobile journal writing should present direct input as a readable step");
+assert.match(journalWriteContent, /class="[^"]*mobile-readable-field[^"]*"[\s\S]*<strong>신체·운동 발달<\/strong>[\s\S]*대근육, 소근육, 감각, 건강, 기본생활 움직임/, "mobile journal writing should split development textareas into readable field blocks");
+assert.match(journalDraftContent, /class="[^"]*mobile-readable-field[^"]*"[\s\S]*<strong>신체·운동 발달<\/strong>[\s\S]*수정 가능/, "mobile journal review should keep editable development fields readable");
+assert.match(reportWriteContent, /class="mobile-step-card"[\s\S]*class="mobile-step-number">1<\/span>[\s\S]*리포트 작성 대상/, "mobile report writing should present report setup as a readable step");
+assert.match(reportWriteContent, /class="[^"]*mobile-report-mode-row[^"]*"[\s\S]*data-mobile-report-mode="weekly"[\s\S]*data-mobile-report-mode="monthly"/, "mobile report writing should show weekly and monthly report options as a clear segmented choice");
+assert.match(reportWriteContent, /class="mobile-step-card"[\s\S]*class="mobile-step-number">2<\/span>[\s\S]*리포트 미리보기/, "mobile report writing should present preview as the next readable step");
 
 assert.doesNotMatch(settingsContent, /mobile-form-card|mobile-check-row/, "mobile settings should not use the nested form/check-row card treatment");
 assert.match(settingsContent, /<div class="mobile-group-list">[\s\S]*?<div class="mobile-setting-card">[\s\S]*<strong>보호자<\/strong>[\s\S]*<span>김도윤 보호자<\/span>/, "mobile settings account should use the standard list-card treatment");
