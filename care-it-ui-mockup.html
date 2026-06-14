@@ -399,43 +399,6 @@
         font-weight: 600;
       }
 
-      .quick-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--space-3);
-      }
-
-      .quick-card {
-        min-height: 78px;
-        padding: var(--mobile-card-padding-compact);
-        border-radius: var(--radius-md);
-        background: var(--care-surface-raised);
-        box-shadow: var(--shadow-hairline);
-        transition:
-          background-color var(--motion-base) var(--motion-ease),
-          transform var(--motion-fast) var(--motion-ease),
-          box-shadow var(--motion-base) var(--motion-ease);
-      }
-
-      .quick-card:hover {
-        background: #eef3f5;
-        transform: translateY(-1px);
-      }
-
-      .quick-card strong {
-        display: block;
-        margin-top: var(--space-2);
-        font-size: var(--mobile-subtitle-size);
-        line-height: 1.25;
-        font-weight: 850;
-      }
-
-      .quick-card span {
-        color: var(--care-muted);
-        font-size: var(--mobile-content-size);
-        font-weight: 650;
-      }
-
       .mobile-manage-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -506,6 +469,32 @@
         font-size: var(--mobile-content-size);
         line-height: 1.55;
         font-weight: 680;
+      }
+
+      .mobile-summary-meta {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-3);
+        margin-top: var(--space-1);
+      }
+
+      .mobile-summary-stat {
+        display: grid;
+        gap: var(--space-1);
+        background: transparent;
+      }
+
+      .mobile-summary-stat span {
+        color: var(--care-muted);
+        font-size: var(--mobile-content-size);
+        font-weight: 700;
+      }
+
+      .mobile-summary-stat strong {
+        color: var(--care-text);
+        font-size: var(--mobile-subtitle-size);
+        line-height: 1.25;
+        font-weight: 850;
       }
 
       .content-block {
@@ -4530,18 +4519,11 @@
                 <section class="mobile-parent-summary">
                   <span class="mobile-kicker">김도윤 오늘 요약</span>
                   <strong>점심 완식 · 휴식 후 재참여</strong>
+                  <div class="mobile-summary-meta">
+                    <span class="mobile-summary-stat"><span>오늘 상태</span><strong>평온</strong></span>
+                    <span class="mobile-summary-stat"><span>이번 주 기록</span><strong>3건</strong></span>
+                  </div>
                 </section>
-
-                <div class="quick-grid">
-                  <div class="quick-card">
-                    <span>오늘 상태</span>
-                    <strong>평온</strong>
-                  </div>
-                  <div class="quick-card">
-                    <span>이번 주 기록</span>
-                    <strong>3건</strong>
-                  </div>
-                </div>
 
                 <section class="content-block">
                   <div class="block-head">

@@ -26,8 +26,9 @@ const mobileTopbarStyles = css.match(/\.mobile-topbar\s*\{[^}]*\}/)?.[0] || "";
 const mobileTitleRowStyles = css.match(/\.mobile-title-row\s*\{[^}]*\}/)?.[0] || "";
 const mobileContentStyles = css.match(/\.mobile-content\s*\{[^}]*\}/)?.[0] || "";
 const primaryActionStyles = css.match(/\.primary-action\s*\{[^}]*\}/)?.[0] || "";
-const quickCardStyles = css.match(/\.quick-card\s*\{[^}]*\}/)?.[0] || "";
-const quickCardStrongStyles = css.match(/\.quick-card strong\s*\{[^}]*\}/)?.[0] || "";
+const summaryMetaStyles = css.match(/\.mobile-summary-meta\s*\{[^}]*\}/)?.[0] || "";
+const summaryStatStyles = css.match(/\.mobile-summary-stat\s*\{[^}]*\}/)?.[0] || "";
+const summaryStatStrongStyles = css.match(/\.mobile-summary-stat strong\s*\{[^}]*\}/)?.[0] || "";
 const manageGridStyles = css.match(/\.mobile-manage-grid\s*\{[^}]*\}/)?.[0] || "";
 const manageCardStyles = css.match(/\.mobile-manage-card\s*\{[^}]*\}/)?.[0] || "";
 const manageCardStrongStyles = css.match(/\.mobile-manage-card strong\s*\{[^}]*\}/)?.[0] || "";
@@ -93,7 +94,6 @@ assert.match(mobileTopbarStyles, /margin-bottom:\s*var\(--mobile-header-gap\);/,
 assert.match(mobileTitleRowStyles, /gap:\s*var\(--mobile-block-gap\);[\s\S]*margin-bottom:\s*var\(--mobile-section-gap\);/, "mobile title row should use block and section gap tokens");
 assert.match(mobileContentStyles, /gap:\s*var\(--mobile-section-gap\);[\s\S]*padding-bottom:\s*var\(--mobile-section-gap\);/, "mobile content should use the section gap token for vertical rhythm");
 assert.match(primaryActionStyles, /gap:\s*var\(--mobile-row-gap\);[\s\S]*padding:\s*var\(--mobile-control-padding-y\) var\(--mobile-card-padding-compact\);/, "mobile primary actions should use row and control spacing tokens");
-assert.match(quickCardStyles, /padding:\s*var\(--mobile-card-padding-compact\);/, "mobile quick cards should use the compact card padding token");
 assert.match(manageCardStyles, /gap:\s*var\(--space-1\);[\s\S]*padding:\s*var\(--mobile-card-padding-compact\);/, "mobile management cards should use the compact card padding token");
 assert.match(parentSummaryStyles, /padding:\s*var\(--mobile-card-padding\);/, "mobile summary cards should use the standard card padding token");
 assert.match(subjectCardStyles, /gap:\s*var\(--mobile-row-gap\);[\s\S]*padding:\s*var\(--mobile-list-row-y\) var\(--mobile-list-row-x\);/, "mobile list rows should use row gap and list row padding tokens");
@@ -116,8 +116,9 @@ assert.match(mobileScreenStyles, /background:\s*#f4f7f8;/, "mobile dashboard bac
 assert.match(css, /\.block-head h3\s*\{[\s\S]*?font-size:\s*var\(--mobile-subtitle-size\)/, "mobile section headings should use the subtitle token");
 assert.match(css, /\.mobile-parent-summary strong\s*\{[\s\S]*?font-size:\s*var\(--mobile-subtitle-size\)/, "mobile summary headline should use the subtitle token");
 assert.match(css, /\.mobile-parent-summary p\s*\{[\s\S]*?font-size:\s*var\(--mobile-content-size\)/, "mobile summary body should use the content token");
-assert.match(quickCardStrongStyles, /font-size:\s*var\(--mobile-subtitle-size\)/, "mobile quick metric values should use the subtitle token");
-assert.doesNotMatch(quickCardStrongStyles, /font-size:\s*var\(--mobile-title-size\)/, "mobile quick metric values should not use the page title token");
+assert.match(summaryMetaStyles, /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/, "mobile home summary stats should stay inside the same summary card as a two-column row");
+assert.match(summaryStatStyles, /background:\s*transparent;/, "mobile home summary stats should not look like separate cards");
+assert.match(summaryStatStrongStyles, /font-size:\s*var\(--mobile-subtitle-size\)/, "mobile home summary stat values should use the subtitle token");
 assert.match(manageGridStyles, /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/, "mobile home management shortcuts should use a compact two-column grid");
 assert.match(manageCardStyles, /background:\s*var\(--care-surface-raised\);/, "mobile home management shortcuts should read as cards");
 assert.match(manageCardStrongStyles, /font-size:\s*var\(--mobile-subtitle-size\)/, "mobile management shortcut titles should use the subtitle token");
@@ -155,6 +156,7 @@ assert.match(mobileSection, /<button class="mobile-manage-card" type="button" da
 assert.match(mobileSection, /<button class="mobile-manage-card" type="button" data-mobile-open-tab="report">[\s\S]*<strong>\uB9AC\uD3EC\uD2B8 \uAD00\uB9AC<\/strong>[\s\S]*<span>\uC791\uC131\u00B7\uBCF4\uAE30<\/span>/, "mobile home should link to report management");
 assert.match(mobileSection, /김도윤 오늘 요약/, "mobile summary should use a short subject label");
 assert.match(mobileSection, /점심 완식 · 휴식 후 재참여/, "mobile summary should expose a short concrete daily status");
+assert.match(mobileSection, /<div class="mobile-summary-meta">[\s\S]*<span>오늘 상태<\/span>[\s\S]*<strong>평온<\/strong>[\s\S]*<span>이번 주 기록<\/span>[\s\S]*<strong>3건<\/strong>/, "mobile home should keep related summary stats inside the same summary card");
 assert.doesNotMatch(mobileSection, />확인할 기록 1건</, "mobile summary should not show extra helper metadata");
 assert.doesNotMatch(mobileSection, /활동 보통 · 수면 보통/, "mobile status card should not show extra helper detail text");
 assert.doesNotMatch(mobileSection, /리포트는 준비 중/, "mobile weekly card should not show extra helper detail text");
@@ -172,7 +174,7 @@ assert.doesNotMatch(mobileSection, /<span class="time">준비 중<\/span>|mobile
 assert.doesNotMatch(css, /\.mobile-report-card/, "mobile weekly report should not define a separate visual treatment");
 
 const homeQuickCardCount = (mobileSection.match(/class="quick-card"/g) || []).length;
-assert.ok(homeQuickCardCount <= 2, `mobile home should keep quick metrics concise, found ${homeQuickCardCount}`);
+assert.equal(homeQuickCardCount, 0, `mobile home should not split related summary stats into separate quick cards, found ${homeQuickCardCount}`);
 
 assert.doesNotMatch(mobileSection, /<button class="primary-action"[^>]*data-mobile-view="journal-write"/, "mobile home should not show a large write CTA");
 assert.match(mobileViewsBlock, /class="mobile-subject-card mobile-create-card"[^>]*data-mobile-view="journal-write"[\s\S]*<span class="mobile-create-symbol" aria-hidden="true">\+<\/span>[\s\S]*<span class="mobile-action-label">\uC2DC\uC791<\/span>/, "mobile journal writing entry should open the same write flow as PC");
