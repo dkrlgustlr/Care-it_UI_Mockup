@@ -94,7 +94,7 @@ while ((match = buttonPattern.exec(html))) {
   const attrs = match[1].replace(/\s+/g, " ").trim();
   const text = match[2].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
   const wired =
-    /data-(go-page|mobile-view|mobile-tab|mobile-open-tab|report-mode|calendar|month-picker|picker|subject-picker|open-profile-edit|close-profile-edit|desktop-fullscreen|mock-action)/.test(attrs) ||
+    /data-(go-page|mobile-view|mobile-tab|mobile-open-tab|report-mode|calendar|month-picker|picker|subject-picker|open-profile-edit|close-profile-edit|desktop-fullscreen|mobile-fullscreen|mock-action)/.test(attrs) ||
     /data-mobile-report-mode/.test(attrs) ||
     /data-save-profile/.test(attrs) ||
     /class="[^"]*(choice-chip|mobile-chip|nav-item|report-kind-button|calendar-day)/.test(attrs) ||

@@ -229,6 +229,39 @@
         box-shadow: var(--shadow-soft);
       }
 
+      body.mobile-fullscreen-active {
+        overflow: hidden;
+      }
+
+      body.mobile-fullscreen-active::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 1090;
+        background: rgba(10, 18, 24, 0.42);
+        backdrop-filter: blur(8px);
+      }
+
+      body.mobile-fullscreen-active [data-mobile-fullscreen-toggle] {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        z-index: 1110;
+        background: #ffffff;
+        box-shadow: var(--shadow-card);
+      }
+
+      .mobile-frame.mobile-fullscreen {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        z-index: 1100;
+        width: min(390px, calc(100vw - 32px));
+        height: min(844px, calc(100vh - 32px));
+        transform: translate(-50%, -50%);
+        box-shadow: 0 28px 80px rgba(0, 0, 0, 0.34);
+      }
+
       .mobile-screen {
         position: relative;
         height: 100%;
@@ -4495,7 +4528,13 @@
   <body>
     <main class="design-board">
       <section class="mobile-section">
-        <h2 class="section-title">Mobile / Parent Daily View</h2>
+        <div class="section-head">
+          <h2 class="section-title">Mobile / Parent Daily View</h2>
+          <button class="fullscreen-toggle" type="button" data-mobile-fullscreen-toggle aria-pressed="false">
+            <span aria-hidden="true">⛶</span>
+            <span data-mobile-fullscreen-label>모바일 전체화면</span>
+          </button>
+        </div>
         <div class="mobile-frame">
           <div class="mobile-screen">
             <div class="mobile-page">
@@ -6047,6 +6086,9 @@
       const mobileEyebrow = document.querySelector(".mobile-title-row .eyebrow");
       const mobileDate = document.querySelector(".mobile-date");
       const mobileContent = document.querySelector(".mobile-content");
+      const mobileFrame = document.querySelector(".mobile-frame");
+      const mobileFullscreenToggle = document.querySelector("[data-mobile-fullscreen-toggle]");
+      const mobileFullscreenLabel = document.querySelector("[data-mobile-fullscreen-label]");
       const desktopFrame = document.querySelector(".dashboard-frame");
       const desktopFullscreenToggle = document.querySelector("[data-desktop-fullscreen-toggle]");
       const desktopFullscreenLabel = document.querySelector("[data-desktop-fullscreen-label]");
@@ -6064,6 +6106,20 @@
         desktopFullscreenToggle.addEventListener("click", () => {
           const shouldOpen = !desktopFrame.classList.contains("desktop-fullscreen");
           setDesktopFullscreen(shouldOpen);
+        });
+      }
+
+      if (mobileFrame && mobileFullscreenToggle && mobileFullscreenLabel) {
+        const setMobileFullscreen = (isFullscreen) => {
+          mobileFrame.classList.toggle("mobile-fullscreen", isFullscreen);
+          document.body.classList.toggle("mobile-fullscreen-active", isFullscreen);
+          mobileFullscreenToggle.setAttribute("aria-pressed", String(isFullscreen));
+          mobileFullscreenLabel.textContent = isFullscreen ? "전체화면 종료" : "모바일 전체화면";
+        };
+
+        mobileFullscreenToggle.addEventListener("click", () => {
+          const shouldOpen = !mobileFrame.classList.contains("mobile-fullscreen");
+          setMobileFullscreen(shouldOpen);
         });
       }
 

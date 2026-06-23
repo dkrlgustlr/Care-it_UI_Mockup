@@ -19,6 +19,26 @@ assert.match(
   /desktopFrame\.classList\.toggle\("desktop-fullscreen"/,
   "desktop fullscreen toggle behavior should exist",
 );
+assert.match(
+  html,
+  /data-mobile-fullscreen-toggle/,
+  "mobile fullscreen toggle button should exist",
+);
+assert.match(
+  html,
+  /\.mobile-frame\.mobile-fullscreen/,
+  "mobile fullscreen CSS state should exist",
+);
+assert.match(
+  html,
+  /body\.mobile-fullscreen-active \[data-mobile-fullscreen-toggle\]/,
+  "mobile fullscreen toggle should stay above the overlay so users can close it",
+);
+assert.match(
+  html,
+  /mobileFrame\.classList\.toggle\("mobile-fullscreen"/,
+  "mobile fullscreen toggle behavior should exist",
+);
 assert.doesNotMatch(
   html,
   /requestFullscreen|exitFullscreen|fullscreenElement|fullscreenchange/,
