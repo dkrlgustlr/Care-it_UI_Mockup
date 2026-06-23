@@ -768,11 +768,59 @@
         box-shadow: var(--shadow-hairline);
       }
 
+      details.mobile-step-card,
+      details.mobile-collapsible-card {
+        overflow: hidden;
+      }
+
+      details.mobile-step-card:not([open]),
+      details.mobile-collapsible-card:not([open]) {
+        gap: 0;
+      }
+
+      details.mobile-step-card summary,
+      details.mobile-collapsible-card summary {
+        list-style: none;
+        cursor: pointer;
+      }
+
+      details.mobile-step-card summary::-webkit-details-marker,
+      details.mobile-collapsible-card summary::-webkit-details-marker {
+        display: none;
+      }
+
       .mobile-step-head {
         display: grid;
         grid-template-columns: auto minmax(0, 1fr);
         gap: var(--space-2);
         align-items: flex-start;
+        position: relative;
+        padding-right: 22px;
+      }
+
+      details.mobile-step-card .mobile-step-head::after,
+      details.mobile-collapsible-card .block-head::after {
+        content: "";
+        position: absolute;
+        right: 2px;
+        top: 8px;
+        width: 8px;
+        height: 8px;
+        border-right: 2px solid var(--care-muted);
+        border-bottom: 2px solid var(--care-muted);
+        transform: rotate(45deg);
+      }
+
+      details.mobile-step-card[open] .mobile-step-head::after,
+      details.mobile-collapsible-card[open] .block-head::after {
+        top: 12px;
+        transform: rotate(225deg);
+      }
+
+      details.mobile-collapsible-card .block-head {
+        position: relative;
+        margin: 0;
+        padding-right: 22px;
       }
 
       .mobile-step-number {
@@ -6363,11 +6411,11 @@
                 </div>
               </div>
             </section>
-            <section class="mobile-step-card">
-              <div class="mobile-step-head">
+            <details class="mobile-step-card" open>
+              <summary class="mobile-step-head">
                 <span class="mobile-step-number">1</span>
                 <span class="mobile-step-copy"><strong>빠른 체크</strong><span>기본 항목을 먼저 선택합니다.</span></span>
-              </div>
+              </summary>
               <div class="mobile-form-card">
                 <div class="mobile-section-head"><h4>식사 <span>끼니마다 하나만</span></h4><span>아침 · 점심 · 저녁</span></div>
                 <div class="mobile-quick-block">
@@ -6432,12 +6480,12 @@
                   </div>
                 </div>
               </div>
-            </section>
-            <section class="mobile-step-card">
-              <div class="mobile-step-head">
+            </details>
+            <details class="mobile-step-card">
+              <summary class="mobile-step-head">
                 <span class="mobile-step-number">2</span>
                 <span class="mobile-step-copy"><strong>오늘 기록 직접 입력</strong><span>필요한 발달 영역만 짧게 적어도 됩니다.</span></span>
-              </div>
+              </summary>
               <div class="mobile-form-card">
                 <div class="mobile-field-list">
                   <div class="mobile-field mobile-readable-field"><label><strong>신체·운동 발달</strong><span>대근육, 소근육, 감각, 건강, 기본생활 움직임</span></label><textarea class="mobile-textarea" placeholder="오늘 관찰한 움직임이나 건강 상태를 입력"></textarea></div>
@@ -6446,7 +6494,7 @@
                   <div class="mobile-field mobile-readable-field"><label><strong>사회·정서 발달</strong><span>또래관계, 애착, 자기조절, 감정표현, 규칙, 협동</span></label><textarea class="mobile-textarea" placeholder="감정 표현이나 관계 흐름을 입력"></textarea></div>
                 </div>
               </div>
-            </section>
+            </details>
             <div class="mobile-action-row">
               <button class="mobile-secondary-action" type="button" data-mobile-view="journal">임시 보관</button>
               <button class="mobile-primary-action" type="button" data-mobile-view="journal-draft">정리된 일지 확인</button>
@@ -6546,11 +6594,11 @@
           title: "리포트 작성",
           date: "주간 리포트",
           content: `
-            <section class="mobile-step-card">
-              <div class="mobile-step-head">
+            <details class="mobile-step-card" open>
+              <summary class="mobile-step-head">
                 <span class="mobile-step-number">1</span>
                 <span class="mobile-step-copy"><strong>리포트 작성 대상</strong><span>종류와 기간을 고르고 확인할 기록을 봅니다.</span></span>
-              </div>
+              </summary>
               <div class="mobile-form-card">
                 <div class="mobile-card-head"><h4>리포트 종류</h4><span>5월 11일 - 5월 17일</span></div>
                 <div class="mobile-chip-row mobile-report-mode-row">
@@ -6576,12 +6624,12 @@
                   </div>
                 </div>
               </div>
-            </section>
-            <section class="mobile-step-card">
-              <div class="mobile-step-head">
+            </details>
+            <details class="mobile-step-card">
+              <summary class="mobile-step-head">
                 <span class="mobile-step-number">2</span>
                 <span class="mobile-step-copy"><strong>리포트 미리보기</strong><span>작성 전에 요약과 발달 지원 내용을 확인합니다.</span></span>
-              </div>
+              </summary>
               <div class="mobile-form-card">
                 <div class="mobile-report-title">
                   <span>김도윤 · 2026년 5월 2주차</span>
@@ -6634,7 +6682,7 @@
                   <p class="mobile-note">이번 주 기록에서는 말로만 안내하기보다 그림이나 순서표를 함께 보여줬을 때 활동이 더 잘 이어졌습니다. 다음 주에는 그림 순서표를 보며 집게로 작은 물건 옮기기, 스티커 떼기처럼 보고 손으로 따라 하는 짧은 활동을 참고로 남겨볼 수 있습니다.</p>
                 </div>
               </div>
-            </section>
+            </details>
             <div class="mobile-action-row">
               <button class="mobile-secondary-action" type="button" data-mobile-view="report">다시 선택</button>
               <button class="mobile-primary-action" type="button" data-mobile-view="report-result">리포트 작성</button>
@@ -6970,11 +7018,11 @@
                 </div>
               </div>
             </section>
-            <section class="mobile-step-card">
-              <div class="mobile-step-head">
+            <details class="mobile-step-card" open>
+              <summary class="mobile-step-head">
                 <span class="mobile-step-number">1</span>
                 <span class="mobile-step-copy"><strong>빠른 체크</strong><span>기본 항목을 먼저 선택합니다.</span></span>
-              </div>
+              </summary>
               <div class="mobile-form-card">
                 <div class="mobile-section-head"><h4>식사 <span>끼니마다 하나만</span></h4><span>아침 · 점심 · 저녁</span></div>
                 <div class="mobile-quick-block">
@@ -7039,12 +7087,12 @@
                   </div>
                 </div>
               </div>
-            </section>
-            <section class="mobile-step-card">
-              <div class="mobile-step-head">
+            </details>
+            <details class="mobile-step-card">
+              <summary class="mobile-step-head">
                 <span class="mobile-step-number">2</span>
                 <span class="mobile-step-copy"><strong>오늘 기록 직접 입력</strong><span>필요한 발달 영역만 짧게 적어도 됩니다.</span></span>
-              </div>
+              </summary>
               <div class="mobile-form-card">
                 <div class="mobile-field mobile-readable-field">
                   <label><strong>신체·운동 발달</strong><span>대근육, 소근육, 감각, 건강, 기본생활 움직임</span></label>
@@ -7063,7 +7111,7 @@
                   <textarea class="mobile-textarea" placeholder="감정 표현이나 관계 흐름을 입력"></textarea>
                 </div>
               </div>
-            </section>
+            </details>
             <div class="mobile-action-row">
               <button class="mobile-secondary-action" type="button" data-mobile-view="journal">임시 보관</button>
               <button class="mobile-primary-action" type="button" data-mobile-view="journal-draft">정리된 일지 확인</button>
@@ -7189,11 +7237,11 @@
           title: "리포트 작성",
           date: "주간 리포트",
           content: `
-            <section class="mobile-step-card">
-              <div class="mobile-step-head">
+            <details class="mobile-step-card" open>
+              <summary class="mobile-step-head">
                 <span class="mobile-step-number">1</span>
                 <span class="mobile-step-copy"><strong>리포트 작성 대상</strong><span>종류와 기간을 고르고 확인할 기록을 봅니다.</span></span>
-              </div>
+              </summary>
               <div class="mobile-form-card">
                 <div class="mobile-card-head"><h4>리포트 종류</h4><span data-mobile-report-range>5월 11일 - 5월 17일</span></div>
                 <div class="mobile-chip-row mobile-report-mode-row">
@@ -7219,12 +7267,12 @@
                   </div>
                 </div>
               </div>
-            </section>
-            <section class="mobile-step-card">
-              <div class="mobile-step-head">
+            </details>
+            <details class="mobile-step-card">
+              <summary class="mobile-step-head">
                 <span class="mobile-step-number">2</span>
                 <span class="mobile-step-copy"><strong>리포트 미리보기</strong><span>작성 전에 요약과 발달 지원 내용을 확인합니다.</span></span>
-              </div>
+              </summary>
               <div class="mobile-form-card">
                 <div class="mobile-report-title">
                   <span data-mobile-report-meta>김도윤 · 2026년 5월 2주차</span>
@@ -7277,7 +7325,7 @@
                   <p class="mobile-note">이번 주 기록에서는 말로만 안내하기보다 그림이나 순서표를 함께 보여줬을 때 활동이 더 잘 이어졌습니다. 다음 주에는 그림 순서표를 보며 집게로 작은 물건 옮기기, 스티커 떼기처럼 보고 손으로 따라 하는 짧은 활동을 참고로 남겨볼 수 있습니다.</p>
                 </div>
               </div>
-            </section>
+            </details>
             <div class="mobile-action-row">
               <button class="mobile-secondary-action" type="button" data-mobile-view="report">다시 선택</button>
               <button class="mobile-primary-action" type="button" data-mobile-view="report-result">리포트 작성</button>
@@ -7295,22 +7343,22 @@
               <strong>이번 주 지원 포인트는 활동 전 안내와 휴식 뒤 재참여입니다.</strong>
               <p>가정에서도 짧은 순서 안내를 먼저 보여주는 방식이 도움이 될 수 있습니다.</p>
             </section>
-            <section class="content-block">
-              <div class="block-head"><h3>발달 영역별 기록</h3></div>
+            <details class="content-block mobile-collapsible-card">
+              <summary class="block-head"><h3>발달 영역별 기록</h3></summary>
               <div class="mobile-form-card">
                 <div class="mobile-preview-card"><h4>신체·운동 발달</h4><p>손 조작과 이동 활동은 짧은 휴식 뒤 다시 이어졌습니다.</p></div>
                 <div class="mobile-preview-card"><h4>인지 발달</h4><p>순서표를 보면 다음 활동을 더 쉽게 기억했습니다.</p></div>
                 <div class="mobile-preview-card"><h4>언어·의사소통 발달</h4><p>말과 손짓으로 원하는 활동을 표현했습니다.</p></div>
                 <div class="mobile-preview-card"><h4>사회·정서 발달</h4><p>감정이 올라온 뒤 쉬고 다시 참여하는 흐름이 보였습니다.</p></div>
               </div>
-            </section>
-            <section class="content-block">
-              <div class="block-head"><h3>다음에 보면 좋은 것</h3></div>
+            </details>
+            <details class="content-block mobile-collapsible-card">
+              <summary class="block-head"><h3>다음에 보면 좋은 것</h3></summary>
               <div class="mobile-preview-card">
                 <h4>가정 연계</h4>
                 <p>활동을 시작하기 전에 그림이나 순서를 먼저 보여주고, 쉬는 시간이 끝난 뒤 다시 참여하기까지 걸리는 시간을 함께 봅니다.</p>
               </div>
-            </section>
+            </details>
             <div class="mobile-action-row">
               <button class="mobile-secondary-action" type="button" data-mobile-view="report">목록으로</button>
               <button class="mobile-primary-action" type="button" data-mobile-view="profile-edit">가정 메모 남기기</button>

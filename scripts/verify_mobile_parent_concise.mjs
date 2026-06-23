@@ -219,11 +219,14 @@ assert.match(mobileViewsBlock, />가정 메모 남기기</, "mobile parent flow 
 
 assert.match(journalWriteContent, /class="mobile-step-card"[\s\S]*class="mobile-step-number">1<\/span>[\s\S]*<strong>빠른 체크<\/strong>/, "mobile journal writing should present the quick check as a readable step");
 assert.match(journalWriteContent, /class="mobile-step-card"[\s\S]*class="mobile-step-number">2<\/span>[\s\S]*<strong>오늘 기록 직접 입력<\/strong>/, "mobile journal writing should present direct input as a readable step");
+assert.match(journalWriteContent, /<details class="mobile-step-card" open>[\s\S]*<strong>빠른 체크<\/strong>[\s\S]*<details class="mobile-step-card">[\s\S]*<strong>오늘 기록 직접 입력<\/strong>/, "mobile journal writing should keep the first step open and collapse long direct input by default");
 assert.match(journalWriteContent, /class="[^"]*mobile-readable-field[^"]*"[\s\S]*<strong>신체·운동 발달<\/strong>[\s\S]*대근육, 소근육, 감각, 건강, 기본생활 움직임/, "mobile journal writing should split development textareas into readable field blocks");
 assert.match(journalDraftContent, /class="[^"]*mobile-readable-field[^"]*"[\s\S]*<strong>신체·운동 발달<\/strong>[\s\S]*수정 가능/, "mobile journal review should keep editable development fields readable");
 assert.match(reportWriteContent, /class="mobile-step-card"[\s\S]*class="mobile-step-number">1<\/span>[\s\S]*<strong>리포트 작성 대상<\/strong>/, "mobile report writing should present report setup as a readable step");
 assert.match(reportWriteContent, /class="[^"]*mobile-report-mode-row[^"]*"[\s\S]*data-mobile-report-mode="weekly"[\s\S]*data-mobile-report-mode="monthly"/, "mobile report writing should show weekly and monthly report options as a clear segmented choice");
 assert.match(reportWriteContent, /class="mobile-step-card"[\s\S]*class="mobile-step-number">2<\/span>[\s\S]*<strong>리포트 미리보기<\/strong>/, "mobile report writing should present preview as the next readable step");
+assert.match(reportWriteContent, /<details class="mobile-step-card" open>[\s\S]*<strong>리포트 작성 대상<\/strong>[\s\S]*<details class="mobile-step-card">[\s\S]*<strong>리포트 미리보기<\/strong>/, "mobile report writing should keep setup open and collapse the long preview by default");
+assert.match(mobileViewsBlock, /"report-result":\s*\{[\s\S]*<details class="content-block mobile-collapsible-card">[\s\S]*발달 영역별 기록[\s\S]*<details class="content-block mobile-collapsible-card">[\s\S]*다음에 보면 좋은 것/, "mobile report result should keep detailed sections collapsible under the summary");
 assert.doesNotMatch(mobileSurface, /<span class="mobile-step-copy"><strong>[12]\./, "mobile step copy should not repeat the visible step number in the title");
 assert.doesNotMatch(mobileSurface, /PC와 같은/, "mobile user-facing helper copy should not reference the PC mockup");
 assert.doesNotMatch(reportWriteContent, /누락 기록|누락 1건/, "mobile report setup should use plain user-facing confirmation wording instead of missing-record jargon");
