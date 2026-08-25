@@ -170,6 +170,10 @@
       }
 
       .mobile-section {
+        display: none;
+      }
+
+      .mobile-section {
         width: 420px;
       }
 
@@ -1574,6 +1578,48 @@
         gap: var(--space-2);
       }
 
+      .menu-toggle {
+        display: none;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border: 0;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--care-text);
+        cursor: pointer;
+      }
+
+      .menu-toggle__lines,
+      .menu-toggle__lines::before,
+      .menu-toggle__lines::after {
+        display: block;
+        width: 18px;
+        height: 2px;
+        border-radius: 999px;
+        background: currentColor;
+      }
+
+      .menu-toggle__lines {
+        position: relative;
+      }
+
+      .menu-toggle__lines::before,
+      .menu-toggle__lines::after {
+        position: absolute;
+        left: 0;
+        content: "";
+      }
+
+      .menu-toggle__lines::before {
+        top: -6px;
+      }
+
+      .menu-toggle__lines::after {
+        top: 6px;
+      }
+
       .nav-item {
         display: flex;
         align-items: center;
@@ -1629,12 +1675,12 @@
         overscroll-behavior: contain;
         padding: var(--space-8) var(--space-9) var(--space-9);
         background: #f8fafb;
-        scrollbar-gutter: stable;
-        scrollbar-color: rgba(100, 116, 139, 0.34) transparent;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
       }
 
       .main::-webkit-scrollbar {
-        width: 10px;
+        display: none;
       }
 
       .main::-webkit-scrollbar-track {
@@ -2294,6 +2340,33 @@
       .workspace-grid.reports {
         grid-template-columns: 0.82fr 1.38fr;
         min-height: 0;
+      }
+
+      .desktop-page[data-page="reports"] > .workspace-grid {
+        display: none;
+      }
+
+      .desktop-page[data-page="reports"] > .desktop-topbar {
+        order: 1;
+      }
+
+      .report-subject-panel {
+        order: 2;
+        flex: 0 0 auto;
+        min-height: 0;
+        height: auto;
+        margin-bottom: var(--space-5);
+      }
+
+      .care-report-frame {
+        display: block;
+        order: 3;
+        flex: 0 0 auto;
+        width: 100%;
+        min-height: 640px;
+        border: 0;
+        border-radius: 0;
+        background: #f8fafb;
       }
 
       .workspace-grid.report-result {
@@ -4556,6 +4629,67 @@
         }
       }
 
+      .design-board {
+        gap: 0;
+        padding: 0;
+      }
+
+      .desktop-section {
+        width: 100%;
+      }
+
+      .desktop-section > .section-head {
+        display: none;
+      }
+
+      .dashboard-frame {
+        width: 100%;
+        height: 100vh;
+        min-height: 100vh;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      @media (max-width: 900px) {
+        .sidebar {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: var(--space-4);
+          overflow: visible;
+        }
+
+        .menu-toggle {
+          display: grid;
+          flex: 0 0 auto;
+        }
+
+        .nav {
+          position: absolute;
+          top: calc(100% - var(--space-3));
+          right: var(--space-4);
+          z-index: 30;
+          display: none;
+          width: min(264px, calc(100vw - 32px));
+          padding: var(--space-2);
+          overflow: visible;
+          border-radius: var(--radius-md);
+          background: #ffffff;
+          box-shadow: var(--shadow-card);
+        }
+
+        .nav.is-open {
+          display: grid;
+        }
+
+        .nav-item {
+          width: 100%;
+          min-height: 42px;
+          padding: 0 var(--space-3);
+        }
+      }
+
       @media (prefers-reduced-motion: reduce) {
         *,
         *::before,
@@ -4683,6 +4817,9 @@
                 <span class="brand-mark"></span>
                 <img class="brand-logo" src="output/logo/care-it-logo-c-transparent-bold-wordmark-v2.png" alt="Care-it" />
               </div>
+              <button class="menu-toggle" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="primaryNav" data-menu-toggle>
+                <span class="menu-toggle__lines" aria-hidden="true"></span>
+              </button>
               <div class="account-card">
                 <div class="account-head">
                   <span class="account-name">현식님</span>
@@ -4692,7 +4829,7 @@
                   <span>hyunsik@care-it.kr</span>
                 </div>
               </div>
-              <nav class="nav" aria-label="PC 메뉴">
+              <nav class="nav" id="primaryNav" aria-label="PC 메뉴">
                 <button class="nav-item active" data-page="dashboard"><span class="nav-dot"></span>대시보드</button>
                 <button class="nav-item" data-page="profiles"><span class="nav-dot"></span>대상자 관리</button>
                 <button class="nav-item" data-page="journals"><span class="nav-dot"></span>일지·리포트 관리</button>
@@ -5558,7 +5695,40 @@
                     <p class="eyebrow">개인 돌봄이</p>
                     <h1>리포트 작성</h1>
                   </div>
+                  <div class="desktop-actions">
+                    <button class="outline-button" type="button" data-go-page="journal-write">일지 작성</button>
+                    <button class="solid-button" type="button" data-print-report>인쇄 · PDF</button>
+                  </div>
                 </div>
+
+                <section class="panel journal-subject-panel report-subject-panel" aria-label="리포트 작성 대상">
+                  <div class="journal-subject-main">
+                    <span>작성 대상</span>
+                    <strong data-journal-subject-name>김도윤</strong>
+                    <p><span data-journal-subject-owner>정민아 활동지원사</span> · <span data-journal-subject-status>오늘 일지 작성 필요</span></p>
+                  </div>
+                  <div class="journal-subject-switch" data-subject-picker aria-label="리포트 작성 대상 선택">
+                    <div class="subject-picker-summary">
+                      <span class="subject-picker-count" data-journal-subject-count>전체 5명 중 1명 선택</span>
+                      <button type="button" class="subject-picker-toggle" data-subject-picker-toggle aria-expanded="false">대상자 변경</button>
+                    </div>
+                    <div class="subject-picker-popover" data-subject-picker-popover hidden>
+                      <div class="subject-picker-head">
+                        <div>
+                          <strong>대상자 선택</strong>
+                          <span>리포트 작성 대상을 선택하세요.</span>
+                        </div>
+                      </div>
+                      <div class="subject-picker-list" data-subject-picker-list></div>
+                    </div>
+                  </div>
+                </section>
+
+                <iframe
+                  class="care-report-frame"
+                  src="careit-report.html?embedded=1"
+                  title="케어릿 케어 리포트"
+                ></iframe>
 
                 <div class="workspace-grid reports">
                   <section class="panel">
@@ -6128,6 +6298,8 @@
 
     <script>
       const navItems = document.querySelectorAll(".nav-item[data-page]");
+      const menuToggle = document.querySelector("[data-menu-toggle]");
+      const primaryNav = document.querySelector("#primaryNav");
       const desktopPages = document.querySelectorAll(".desktop-page[data-page]");
       const mobileTabs = document.querySelectorAll("[data-mobile-tab]");
       const mobileTitle = document.querySelector(".mobile-title");
@@ -6142,6 +6314,31 @@
       const desktopFullscreenLabel = document.querySelector("[data-desktop-fullscreen-label]");
       let refreshReportPage = () => {};
       let selectedMobileReportMode = "weekly";
+
+      const closeMenu = () => {
+        if (!menuToggle || !primaryNav) return;
+        primaryNav.classList.remove("is-open");
+        menuToggle.setAttribute("aria-expanded", "false");
+        menuToggle.setAttribute("aria-label", "메뉴 열기");
+      };
+
+      if (menuToggle && primaryNav) {
+        menuToggle.addEventListener("click", () => {
+          const isOpen = primaryNav.classList.toggle("is-open");
+          menuToggle.setAttribute("aria-expanded", String(isOpen));
+          menuToggle.setAttribute("aria-label", isOpen ? "메뉴 닫기" : "메뉴 열기");
+        });
+
+        document.addEventListener("click", (event) => {
+          if (!primaryNav.classList.contains("is-open")) return;
+          if (event.target.closest(".sidebar")) return;
+          closeMenu();
+        });
+
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") closeMenu();
+        });
+      }
 
       if (desktopFrame && desktopFullscreenToggle && desktopFullscreenLabel) {
         const setDesktopFullscreen = (isFullscreen) => {
@@ -7563,12 +7760,18 @@
           page.classList.toggle("active", page.dataset.page === targetPage);
         });
 
-        if (targetPage === "reports") refreshReportPage();
+        if (targetPage === "reports") {
+          refreshReportPage();
+          scoreAnimationShown = false;
+          careMapAnimationShown = false;
+          requestAnimationFrame(triggerReportGraphAnimations);
+        }
       };
 
       navItems.forEach((item) => {
         item.addEventListener("click", () => {
           activateDesktopPage(item.dataset.page);
+          closeMenu();
         });
       });
 
@@ -7580,6 +7783,74 @@
           activateDesktopPage(button.dataset.goPage);
         });
       });
+
+      const careReportFrame = document.querySelector(".care-report-frame");
+      const reportMain = document.querySelector(".main");
+      let scoreAnimationShown = false;
+      let careMapAnimationShown = false;
+      let reportGraphTargets = null;
+
+      const isReportSectionVisible = (targetTop) => {
+        if (!reportMain || !careReportFrame || !Number.isFinite(targetTop)) return false;
+
+        const frameTop = careReportFrame.getBoundingClientRect().top;
+        const sectionTop = frameTop + targetTop;
+        const viewport = reportMain.getBoundingClientRect();
+
+        return sectionTop >= viewport.top + 72 && sectionTop < viewport.bottom - 72;
+      };
+
+      const triggerReportGraphAnimations = () => {
+        if (!document.querySelector('.desktop-page[data-page="reports"]')?.classList.contains("active")) return;
+
+        if (!scoreAnimationShown && isReportSectionVisible(reportGraphTargets?.scoreTop)) {
+          scoreAnimationShown = true;
+          careReportFrame.contentWindow?.postMessage({ type: "care-report-score-visible" }, "*");
+        }
+
+        if (!careMapAnimationShown && isReportSectionVisible(reportGraphTargets?.radarTop)) {
+          careMapAnimationShown = true;
+          careReportFrame.contentWindow?.postMessage({ type: "care-report-radar-visible" }, "*");
+        }
+      };
+
+      reportMain?.addEventListener("scroll", triggerReportGraphAnimations, { passive: true });
+
+      const syncCareReportHeight = () => {
+        careReportFrame?.contentWindow?.postMessage({ type: "care-report-height-request" }, "*");
+      };
+
+      careReportFrame?.addEventListener("load", () => {
+        syncCareReportHeight();
+        careReportFrame.contentWindow?.postMessage({ type: "care-report-height-request" }, "*");
+        requestAnimationFrame(triggerReportGraphAnimations);
+      });
+
+      window.addEventListener("message", (event) => {
+        if (event.data?.type === "care-report-subject-request") {
+          setJournalSubject(selectedJournalSubjectIndex);
+          return;
+        }
+        if (event.data?.type === "care-report-graph-targets") {
+          reportGraphTargets = event.data.targets;
+          requestAnimationFrame(triggerReportGraphAnimations);
+          return;
+        }
+        if (event.data?.type !== "care-report-height" || !Number.isFinite(event.data.height)) return;
+        if (careReportFrame) careReportFrame.style.height = `${event.data.height}px`;
+        requestAnimationFrame(triggerReportGraphAnimations);
+      });
+
+      document.querySelector("[data-print-report]")?.addEventListener("click", () => {
+        careReportFrame?.contentWindow?.print();
+      });
+
+      syncCareReportHeight();
+
+      const requestedPage = new URLSearchParams(window.location.search).get("view");
+      if (requestedPage && document.querySelector(`.desktop-page[data-page="${requestedPage}"]`)) {
+        activateDesktopPage(requestedPage);
+      }
 
       document.addEventListener("click", (event) => {
         const actionButton = event.target.closest("[data-mock-action]");
@@ -7885,6 +8156,15 @@
         },
       ];
 
+      const syncCareReportSubject = () => {
+        const subject = profileData[selectedJournalSubjectIndex];
+        if (!subject) return;
+        careReportFrame?.contentWindow?.postMessage(
+          { type: "care-report-subject", subject: { name: subject.name, owner: subject.owner } },
+          "*",
+        );
+      };
+
       const getJournalSubjectIndex = (value) => {
         const index = Number(value);
         if (!Number.isInteger(index)) return selectedJournalSubjectIndex;
@@ -7992,6 +8272,7 @@
           item.textContent = statusText;
         });
         renderSubjectPickerList();
+        syncCareReportSubject();
       };
 
       document.querySelectorAll("[data-subject-picker-toggle]").forEach((button) => {
