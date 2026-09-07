@@ -2218,6 +2218,13 @@
         background: var(--care-mint-soft);
       }
 
+      .score-question-add:disabled {
+        border-color: var(--care-border);
+        background: var(--care-neutral-soft);
+        color: var(--care-muted);
+        cursor: not-allowed;
+      }
+
       .score-criteria-modal .modal-actions {
         position: sticky;
         bottom: calc(var(--space-6) * -1);
@@ -6571,7 +6578,7 @@
 
         <div class="score-criteria-summary">
           <strong>현재 문항 <span data-score-criteria-total>59개</span></strong>
-          <span>저장한 기준은 다음 리포트 채점에 사용됩니다.</span>
+          <span>맞춤 문항 <b data-score-criteria-custom-count>0/15개</b> · 문항당 100자 이내</span>
         </div>
 
         <div class="score-criteria-list" data-score-criteria-list></div>
@@ -8358,27 +8365,50 @@
       ];
 
       const scoreCriteriaStorageKey = "careit-score-criteria-v1";
-      const cloneScoreCriteria = (criteria) => JSON.parse(JSON.stringify(criteria));
+      const maxCustomScoreQuestions = 15;
+      const maxScoreQuestionLength = 100;
+      const createDefaultScoreCriteria = () => scoreCriteriaDefaults.map((domain) => ({
+        id: domain.id,
+        title: domain.title,
+        questions: [...domain.questions],
+        customQuestionCount: 0,
+      }));
       const normalizeScoreCriteria = (criteria) => {
-        if (!Array.isArray(criteria)) return cloneScoreCriteria(scoreCriteriaDefaults);
+        if (!Array.isArray(criteria)) return createDefaultScoreCriteria();
 
+        let remainingCustomQuestions = maxCustomScoreQuestions;
         return scoreCriteriaDefaults.map((defaultDomain) => {
           const savedDomain = criteria.find((domain) => domain?.id === defaultDomain.id);
           const title = typeof savedDomain?.title === "string" && savedDomain.title.trim()
             ? savedDomain.title.trim()
             : defaultDomain.title;
           const questions = Array.isArray(savedDomain?.questions)
-            ? savedDomain.questions.filter((question) => typeof question === "string" && question.trim()).map((question) => question.trim())
-            : defaultDomain.questions;
+            ? savedDomain.questions
+              .filter((question) => typeof question === "string" && question.trim())
+              .map((question) => question.trim().slice(0, maxScoreQuestionLength))
+            : [...defaultDomain.questions];
+          const legacyCustomCount = Math.max(0, questions.length - defaultDomain.questions.length);
+          const requestedCustomQuestionCount = Math.min(
+            Math.max(0, Number(savedDomain?.customQuestionCount) || legacyCustomCount),
+            questions.length,
+          );
+          const customQuestionCount = Math.min(requestedCustomQuestionCount, remainingCustomQuestions);
+          remainingCustomQuestions -= customQuestionCount;
+          const removedCustomQuestionCount = requestedCustomQuestionCount - customQuestionCount;
 
-          return { id: defaultDomain.id, title, questions };
+          return {
+            id: defaultDomain.id,
+            title,
+            questions: removedCustomQuestionCount ? questions.slice(0, -removedCustomQuestionCount) : questions,
+            customQuestionCount,
+          };
         });
       };
       const loadScoreCriteria = () => {
         try {
           return normalizeScoreCriteria(JSON.parse(window.localStorage.getItem(scoreCriteriaStorageKey)));
         } catch {
-          return cloneScoreCriteria(scoreCriteriaDefaults);
+          return createDefaultScoreCriteria();
         }
       };
       const escapeScoreCriteriaHtml = (value) => String(value)
@@ -8391,12 +8421,16 @@
       const scoreCriteriaModal = document.querySelector("[data-score-criteria-modal]");
       const scoreCriteriaList = document.querySelector("[data-score-criteria-list]");
       const scoreCriteriaTotal = document.querySelector("[data-score-criteria-total]");
+      const scoreCriteriaCustomCount = document.querySelector("[data-score-criteria-custom-count]");
       const getScoreCriteriaTotal = () => scoreCriteria.reduce((total, domain) => total + domain.questions.length, 0);
+      const getCustomScoreQuestionTotal = () => scoreCriteria.reduce((total, domain) => total + domain.customQuestionCount, 0);
 
       const renderScoreCriteria = () => {
         if (!scoreCriteriaList) return;
 
         if (scoreCriteriaTotal) scoreCriteriaTotal.textContent = `${getScoreCriteriaTotal()}개`;
+        if (scoreCriteriaCustomCount) scoreCriteriaCustomCount.textContent = `${getCustomScoreQuestionTotal()}/${maxCustomScoreQuestions}개`;
+        const canAddCustomQuestion = getCustomScoreQuestionTotal() < maxCustomScoreQuestions;
         scoreCriteriaList.innerHTML = scoreCriteria
           .map((domain) => `
             <article class="score-domain-card" data-score-domain="${domain.id}">
@@ -8409,13 +8443,13 @@
                   .map((question, index) => `
                     <div class="score-question-row">
                       <span class="score-question-number">${index + 1}</span>
-                      <textarea class="score-question-input" rows="2" aria-label="${escapeScoreCriteriaHtml(domain.title)} ${index + 1}번 문항" data-score-question-index="${index}">${escapeScoreCriteriaHtml(question)}</textarea>
+                      <textarea class="score-question-input" rows="2" maxlength="${maxScoreQuestionLength}" aria-label="${escapeScoreCriteriaHtml(domain.title)} ${index + 1}번 문항" data-score-question-index="${index}">${escapeScoreCriteriaHtml(question)}</textarea>
                       <button class="score-question-remove" type="button" data-remove-score-question="${index}">삭제</button>
                     </div>
                   `)
                   .join("")}
               </div>
-              <button class="score-question-add" type="button" data-add-score-question>+ 맞춤 문항 추가</button>
+              <button class="score-question-add" type="button" data-add-score-question ${canAddCustomQuestion ? "" : "disabled"}>+ 맞춤 문항 추가 (${getCustomScoreQuestionTotal()}/${maxCustomScoreQuestions})</button>
             </article>
           `)
           .join("");
@@ -8443,7 +8477,12 @@
         if (!domain) return;
 
         if (event.target.closest("[data-add-score-question]")) {
+          if (getCustomScoreQuestionTotal() >= maxCustomScoreQuestions) {
+            showMockToast(`맞춤 문항은 전체 영역에서 최대 ${maxCustomScoreQuestions}개까지 추가할 수 있습니다.`);
+            return;
+          }
           domain.questions.push("새 맞춤 문항을 입력하세요.");
+          domain.customQuestionCount += 1;
           renderScoreCriteria();
           const inputs = scoreCriteriaList?.querySelector(`[data-score-domain="${domain.id}"]`)?.querySelectorAll(".score-question-input");
           inputs?.[inputs.length - 1]?.focus();
@@ -8452,7 +8491,10 @@
 
         const removeButton = event.target.closest("[data-remove-score-question]");
         if (removeButton) {
-          domain.questions.splice(Number(removeButton.dataset.removeScoreQuestion), 1);
+          const questionIndex = Number(removeButton.dataset.removeScoreQuestion);
+          const firstCustomQuestionIndex = domain.questions.length - domain.customQuestionCount;
+          if (questionIndex >= firstCustomQuestionIndex) domain.customQuestionCount -= 1;
+          domain.questions.splice(questionIndex, 1);
           renderScoreCriteria();
         }
       });
@@ -8468,12 +8510,12 @@
         }
 
         if (event.target.matches("[data-score-question-index]")) {
-          domain.questions[Number(event.target.dataset.scoreQuestionIndex)] = event.target.value;
+          domain.questions[Number(event.target.dataset.scoreQuestionIndex)] = event.target.value.slice(0, maxScoreQuestionLength);
         }
       });
 
       document.querySelector("[data-reset-score-criteria]")?.addEventListener("click", () => {
-        scoreCriteria = cloneScoreCriteria(scoreCriteriaDefaults);
+        scoreCriteria = createDefaultScoreCriteria();
         renderScoreCriteria();
         showMockToast("기본 59문항으로 복원했습니다. 저장하면 적용됩니다.");
       });
@@ -8486,7 +8528,7 @@
           // Local file previews may block storage; the current screen still keeps the edited criteria.
         }
         renderScoreCriteria();
-        showMockToast(`채점 기준 ${getScoreCriteriaTotal()}문항을 저장했습니다.`);
+        showMockToast(`채점 기준 ${getScoreCriteriaTotal()}문항과 맞춤 문항 ${getCustomScoreQuestionTotal()}개를 저장했습니다.`);
       });
 
       document.addEventListener("keydown", (event) => {
