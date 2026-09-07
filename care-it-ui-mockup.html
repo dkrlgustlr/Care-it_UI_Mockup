@@ -2234,6 +2234,37 @@
         background: var(--care-surface-raised);
       }
 
+      .score-template-control {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        margin-right: auto;
+      }
+
+      .score-template-control label {
+        color: var(--care-muted);
+        font-size: var(--font-caption);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .score-template-select {
+        min-height: 40px;
+        padding: 0 34px 0 var(--space-3);
+        border: 0;
+        border-radius: var(--radius-sm);
+        background: var(--care-neutral-soft);
+        color: var(--care-text);
+        font: inherit;
+        font-size: var(--font-caption);
+        font-weight: 700;
+      }
+
+      .score-template-select:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(5, 166, 107, 0.2);
+      }
+
       @media (max-width: 720px) {
         .modal-backdrop {
           align-items: stretch;
@@ -2283,6 +2314,16 @@
           bottom: calc(var(--space-5) * -1);
           margin: var(--space-5) calc(var(--space-4) * -1) calc(var(--space-5) * -1);
           padding: var(--space-3) var(--space-4);
+        }
+
+        .score-template-control {
+          width: 100%;
+          margin-right: 0;
+        }
+
+        .score-template-select {
+          flex: 1;
+          min-width: 0;
         }
       }
 
@@ -6584,7 +6625,14 @@
         <div class="score-criteria-list" data-score-criteria-list></div>
 
         <div class="modal-actions">
-          <button class="outline-button" type="button" data-reset-score-criteria>기본 문항 복원</button>
+          <div class="score-template-control">
+            <label for="score-template-select">템플릿 변경</label>
+            <select id="score-template-select" class="score-template-select" data-score-template-select>
+              <option value="nuri">누리과정 · 3~5세</option>
+              <option value="elementary-lower">초등 교육과정 기반 · 1~2학년</option>
+              <option value="elementary-upper">초등 교육과정 기반 · 3~6학년</option>
+            </select>
+          </div>
           <button class="solid-button" type="button" data-save-score-criteria>저장</button>
         </div>
       </section>
@@ -8364,20 +8412,41 @@
         },
       ];
 
+      const elementaryLowerCriteria = [
+        { id: "korean", title: "국어", questions: ["말하는 이를 바라보며 핵심 내용을 듣는다.", "자신의 경험과 생각을 문장으로 표현한다.", "글과 그림 자료에서 필요한 정보를 찾는다.", "읽은 내용과 자신의 경험을 연결해 말한다.", "목적에 맞게 짧은 글이나 그림으로 표현한다."] },
+        { id: "math", title: "수학", questions: ["생활 속 수량을 세고 비교한다.", "규칙을 찾아 다음 모양이나 수를 예상한다.", "여러 방법으로 덧셈과 뺄셈 상황을 해결한다.", "위치와 방향을 이해하고 표현한다.", "길이와 들이, 무게를 비교해 본다."] },
+        { id: "right-life", title: "바른 생활", questions: ["일과에 필요한 약속과 규칙을 지킨다.", "자신과 다른 사람의 기분을 살피고 배려한다.", "맡은 일을 끝까지 해 보려 한다.", "안전한 생활 습관을 실천한다."] },
+        { id: "wise-life", title: "슬기로운 생활", questions: ["주변 사람과 장소, 일에 관심을 보인다.", "계절과 날씨의 변화를 관찰한다.", "관찰한 내용을 기준에 따라 분류한다.", "궁금한 점을 탐색하며 해결 방법을 찾는다."] },
+        { id: "joyful-life", title: "즐거운 생활", questions: ["노래와 움직임을 즐기며 표현한다.", "미술 재료와 도구를 탐색해 표현한다.", "놀이에 자신의 생각을 더해 참여한다.", "친구의 표현을 보고 함께 즐긴다."] },
+      ];
+      const elementaryUpperCriteria = [
+        { id: "korean", title: "국어", questions: ["글의 중심 내용을 파악한다.", "근거를 들어 자신의 의견을 말하거나 쓴다.", "상대와 목적에 맞게 대화한다.", "다양한 글과 매체를 비판적으로 이해한다.", "읽은 내용을 요약하고 자신의 생각을 표현한다."] },
+        { id: "math", title: "수학", questions: ["문제 상황에 맞는 계산 방법을 선택한다.", "규칙과 관계를 식이나 표로 표현한다.", "자료를 수집하고 표와 그래프로 나타낸다.", "도형의 성질을 활용해 문제를 해결한다.", "해결 과정을 설명하고 다른 방법을 비교한다."] },
+        { id: "social", title: "사회", questions: ["공동체에서 지켜야 할 규칙과 책임을 이해한다.", "사회 현상을 다양한 관점에서 살펴본다.", "자료를 바탕으로 자신의 의견을 근거 있게 표현한다.", "지역사회와 세계의 변화에 관심을 보인다.", "협력하여 공동의 문제 해결에 참여한다."] },
+        { id: "science", title: "과학", questions: ["자연 현상에 대해 질문하고 관찰한다.", "예상과 실험을 통해 탐구한다.", "탐구 결과를 자료로 정리하고 설명한다.", "과학 원리를 생활 문제에 적용한다.", "환경과 생명을 존중하는 태도를 실천한다."] },
+        { id: "arts-pe", title: "예술·체육", questions: ["음악과 미술, 움직임으로 생각과 느낌을 표현한다.", "다양한 표현 방식을 감상하고 의견을 나눈다.", "신체 활동에 꾸준히 참여하며 안전을 지킨다.", "협력과 규칙이 필요한 활동에 참여한다.", "건강한 생활 습관을 스스로 실천한다."] },
+      ];
+      const scoreCriteriaTemplates = {
+        nuri: { label: "누리과정 · 3~5세", domains: scoreCriteriaDefaults },
+        "elementary-lower": { label: "초등 교육과정 기반 · 1~2학년", domains: elementaryLowerCriteria },
+        "elementary-upper": { label: "초등 교육과정 기반 · 3~6학년", domains: elementaryUpperCriteria },
+      };
       const scoreCriteriaStorageKey = "careit-score-criteria-v1";
       const maxCustomScoreQuestions = 15;
       const maxScoreQuestionLength = 100;
-      const createDefaultScoreCriteria = () => scoreCriteriaDefaults.map((domain) => ({
+      const getScoreCriteriaTemplate = (templateId) => scoreCriteriaTemplates[templateId] || scoreCriteriaTemplates.nuri;
+      const createScoreCriteria = (templateId = "nuri") => getScoreCriteriaTemplate(templateId).domains.map((domain) => ({
         id: domain.id,
         title: domain.title,
         questions: [...domain.questions],
         customQuestionCount: 0,
       }));
-      const normalizeScoreCriteria = (criteria) => {
-        if (!Array.isArray(criteria)) return createDefaultScoreCriteria();
+      const normalizeScoreCriteria = (criteria, templateId = "nuri") => {
+        const template = getScoreCriteriaTemplate(templateId);
+        if (!Array.isArray(criteria)) return createScoreCriteria(templateId);
 
         let remainingCustomQuestions = maxCustomScoreQuestions;
-        return scoreCriteriaDefaults.map((defaultDomain) => {
+        return template.domains.map((defaultDomain) => {
           const savedDomain = criteria.find((domain) => domain?.id === defaultDomain.id);
           const title = typeof savedDomain?.title === "string" && savedDomain.title.trim()
             ? savedDomain.title.trim()
@@ -8406,9 +8475,12 @@
       };
       const loadScoreCriteria = () => {
         try {
-          return normalizeScoreCriteria(JSON.parse(window.localStorage.getItem(scoreCriteriaStorageKey)));
+          const saved = JSON.parse(window.localStorage.getItem(scoreCriteriaStorageKey));
+          const templateId = saved?.templateId && scoreCriteriaTemplates[saved.templateId] ? saved.templateId : "nuri";
+          const criteria = Array.isArray(saved) ? saved : saved?.criteria;
+          return { templateId, criteria: normalizeScoreCriteria(criteria, templateId) };
         } catch {
-          return createDefaultScoreCriteria();
+          return { templateId: "nuri", criteria: createScoreCriteria() };
         }
       };
       const escapeScoreCriteriaHtml = (value) => String(value)
@@ -8417,11 +8489,14 @@
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;");
 
-      let scoreCriteria = loadScoreCriteria();
+      const savedScoreCriteria = loadScoreCriteria();
+      let activeScoreCriteriaTemplateId = savedScoreCriteria.templateId;
+      let scoreCriteria = savedScoreCriteria.criteria;
       const scoreCriteriaModal = document.querySelector("[data-score-criteria-modal]");
       const scoreCriteriaList = document.querySelector("[data-score-criteria-list]");
       const scoreCriteriaTotal = document.querySelector("[data-score-criteria-total]");
       const scoreCriteriaCustomCount = document.querySelector("[data-score-criteria-custom-count]");
+      const scoreCriteriaTemplateSelect = document.querySelector("[data-score-template-select]");
       const getScoreCriteriaTotal = () => scoreCriteria.reduce((total, domain) => total + domain.questions.length, 0);
       const getCustomScoreQuestionTotal = () => scoreCriteria.reduce((total, domain) => total + domain.customQuestionCount, 0);
 
@@ -8430,6 +8505,7 @@
 
         if (scoreCriteriaTotal) scoreCriteriaTotal.textContent = `${getScoreCriteriaTotal()}개`;
         if (scoreCriteriaCustomCount) scoreCriteriaCustomCount.textContent = `${getCustomScoreQuestionTotal()}/${maxCustomScoreQuestions}개`;
+        if (scoreCriteriaTemplateSelect) scoreCriteriaTemplateSelect.value = activeScoreCriteriaTemplateId;
         const canAddCustomQuestion = getCustomScoreQuestionTotal() < maxCustomScoreQuestions;
         scoreCriteriaList.innerHTML = scoreCriteria
           .map((domain) => `
@@ -8467,6 +8543,13 @@
       });
       document.querySelectorAll("[data-close-score-criteria]").forEach((button) => {
         button.addEventListener("click", closeScoreCriteria);
+      });
+
+      scoreCriteriaTemplateSelect?.addEventListener("change", () => {
+        activeScoreCriteriaTemplateId = scoreCriteriaTemplateSelect.value;
+        scoreCriteria = createScoreCriteria(activeScoreCriteriaTemplateId);
+        renderScoreCriteria();
+        showMockToast(`${getScoreCriteriaTemplate(activeScoreCriteriaTemplateId).label} 템플릿으로 변경했습니다.`);
       });
 
       scoreCriteriaModal?.addEventListener("click", (event) => {
@@ -8514,16 +8597,13 @@
         }
       });
 
-      document.querySelector("[data-reset-score-criteria]")?.addEventListener("click", () => {
-        scoreCriteria = createDefaultScoreCriteria();
-        renderScoreCriteria();
-        showMockToast("기본 59문항으로 복원했습니다. 저장하면 적용됩니다.");
-      });
-
       document.querySelector("[data-save-score-criteria]")?.addEventListener("click", () => {
-        scoreCriteria = normalizeScoreCriteria(scoreCriteria);
+        scoreCriteria = normalizeScoreCriteria(scoreCriteria, activeScoreCriteriaTemplateId);
         try {
-          window.localStorage.setItem(scoreCriteriaStorageKey, JSON.stringify(scoreCriteria));
+          window.localStorage.setItem(
+            scoreCriteriaStorageKey,
+            JSON.stringify({ templateId: activeScoreCriteriaTemplateId, criteria: scoreCriteria }),
+          );
         } catch {
           // Local file previews may block storage; the current screen still keeps the edited criteria.
         }
