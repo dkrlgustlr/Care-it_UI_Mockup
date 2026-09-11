@@ -2675,7 +2675,10 @@
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(250px, 0.72fr) auto;
         align-items: end;
+        flex: 0 0 auto;
         gap: var(--space-5);
+        min-height: 0;
+        height: auto;
         margin-bottom: var(--space-5);
         padding: var(--space-5) var(--space-6);
       }
@@ -5034,6 +5037,26 @@
         .report-action-buttons {
           flex-wrap: wrap;
         }
+
+        .desktop-page[data-page="reports"] .desktop-topbar {
+          flex-direction: row;
+          align-items: flex-end;
+        }
+
+        .desktop-page[data-page="reports"] .desktop-actions {
+          width: auto;
+        }
+
+        .report-create-panel {
+          grid-template-columns: minmax(0, 1fr);
+          align-items: stretch;
+          gap: var(--space-4);
+        }
+
+        .report-create-panel .solid-button {
+          grid-column: auto;
+          width: 100%;
+        }
       }
 
       .design-board {
@@ -5094,6 +5117,17 @@
           width: 100%;
           min-height: 42px;
           padding: 0 var(--space-3);
+        }
+      }
+
+      @media (max-width: 600px) {
+        .desktop-page[data-page="reports"] .desktop-topbar {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .desktop-page[data-page="reports"] .desktop-actions {
+          width: 100%;
         }
       }
 
