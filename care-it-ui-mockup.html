@@ -2731,21 +2731,6 @@
         box-shadow: 0 0 0 2px rgba(5, 166, 107, 0.2);
       }
 
-      .report-week-detail {
-        display: flex;
-        justify-content: space-between;
-        gap: var(--space-3);
-        color: var(--care-muted);
-        font-size: var(--font-caption);
-        font-weight: 400;
-      }
-
-      .report-week-detail strong {
-        color: var(--care-primary-dark);
-        font-weight: 700;
-        white-space: nowrap;
-      }
-
       .report-create-panel .solid-button {
         min-width: 132px;
         min-height: 42px;
@@ -6182,7 +6167,6 @@
                       <option value="2026-05-18">2026년 5월 3주차</option>
                       <option value="2026-05-25">2026년 5월 4주차</option>
                     </select>
-                    <span class="report-week-detail"><span data-report-week-range>5월 11일 - 5월 17일</span><strong data-report-week-count>일지 5건</strong></span>
                   </label>
                   <button class="solid-button" type="button" data-create-weekly-report>리포트 만들기</button>
                 </section>
@@ -10275,8 +10259,6 @@
       const reportBuilder = document.querySelector(".report-create-panel");
       if (reportBuilder) {
         const weekSelect = reportBuilder.querySelector("[data-report-week-select]");
-        const weekRange = reportBuilder.querySelector("[data-report-week-range]");
-        const weekCount = reportBuilder.querySelector("[data-report-week-count]");
         const createButton = reportBuilder.querySelector("[data-create-weekly-report]");
 
         const renderReportBuilder = () => {
@@ -10285,8 +10267,6 @@
           const canCreate = diaryCount >= 2;
 
           if (weekSelect) weekSelect.value = period.id;
-          if (weekRange) weekRange.textContent = period.range;
-          if (weekCount) weekCount.textContent = canCreate ? `일지 ${diaryCount}건` : `일지 ${diaryCount}건 · 2건 이상 필요`;
           if (createButton) createButton.disabled = !canCreate;
         };
 
