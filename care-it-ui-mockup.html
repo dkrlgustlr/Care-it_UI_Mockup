@@ -2662,24 +2662,37 @@
         order: 1;
       }
 
-      .report-subject-panel {
+      .report-setup-panel {
         order: 2;
         flex: 0 0 auto;
         min-height: 0;
         height: auto;
         margin-bottom: var(--space-5);
+        padding: 0;
+        position: relative;
+        z-index: 10;
+        overflow: visible;
+      }
+
+      .report-subject-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-6);
+        padding: var(--space-5) var(--space-6);
+      }
+
+      .report-setup-divider {
+        height: 1px;
+        margin: 0 var(--space-6);
+        background: var(--care-border);
       }
 
       .report-create-panel {
-        order: 3;
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(250px, 0.72fr) auto;
         align-items: end;
-        flex: 0 0 auto;
         gap: var(--space-5);
-        min-height: 0;
-        height: auto;
-        margin-bottom: var(--space-5);
         padding: var(--space-5) var(--space-6);
       }
 
@@ -4738,7 +4751,8 @@
           justify-content: flex-end;
         }
 
-        .journal-subject-panel {
+        .journal-subject-panel,
+        .report-subject-row {
           flex-direction: column;
           align-items: stretch;
         }
@@ -4814,6 +4828,14 @@
           padding: var(--space-5);
         }
 
+        .report-setup-panel {
+          padding: 0;
+        }
+
+        .report-setup-divider {
+          margin: 0 var(--space-5);
+        }
+
         .panel-grid {
           grid-template-columns: minmax(0, 1fr);
         }
@@ -4864,7 +4886,8 @@
           justify-content: flex-end;
         }
 
-        .journal-subject-panel {
+        .journal-subject-panel,
+        .report-subject-row {
           flex-direction: column;
           align-items: stretch;
         }
@@ -6130,45 +6153,50 @@
                   </div>
                 </div>
 
-                <section class="panel journal-subject-panel report-subject-panel" aria-label="리포트 작성 대상">
-                  <div class="journal-subject-main">
-                    <span>작성 대상</span>
-                    <strong data-journal-subject-name>김도윤</strong>
-                    <p><span data-journal-subject-owner>정민아 활동지원사</span> · <span data-journal-subject-status>오늘 일지 작성 필요</span></p>
-                  </div>
-                  <div class="journal-subject-switch" data-subject-picker aria-label="리포트 작성 대상 선택">
-                    <div class="subject-picker-summary">
-                      <span class="subject-picker-count" data-journal-subject-count>전체 5명 중 1명 선택</span>
-                      <button type="button" class="subject-picker-toggle" data-subject-picker-toggle aria-expanded="false">대상자 변경</button>
+                <section class="panel report-setup-panel" aria-label="리포트 작성 설정">
+                  <div class="report-subject-row" aria-label="리포트 작성 대상">
+                    <div class="journal-subject-main">
+                      <span>작성 대상</span>
+                      <strong data-journal-subject-name>김도윤</strong>
+                      <p><span data-journal-subject-owner>정민아 활동지원사</span> · <span data-journal-subject-status>오늘 일지 작성 필요</span></p>
                     </div>
-                    <div class="subject-picker-popover" data-subject-picker-popover hidden>
-                      <div class="subject-picker-head">
-                        <div>
-                          <strong>대상자 선택</strong>
-                          <span>리포트 작성 대상을 선택하세요.</span>
-                        </div>
+                    <div class="journal-subject-switch" data-subject-picker aria-label="리포트 작성 대상 선택">
+                      <div class="subject-picker-summary">
+                        <span class="subject-picker-count" data-journal-subject-count>전체 5명 중 1명 선택</span>
+                        <button type="button" class="subject-picker-toggle" data-subject-picker-toggle aria-expanded="false">대상자 변경</button>
                       </div>
-                      <div class="subject-picker-list" data-subject-picker-list></div>
+                      <div class="subject-picker-popover" data-subject-picker-popover hidden>
+                        <div class="subject-picker-head">
+                          <div>
+                            <strong>대상자 선택</strong>
+                            <span>리포트 작성 대상을 선택하세요.</span>
+                          </div>
+                        </div>
+                        <div class="subject-picker-list" data-subject-picker-list></div>
+                      </div>
                     </div>
                   </div>
-                </section>
-
-                <section class="panel report-create-panel" aria-label="주간 리포트 생성">
-                  <div class="report-create-copy">
-                    <span>주간 리포트</span>
-                    <strong>기록이 쌓인 주를 선택하세요</strong>
-                    <p>선택한 대상자의 해당 주 일지를 기준으로 리포트 초안을 만듭니다.</p>
                   </div>
-                  <label class="report-week-control" for="report-week-select">
-                    <span>리포트 기간</span>
-                    <select id="report-week-select" class="report-week-select" data-report-week-select>
-                      <option value="2026-05-04">2026년 5월 1주차</option>
-                      <option value="2026-05-11" selected>2026년 5월 2주차</option>
-                      <option value="2026-05-18">2026년 5월 3주차</option>
-                      <option value="2026-05-25">2026년 5월 4주차</option>
-                    </select>
-                  </label>
-                  <button class="solid-button" type="button" data-create-weekly-report>리포트 만들기</button>
+
+                  <div class="report-setup-divider" aria-hidden="true"></div>
+
+                  <div class="report-create-panel" aria-label="주간 리포트 생성">
+                    <div class="report-create-copy">
+                      <span>주간 리포트</span>
+                      <strong>기록이 쌓인 주를 선택하세요</strong>
+                      <p>선택한 대상자의 해당 주 일지를 기준으로 리포트 초안을 만듭니다.</p>
+                    </div>
+                    <label class="report-week-control" for="report-week-select">
+                      <span>리포트 기간</span>
+                      <select id="report-week-select" class="report-week-select" data-report-week-select>
+                        <option value="2026-05-04">2026년 5월 1주차</option>
+                        <option value="2026-05-11" selected>2026년 5월 2주차</option>
+                        <option value="2026-05-18">2026년 5월 3주차</option>
+                        <option value="2026-05-25">2026년 5월 4주차</option>
+                      </select>
+                    </label>
+                    <button class="solid-button" type="button" data-create-weekly-report>리포트 만들기</button>
+                  </div>
                 </section>
 
                 <div class="workspace-grid reports">
