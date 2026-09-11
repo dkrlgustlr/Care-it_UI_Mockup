@@ -1450,9 +1450,6 @@
             <button class="active" type="button" role="tab" aria-selected="true" data-mode="weekly">
               주간 리포트
             </button>
-            <button type="button" role="tab" aria-selected="false" data-mode="monthly">
-              월간 리포트
-            </button>
           </div>
         </div>
 
@@ -1931,6 +1928,7 @@
 
       let activeMode = "weekly";
       let graphAnimationFrame = 0;
+      let generatedWeeklyReport = null;
 
       function renderScore(score, progress = 1) {
         const displayedScore = Math.round(score * progress);
@@ -2022,7 +2020,7 @@
 
       function render(mode, animation) {
         activeMode = mode;
-        const data = mode === "weekly" ? buildWeeklyReport() : reportData[mode];
+        const data = mode === "weekly" ? generatedWeeklyReport || buildWeeklyReport() : reportData[mode];
 
         elements.modeButtons.forEach((button) => {
           const active = button.dataset.mode === mode;
@@ -2127,6 +2125,11 @@
         window.addEventListener("message", (event) => {
           if (event.data?.type === "care-report-height-request") notifyParentHeight();
           if (event.data?.type === "care-report-subject") renderReportSubject(event.data.subject);
+          if (event.data?.type === "care-report-generated") {
+            generatedWeeklyReport = event.data.report;
+            renderReportSubject(event.data.subject);
+            render("weekly", { score: true, radar: true });
+          }
           if (event.data?.type === "care-report-score-visible") render(activeMode, { score: true, radar: false });
           if (event.data?.type === "care-report-radar-visible") render(activeMode, { score: false, radar: true });
         });
