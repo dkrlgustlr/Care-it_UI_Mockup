@@ -1,4 +1,12 @@
 /* 로컬 목업 전용 기능. 서비스 화면 스타일은 assets/original.css를 사용합니다. */
+/* 글자 크기: 작은 안내는 14px, 기존 18px 제목은 20px로 통일합니다. */
+:root {
+  --fs-brand-tagline:calc(14px * var(--native-text-scale,1));
+  --fs-section:calc(20px * var(--native-text-scale,1));
+  --fs-card-title:calc(20px * var(--native-text-scale,1));
+}
+.configured-report-section-header h3,
+.configured-report-page-header.is-compact h2 { font-size:20px; }
 /* 카드·팝업 등 떠 있는 영역의 그림자는 이 값 하나를 사용합니다. */
 :root {
   --shadow-ui:0 4px 12px rgba(22,32,42,0.05);
@@ -90,7 +98,7 @@ textarea,select,.dropdown-trigger,.datefield-trigger,
   .records-date-filter-fields { width:100%; display:grid; grid-template-columns:minmax(0,1fr); }
   .records-date-filter-field { width:100%; }
   .records-recipient-filter-field { grid-column:1 / -1; }
-  .records-date-filter .datefield-trigger { gap:4px; padding-inline:8px; font-size:13px; }
+  .records-date-filter .datefield-trigger { gap:4px; padding-inline:8px; font-size:14px; }
   .records-date-filter .datefield-trigger svg { width:16px; height:16px; }
 }
 /* 제목은 카드 위의 텍스트처럼 표시하고 Lucide 연필로 편집 가능함을 알립니다. */
@@ -120,23 +128,23 @@ textarea,select,.dropdown-trigger,.datefield-trigger,
 [hidden] { display: none !important; }
 #screen { display: contents; }
 .app-layout.mockup-nav-collapsed .sidebar { display: none; }
-.mockup-toggle { position: fixed; right: 20px; bottom: 18px; z-index: 80; border: 1px solid #d5dfe1; border-radius: 30px; padding: 10px 16px; background: #fff; color: #30443d; box-shadow: var(--shadow-ui); font: 600 13px/1.3 Pretendard,sans-serif; cursor: pointer; }
+.mockup-toggle { position: fixed; right: 20px; bottom: 18px; z-index: 80; border: 1px solid #d5dfe1; border-radius: 30px; padding: 10px 16px; background: #fff; color: #30443d; box-shadow: var(--shadow-ui); font: 600 14px/1.3 Pretendard,sans-serif; cursor: pointer; }
 .mockup-panel { position: fixed; right: 20px; bottom: 68px; z-index: 81; width: 330px; max-width: calc(100vw - 32px); max-height: calc(100dvh - 100px); overflow-y: auto; padding: 20px; border: 1px solid #d5dfe1; border-radius: 14px; background: #fff; color: #16202a; box-shadow: var(--shadow-ui); font: 14px/1.5 Pretendard,sans-serif; }
 .mockup-panel-heading { display:flex; align-items:center; justify-content:space-between; }
 .mockup-panel-heading strong { font-size:17px; }
 .mockup-panel button { cursor:pointer; border:1px solid #d5dfe1; border-radius:8px; padding:8px 12px; background:#f6f8fa; color:#16202a; font:inherit; }
 .mockup-panel-heading button { border:0; background:transparent; font-size:24px; padding:0 4px; }
-.mockup-panel p { color:#64707e; font-size:13px; }
+.mockup-panel p { color:#64707e; font-size:14px; }
 .mockup-panel label { display:block; margin:14px 0 6px; font-weight:600; }
 .mockup-panel input[type=color] { height:34px; width:100%; margin-top:6px; padding:2px; border:1px solid #d5dfe1; border-radius:6px; cursor:pointer; }
 .mockup-panel input[type=range] { display:block; width:100%; margin-top:10px; }
 .mockup-panel input[type=checkbox] { accent-color:#05a66b; }
-.mockup-panel textarea { display:block; width:100%; background:#f6f8fa; border:1px solid #d5dfe1; border-radius:8px; padding:10px; color:#16202a; font:12px/1.6 Consolas,monospace; resize:vertical; }
+.mockup-panel textarea { display:block; width:100%; background:#f6f8fa; border:1px solid #d5dfe1; border-radius:8px; padding:10px; color:#16202a; font:14px/1.6 Consolas,monospace; resize:vertical; }
 .mockup-panel output { float:right; color:#64707e; font-weight:400; }
 .mockup-panel-actions { display:flex; gap:6px; margin-top:12px; }
 .mockup-panel-actions button:last-child { background:#06784f; color:white; border-color:#06784f; flex:1; }
-.mockup-panel .mockup-reset { font-size:12px; border:0; padding:0; background:transparent; text-decoration:underline; color:#64707e; }
-.mockup-panel small { display:block; margin-top:14px; padding-top:12px; border-top:1px solid #edf0f1; color:#64707e; font-size:12px; }
+.mockup-panel .mockup-reset { font-size:14px; border:0; padding:0; background:transparent; text-decoration:underline; color:#64707e; }
+.mockup-panel small { display:block; margin-top:14px; padding-top:12px; border-top:1px solid #edf0f1; color:#64707e; font-size:14px; }
 .mockup-toast { position:fixed; z-index:150; bottom:24px; left:50%; transform:translateX(-50%); max-width:calc(100% - 40px); border-radius:10px; padding:12px 20px; background:#16202a; color:#fff; box-shadow:var(--shadow-ui); font-size:14px; }
 body.mockup-editing [contenteditable=true] { outline:1px dashed #05a66b99; outline-offset:3px; cursor:text; }
 body.mockup-editing [contenteditable=true]:focus { outline:2px solid #05a66b; background:#05a66b09; }
@@ -164,7 +172,7 @@ body.mockup-editing [contenteditable=true]:focus { outline:2px solid #05a66b; ba
 .mockup-listbox button { display:flex; align-items:center; justify-content:space-between; gap:20px; min-height:44px; padding:10px 12px; font-size:14px; font-weight:700; line-height:1.45; white-space:nowrap; }
 .mockup-option-copy { display:grid; gap:4px; min-width:0; }
 .mockup-option-copy>span { overflow:hidden; text-overflow:ellipsis; }
-.mockup-option-copy small { color:var(--muted); font-size:12px; font-weight:400; }
+.mockup-option-copy small { color:var(--muted); font-size:14px; font-weight:400; }
 .mockup-listbox svg,.mockup-check-space { width:18px; height:18px; flex:none; }
 .mockup-listbox button:focus-visible { outline:2px solid var(--primary-dark); outline-offset:-2px; }
 .mockup-listbox button:disabled { opacity:.45; cursor:not-allowed; }
@@ -175,7 +183,7 @@ body.mockup-editing [contenteditable=true]:focus { outline:2px solid #05a66b; ba
 .mockup-date-popup .datefield-day { min-height:36px; }
 .mockup-date-popup button:disabled { opacity:.32; cursor:not-allowed; }
 .date-range-prompt { margin:0; color:var(--text); font-size:14px; font-weight:700; }
-.date-range-summary { margin:0; color:var(--muted); font-size:13px; }
+.date-range-summary { margin:0; color:var(--muted); font-size:14px; }
 .mockup-date-range .datefield-grid { column-gap:0; }
 .mockup-date-range .datefield-day.is-in-range { background:var(--mint-soft); border-radius:0; color:var(--primary-dark); }
 .mockup-date-range .datefield-day.is-range-start,
@@ -215,7 +223,7 @@ dialog { color:var(--text); }
 .mockup-trash-row p { color:var(--muted); font-size:14px; }
 .consent-dialog { width:min(600px,calc(100vw - 32px)); text-align:left; }
 .consent-dialog .consent-item label { display:block; }
-.mockup-preview-note { margin:12px 0; font-size:13px; color:var(--muted); }
+.mockup-preview-note { margin:12px 0; font-size:14px; color:var(--muted); }
 @media(max-width:767px) {
   .mockup-date-popup[popover] { padding:12px; }
   .mockup-date-popup .datefield-day { min-height:38px; }
