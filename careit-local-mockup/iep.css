@@ -1,0 +1,82 @@
+/* 기존 케어릿 색상·폰트·그림자·모서리 토큰을 공유합니다. */
+.iep-page { min-width:0; }
+.iep-page h2 { scroll-margin-top:24px; }
+.iep-page .iep-title { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+.iep-page .workflow-badge { background:var(--mint-soft); color:var(--primary-dark); font-size:14px; border-radius:var(--radius-control); font-weight:600; }
+.iep-tabs-row,.iep-card-heading,.iep-action-bar,.iep-result-header,.iep-saved-card { display:flex; justify-content:space-between; align-items:center; gap:16px; }
+.iep-tabs-row { margin-bottom:20px; }
+.iep-local-note,.iep-help { color:var(--muted); font-size:14px; line-height:1.6; }
+.iep-help { margin:0; }
+.iep-card { padding:24px; margin-bottom:20px; background:var(--surface); border:0; border-radius:var(--radius-card); box-shadow:var(--shadow-ui); min-width:0; }
+.iep-card h2 { font-size:20px; line-height:1.5; margin:0; }
+.iep-card-heading { margin-bottom:20px; flex-wrap:wrap; }
+.iep-card-heading .button { flex-shrink:0; }
+.iep-heading-labels { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.iep-recipient-bar { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; align-items:end; }
+.iep-recipient-bar--period { grid-template-columns:minmax(0,1fr) minmax(0,.8fr) minmax(260px,1.55fr); }
+.iep-recipient-bar .datefield-trigger { white-space:nowrap; }
+.iep-optional-context { margin-top:24px; padding-top:16px; border-top:1px solid var(--line); }
+.iep-optional-context summary { cursor:pointer; font-size:14px; font-weight:600; color:var(--primary-dark); padding:8px 0; }
+.iep-optional-context>.iep-two-col { margin-top:16px; }
+.iep-field { display:flex; flex-direction:column; gap:8px; min-width:0; }
+.iep-field>label,.iep-field>span { font-size:14px; font-weight:600; line-height:1.5; }
+.iep-required,.iep-optional { color:var(--primary-dark); }
+.iep-page textarea { width:100%; min-height:90px; padding:14px 16px; font-size:16px; line-height:1.7; border:0; border-radius:var(--radius-control); background:var(--neutral-soft); color:var(--text); box-shadow:none; resize:vertical; }
+.iep-page textarea:focus-visible { outline:2px solid var(--primary-action); outline-offset:0; }
+.iep-two-col { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
+.iep-goal-column { display:grid; align-content:start; gap:20px; }
+.iep-two-col+.iep-help { margin-top:16px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+.iep-page .datefield,.iep-page .dropdown { width:100%; }
+.iep-page .datefield-trigger { width:100%; }
+.iep-demo-note { background:var(--neutral-soft); color:var(--muted); padding:12px 16px; border-radius:var(--radius-control); font-size:14px; margin:0 0 24px; line-height:1.6; }
+.iep-action-bar[hidden] { display:none; }
+.iep-action-bar p { margin-top:8px; }
+.iep-action-bar .button { flex-shrink:0; }
+.iep-error { color:var(--danger); font-size:14px; }
+.iep-result-header { align-items:center; }
+.iep-result-header .iep-card-heading { justify-content:flex-start; margin-bottom:8px; }
+.iep-inline-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.iep-inline-actions svg { width:16px; height:16px; }
+.iep-result-fields { display:grid; gap:24px; }
+.iep-result-field { min-width:0; }
+.iep-result-field>label { display:block; font-size:14px; font-weight:600; color:var(--muted); margin-bottom:8px; }
+.iep-spaced { margin-top:20px; }
+.iep-before-fields { margin-bottom:20px; }
+.iep-result-fields.iep-two-col>.iep-result-field:last-child:nth-child(odd) { grid-column:1/-1; }
+.iep-table-scroll { overflow-x:auto; }
+.iep-plan-table { width:100%; min-width:660px; table-layout:fixed; border-collapse:collapse; font-size:14px; line-height:1.75; }
+.iep-plan-table caption { text-align:left; font-size:20px; font-weight:600; margin-bottom:16px; }
+.iep-table-section { width:16%; }
+.iep-table-label { width:22%; }
+.iep-plan-table th,.iep-plan-table td { border:1px solid var(--line); padding:16px; text-align:left; vertical-align:top; white-space:pre-wrap; overflow-wrap:anywhere; }
+.iep-plan-table th { background:var(--neutral-soft); font-weight:600; }
+.iep-plan-table thead th { background:var(--mint-soft); color:var(--primary-dark); }
+.iep-observation-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:16px; }
+.iep-observation-grid>div { display:flex; flex-direction:column; gap:12px; padding:16px; background:var(--neutral-soft); border-radius:var(--radius-control); font-size:14px; }
+.iep-observation-grid span { color:var(--muted); }
+.iep-saved-card>div { flex:1; min-width:0; }
+.iep-saved-card .iep-card-heading { justify-content:flex-start; gap:12px; margin-bottom:12px; }
+.iep-saved-card>div>p { font-size:16px; line-height:1.7; margin:0 0 12px; overflow-wrap:anywhere; white-space:pre-wrap; }
+.iep-saved-card>.button { flex-shrink:0; }
+.iep-empty { text-align:center; padding:64px 24px; }
+.iep-empty p { margin:12px 0 24px; }
+.iep-page button:focus-visible,.iep-page summary:focus-visible { outline:2px solid var(--primary-action); outline-offset:2px; }
+@media(max-width:1200px) {
+  .iep-recipient-bar--period { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .iep-recipient-bar--period>.field:last-child { grid-column:1/-1; }
+}
+@media(max-width:1100px) {
+  .iep-result-header { align-items:flex-start; flex-direction:column; }
+  .iep-observation-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(max-width:767px) {
+  .iep-card { padding:20px; }
+  .iep-two-col,.iep-goal-results { grid-template-columns:minmax(0,1fr); }
+  .iep-action-bar,.iep-saved-card { align-items:stretch; flex-direction:column; }
+  .iep-recipient-bar { grid-template-columns:minmax(0,1fr); }
+  .iep-tabs-row { flex-wrap:wrap; gap:12px; }
+  .iep-card-heading { gap:12px; }
+  .iep-inline-actions { flex-wrap:wrap; }
+  .iep-page .datefield-trigger { padding-inline:12px; font-size:14px; }
+  .iep-page .datefield-trigger svg { width:16px; height:16px; flex-shrink:0; }
+}

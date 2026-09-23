@@ -27,6 +27,7 @@
   state.trash ||= [];
   state.reportTemplates ||= {};
   const TODAY = '2026-09-23'; // 원본 화면의 기준일. 목업 날짜를 일관되게 유지합니다.
+  const ageBands = ['만 3세 미만','만 3세','만 4세','만 5세','만 6~7세','만 8~12세','만 13~17세','만 18세 이상'];
   state.recipients ||= [
     {name:'산책 샘플', count:11, date:'2026/09/10', active:true, memo:''},
     {name:'그림책 샘플', count:8, date:'2026/09/10', active:true, memo:''},
@@ -108,6 +109,7 @@
     $$('.sidebar nav a').forEach(a => { const current = a.dataset.route === route || (a.dataset.route === '/settings' && route.startsWith('/settings/')); a.classList.toggle('active', current); if (current) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
     $$('[data-options="recipients"] span', $('#screen')).forEach(x => x.textContent = state.recipients[recipient].name);
     if (route === '/journals/new') prepareJournal();
+    if (route === '/iep') iep.mount($('.iep-page'),recipient);
     if (route === '/records') { updateRecordFilters(); renderRecords(); }
     if (route === '/recipients') renderRecipients();
     if (route === '/plans') $$('.pricing-features li').forEach(li => li.insertAdjacentHTML('afterbegin','<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>'));
@@ -115,7 +117,7 @@
     if (route === '/settings/configuration') prepareConfiguration();
     if (route === '/settings') prepareSettings();
     if (route === '/reports') {
-      $('[data-options="report-templates"] span').textContent=state.reportTemplates[recipient]||'초등 교육과정 기반 · 3~6학년';
+      $('[data-options="report-templates"] span').textContent=currentScoring().title;
       if(params.get('report')==='sample')Object.assign(reportRange,{from:'2026-08-28',to:'2026-09-03'});
       updateReportPeriod();
     }
@@ -216,12 +218,27 @@
     $('[data-recipient-grid]').innerHTML = state.recipients.map((r,i)=>r.deleted?'':`<article class="recipient-card card${r.active?'':' is-inactive'}"><header><div><h2>${escapeHTML(r.name)}</h2></div>${r.active?'':'<span class="recipient-card-status">비활성화</span>'}</header><dl><div><dt>저장한 일지</dt><dd>${r.count}건</dd></div><div><dt>퀵체크 항목</dt><dd>${getQuickChecks(i).filter(q=>q.active).length}개</dd></div><div><dt>기록 시작</dt><dd>${r.date}</dd></div></dl><button class="button secondary recipient-detail-button" type="button" data-detail="${i}">상세 보기</button></article>`).join('');
     registerEdits();
   }
+  function openRecipientForm(index=null) {
+    editingRecipient=index;
+    const r=index===null?{}:state.recipients[index];
+    $('.recipient-form-card').hidden=false;$('#recipient-form').reset();
+    $('#recipient-form-title').textContent=index===null?'관리대상 추가하기':'관리대상 정보 수정';
+    $('#recipient-form button[type=submit]').textContent=index===null?'추가하기':'저장';
+    $('#recipient-name').value=r.name||'';
+    $('#recipient-name-limit').textContent=`${(r.name||'').length}/30자`;
+    const age=$('#recipient-age-band');age.dataset.value=ageBands.includes(r.ageBand)?r.ageBand:'';
+    $('span',age).textContent=age.dataset.value||'연령대 선택';age.removeAttribute('aria-invalid');
+    $('#recipient-age-error').hidden=true;$('#recipient-name').focus();
+  }
   function showRecipient(index) {
     detailRecipient = index; const r = state.recipients[index];
     $('#recipient-detail-title').textContent = r.name+' 상세'; $('[data-detail-count]').textContent = r.count+'건';
     $$('.recipient-detail-overview-stats dd')[1].textContent=getQuickChecks(index).filter(q=>q.active).length+'개';
     $('[data-detail-active]').textContent = r.active?'활성화':'비활성화';
-    $('[data-detail-date]').textContent = formatDate(r.date.replaceAll('/','-')); $('[data-detail-memo]').textContent = r.memo || '—';
+    $('[data-detail-date]').textContent = formatDate(r.date.replaceAll('/','-'));
+    $('[data-detail-age]').textContent = r.ageBand || '미설정';
+    $('[data-legacy-memo]').hidden = !r.memo;
+    $('[data-detail-memo]').textContent = r.memo || '';
     $('[data-action="toggle-recipient"]').textContent = r.active?'비활성화':'다시 활성화';
     $('#recipient-dialog a').href = '#/settings/configuration?recipient='+index;
     $('#recipient-dialog').showModal(); registerEdits();
@@ -232,7 +249,7 @@
   const iconCheck='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
   const iconPrev='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>';
   const iconNext='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>';
-  const reportTemplates=['누리과정 · 3~5세','초등 교육과정 기반 · 1~2학년','초등 교육과정 기반 · 3~6학년'];
+  const reportTemplates=CAREIT_OBSERVATION.templates.map(t=>t.title);
   const quickTypes=['선택형','숫자','척도','텍스트','시간 길이','시각'];
   function closePopups(restoreFocus=false) {
     const trigger=activePopupTrigger;
@@ -272,6 +289,7 @@
     const kind=button.dataset.options;
     let choices=[];
     if(kind==='recipients')choices=state.recipients.flatMap((r,i)=>r.active&&!r.deleted?[{label:r.name,value:i}]:[]);
+    else if(kind==='recipient-age-band')choices=ageBands.map(label=>({label,value:label}));
     else if(kind==='report-templates'||kind==='score-templates')choices=reportTemplates.map((label,value)=>({label,value}));
     else if(kind==='quick-type')choices=quickTypes.map((label,value)=>({label,value}));
     else if(kind==='saved-journals')choices=journalRows().map((x,i)=>({label:x[1],description:'저장됨',value:i}));
@@ -280,7 +298,6 @@
     choices.forEach((choice,i)=>{
       const selected=kind==='recipients'?choice.value===recipient:kind==='saved-journals'?String(choice.value)===params.get('entry'):choice.label===button.textContent.trim();
       const option=document.createElement('button');option.type='button';option.setAttribute('role','option');option.setAttribute('aria-selected',selected);option.tabIndex=selected?0:-1;
-      if(kind==='report-templates'&&choice.value===1){option.disabled=true;choice.description='문항 수 보완 필요';}
       option.innerHTML=`<span class="mockup-option-copy"><span>${escapeHTML(choice.label)}</span>${choice.description?`<small>${escapeHTML(choice.description)}</small>`:''}</span>${selected?iconCheck:'<span class="mockup-check-space"></span>'}`;
       option.addEventListener('click',()=>{
         closePopups(true);
@@ -288,10 +305,14 @@
           if(route==='/journals/new')captureDraft();
           const change=()=>{params.set('recipient',choice.value);params.delete('entry');params.delete('report');routeTo('#'+route+'?'+params);};
           if(configurationDirty())confirmDiscard(change,'이동하면 저장하지 않은 변경이 사라집니다.');else change();
+        }else if(kind==='recipient-age-band'){
+          button.dataset.value=choice.value;$('span',button).textContent=choice.label;button.removeAttribute('aria-invalid');
+          if(button.hasAttribute('data-iep-age'))iep.setAgeBand(choice.value);
+          else $('#recipient-age-error').hidden=true;
         }else if(kind==='saved-journals')routeTo(`#/journals/new?recipient=${recipient}&entry=${choice.value}`);
-        else if(kind==='report-templates')dialog('채점 기준을 바꿀까요?','<p>선택한 템플릿의 기본 영역명과 문항으로 저장한 뒤 새 리포트에 적용해요. 기존 리포트는 바뀌지 않아요.</p>','저장하고 적용',()=>{state.reportTemplates[recipient]=choice.label;persist();button.querySelector('span').textContent=choice.label;});
+        else if(kind==='report-templates')dialog('관찰 기준을 바꿀까요?','<p>선택한 템플릿의 기본 영역명과 문항으로 저장한 뒤 새 리포트에 적용해요. 기존 리포트는 바뀌지 않아요.</p>','저장하고 적용',()=>{state.scoring[recipient]=scoreSeed(choice.value);state.reportTemplates[recipient]=choice.label;persist();button.querySelector('span').textContent=choice.label;});
         else if(kind==='quick-type'){readQuickDraft();quickDraft.type=choice.label;drawQuickEditor();}
-        else if(kind==='score-templates')dialog('채점 기준을 바꿀까요?','<p>현재 편집 중인 영역명과 문항을 선택한 템플릿의 기본 내용으로 바꿔요.</p>','바꾸기',()=>{scoreDraft=scoreSeed(choice.value);drawScoring();});
+        else if(kind==='score-templates')dialog('관찰 기준을 바꿀까요?','<p>현재 편집 중인 영역명과 문항을 선택한 템플릿의 기본 내용으로 바꿔요.</p>','바꾸기',()=>{scoreDraft=scoreSeed(choice.value);drawScoring();});
       });menu.append(option);
     });
     if(!choices.length)menu.innerHTML='<p class="mockup-popup-empty">선택할 기록이 없어요.</p>';
@@ -310,11 +331,13 @@
     const wasOpen=button.getAttribute('aria-expanded')==='true';closePopups();if(wasOpen)return;
     const isRange=button.hasAttribute('data-date-range');
     const isReportRange=button.dataset.dateRange==='report';
-    const activeRange=isReportRange?reportRange:recordRange;
+    const iepRange=button.dataset.dateRange?.startsWith('iep-')?button.dataset.dateRange.slice(4):null;
+    const activeRange=iepRange?iep.getRange(iepRange):isReportRange?reportRange:recordRange;
     const commitRange=(from,to)=>{
       Object.assign(activeRange,{from,to});
       closePopups(true);
-      if(isReportRange){
+      if(iepRange){iep.commitRange(iepRange);}
+      else if(isReportRange){
         params.delete('report');
         history.replaceState(null,'','#'+route+(params.size?'?'+params:''));
         updateReportPeriod();registerEdits();
@@ -322,7 +345,7 @@
     };
     const value=button.dataset.value||'';
     let rangeFrom=activeRange.from,rangeTo=activeRange.to,selectingEnd=false;
-    const max=TODAY;
+    const max=iepRange?'2100-12-31':TODAY;
     let initialDate=(isRange?rangeFrom:value)||TODAY;
     if(initialDate>max)initialDate=max;
     let [year,month]=initialDate.split('-').map(Number);month--;
@@ -425,10 +448,10 @@
     else if(action==='export-html')exportHTML();
     else if(action==='close-dialog')$('#mockup-dialog').close();
     else if(action==='save-journal')saveJournal();
-    else if(action==='add-recipient'){editingRecipient=null;$('.recipient-form-card').hidden=false;$('#recipient-form').reset();$('#recipient-form-title').textContent='관리대상 추가하기';$('#recipient-form button[type=submit]').textContent='추가하기';$('#recipient-name').focus();}
+    else if(action==='add-recipient')openRecipientForm();
     else if(action==='cancel-recipient')$('.recipient-form-card').hidden=true;
     else if(action==='close-recipient')$('#recipient-dialog').close();
-    else if(action==='edit-recipient'){editingRecipient=detailRecipient;$('#recipient-dialog').close();$('.recipient-form-card').hidden=false;$('#recipient-name').value=state.recipients[detailRecipient].name;$('#recipient-memo').value=state.recipients[detailRecipient].memo;$('#recipient-form-title').textContent='관리대상 정보 수정';$('#recipient-form button[type=submit]').textContent='저장';$('#recipient-name').focus();}
+    else if(action==='edit-recipient'){$('#recipient-dialog').close();openRecipientForm(detailRecipient);}
     else if(action==='read-notification'){button.closest('li').classList.remove('unread');button.remove();}
     else if(action==='read-all'){state.notificationsRead=true;persist();$$('.notification-list .unread').forEach(x=>x.classList.remove('unread'));$$('[data-action="read-notification"]').forEach(x=>x.remove());}
     else if(action==='print-report')window.print();
@@ -441,8 +464,10 @@
     if(e.target.id==='configuration-form'){const values=$$('input',e.target).map(x=>x.value.trim());if(values.some(x=>!x)){toast('영역 이름을 모두 입력해 주세요.');return;}dialog('일지 영역 이름을 바꿀까요?','<p>이미 저장된 일지는 그때 이름 그대로 남아요.</p>','바꾸기',()=>{state.configuration[recipient]=values;persist();prepareConfiguration();toast('일지 영역 이름을 저장했어요.');});return;}
     if(e.target.id!=='recipient-form')return;
     const name=$('#recipient-name').value.trim();if(!name){$('#recipient-name').focus();return;}
-    const memo=$('#recipient-memo').value;
-    if(editingRecipient!==null)Object.assign(state.recipients[editingRecipient],{name,memo});else state.recipients.push({name,memo,count:0,date:'2026/09/23',active:true});
+    const ageBand=$('#recipient-age-band').dataset.value;
+    if(!ageBands.includes(ageBand)){$('#recipient-age-error').hidden=false;$('#recipient-age-band').setAttribute('aria-invalid','true');$('#recipient-age-band').focus();return;}
+    // 기존 이름·메모 및 대상 인덱스는 유지합니다. 새 등록에는 자유 메모를 수집하지 않습니다.
+    if(editingRecipient!==null)Object.assign(state.recipients[editingRecipient],{name,ageBand});else state.recipients.push({name,ageBand,count:0,date:'2026/09/23',active:true});
     persist();$('.recipient-form-card').hidden=true;renderRecipients();toast('이 브라우저에 관리대상을 저장했어요.');
   });
   document.addEventListener('input',e=>{
@@ -531,11 +556,15 @@
     state.quickChecks[recipient]=items;persist();$('#quick-dialog').close();prepareConfiguration();toast('퀵체크를 저장했어요.');
   }
   function scoreSeed(template=2){
-    const base=REPORT_AREAS.map(a=>({name:a[0],questions:[...a[4]]}));
-    if(template<2)return {title:reportTemplates[template],domains:copy(SCORE_TEMPLATE_DOMAINS[template])};
-    return {title:reportTemplates[2],domains:base};
+    const t=CAREIT_OBSERVATION.templates[template]||CAREIT_OBSERVATION.templates[2];
+    return {title:t.title,templateId:t.id,version:t.version,domains:t.domains.map(d=>({name:d.name,questions:[...d.questions]}))};
   }
-  function openScoring(){scoreDraft=copy(state.scoring[detailRecipient]||scoreSeed());scoreSnapshot=JSON.stringify(scoreDraft);drawScoring();}
+  function scoreTemplateIndex(draft){
+    const i=CAREIT_OBSERVATION.templates.findIndex(t=>t.id===draft?.templateId||t.title===draft?.title||t.legacyTitle===draft?.title);
+    return i<0?2:i;
+  }
+  function currentScoring(index=recipient){return state.scoring[index]||scoreSeed(scoreTemplateIndex({title:state.reportTemplates[index]}));}
+  function openScoring(){scoreDraft=copy(currentScoring(detailRecipient));scoreSnapshot=JSON.stringify(scoreDraft);drawScoring();}
   function readScoreDraft(){
     if(!$('#score-edit-form'))return;
     scoreDraft.title=$('#score-template-title').value;
@@ -544,7 +573,7 @@
   function drawScoring(){
     const domains=scoreDraft.domains,total=domains.reduce((n,d)=>n+d.questions.length,0);
     const card=(d,i)=>`<article class="score-domain-card"><div class="score-domain-head"><div class="score-domain-field"><label class="sr-only" for="score-domain-title-${i}">${i+1}번째 영역명</label><input id="score-domain-title-${i}" maxlength="40" value="${escapeHTML(d.name)}" aria-describedby="score-domain-title-${i}-limit"></div><span class="field-limit score-domain-limit" id="score-domain-title-${i}-limit">${d.name.length}/40자</span><button type="button" class="score-domain-delete icon-button" data-action="score-delete-domain" data-index="${i}" aria-label="${escapeHTML(d.name)} 영역 삭제"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12ZM8 9h8v10H8V9Zm7.5-5-1-1h-5l-1 1H5v2h14V4z"/></svg></button></div><details class="score-domain-details" open><summary><span>${d.questions.length}문항</span></summary><ol class="score-question-list">${d.questions.map((q,j)=>`<li><span>${j+1}</span><div><label class="sr-only" for="score-question-${i}-${j}">${escapeHTML(d.name)} ${j+1}번 문항</label><textarea id="score-question-${i}-${j}" data-score-question="${i}" maxlength="80" rows="2" aria-describedby="score-question-${i}-${j}-limit">${escapeHTML(q)}</textarea><small class="field-limit score-input-limit" id="score-question-${i}-${j}-limit">${q.length}/80자</small></div><button class="button tertiary" type="button" data-action="score-delete-question" data-index="${i}" data-question="${j}" aria-label="${escapeHTML(d.name)} ${j+1}번 문항 삭제">삭제</button></li>`).join('')}</ol><button class="score-question-add" type="button" data-action="score-add-question" data-index="${i}" ${d.questions.length>=15?'disabled':''}>맞춤 문항 추가 (${d.questions.length}/15)</button></details></article>`;
-    editorDialog('scoring-dialog','score-criteria-dialog','리포트 채점 문항',`<form id="score-edit-form"><div class="score-criteria-summary"><div class="score-template-title-field"><label class="sr-only" for="score-template-title">템플릿 이름</label><input id="score-template-title" maxlength="40" value="${escapeHTML(scoreDraft.title)}" aria-describedby="score-template-title-limit"><small class="field-limit score-input-limit" id="score-template-title-limit">${scoreDraft.title.length}/40자</small></div><strong>현재 문항 <span>${total}개</span></strong><div class="score-criteria-help"><button type="button" data-action="score-help" aria-label="리포트 사용 기준 도움말" aria-expanded="false" aria-controls="score-help"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7h.01"/></svg></button><p id="score-help" role="tooltip">영역당 최대 15문항, 문항당 80자예요. 저장은 초안으로 가능하고, 리포트는 영역 3~5개와 영역별 문항 5개 이상이 필요해요.</p></div></div><div class="score-criteria-body"><div class="score-criteria-list">${[0,1].map(col=>`<div class="score-domain-column">${domains.map((d,i)=>i%2===col?card(d,i):'').join('')}</div>`).join('')}</div><button type="button" class="button secondary mockup-score-add" data-action="score-add-domain" ${domains.length>=5?'disabled':''}>+ 영역 추가 (${domains.length}/5)</button></div><footer class="score-criteria-dialog-footer"><div class="score-template-actions"><div class="score-template-control"><label class="score-template-label">템플릿 변경</label><div class="dropdown"><button type="button" class="dropdown-trigger" data-options="score-templates" aria-label="채점 기준 템플릿" aria-haspopup="listbox" aria-expanded="false"><span>${escapeHTML(scoreDraft.title)}</span></button></div></div><button class="button tertiary" type="button" data-action="score-reset">초기화</button></div><div class="score-criteria-save"><p class="score-criteria-save-status" role="status" data-score-status></p><button class="button primary" type="submit">저장</button></div></footer></form>`);
+    editorDialog('scoring-dialog','score-criteria-dialog','리포트 관찰 문항',`<form id="score-edit-form"><div class="score-criteria-summary"><div class="score-template-title-field"><label class="sr-only" for="score-template-title">템플릿 이름</label><input id="score-template-title" maxlength="40" value="${escapeHTML(scoreDraft.title)}" aria-describedby="score-template-title-limit"><small class="field-limit score-input-limit" id="score-template-title-limit">${scoreDraft.title.length}/40자</small></div><strong>현재 문항 <span>${total}개</span></strong><div class="score-criteria-help"><button type="button" data-action="score-help" aria-label="리포트 사용 기준 도움말" aria-expanded="false" aria-controls="score-help"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7h.01"/></svg></button><p id="score-help" role="tooltip">영역당 최대 15문항, 문항당 80자예요. 저장은 초안으로 가능하고, 리포트는 영역 3~5개와 영역별 문항 5개 이상이 필요해요.</p></div></div><div class="score-criteria-body"><div class="score-criteria-list">${[0,1].map(col=>`<div class="score-domain-column">${domains.map((d,i)=>i%2===col?card(d,i):'').join('')}</div>`).join('')}</div><button type="button" class="button secondary mockup-score-add" data-action="score-add-domain" ${domains.length>=5?'disabled':''}>+ 영역 추가 (${domains.length}/5)</button></div><footer class="score-criteria-dialog-footer"><div class="score-template-actions"><div class="score-template-control"><label class="score-template-label">템플릿 변경</label><div class="dropdown"><button type="button" class="dropdown-trigger" data-options="score-templates" aria-label="관찰 기준 템플릿" aria-haspopup="listbox" aria-expanded="false"><span>${escapeHTML(scoreDraft.title)}</span></button></div></div><button class="button tertiary" type="button" data-action="score-reset">초기화</button></div><div class="score-criteria-save"><p class="score-criteria-save-status" role="status" data-score-status></p><button class="button primary" type="submit">저장</button></div></footer></form>`);
   }
   function saveScoring(){
     readScoreDraft();if(!scoreDraft.title.trim()){$('[data-score-status]').textContent='템플릿 이름을 입력해 주세요.';$('#score-template-title').focus();return;}
@@ -592,7 +621,7 @@
     }
     else if(action==='scoring')openScoring();
     else if(action==='score-help')button.setAttribute('aria-expanded',button.getAttribute('aria-expanded')!=='true');
-    else if(action==='score-reset')dialog('채점 문항을 초기화할까요?','<p>영역명과 문항을 기본 템플릿으로 되돌려요. 저장 전까지 기존 기준은 유지돼요.</p>','초기화',()=>{scoreDraft=scoreSeed();drawScoring();});
+    else if(action==='score-reset')dialog('관찰 문항을 초기화할까요?','<p>영역명과 문항을 기본 템플릿으로 되돌려요. 저장 전까지 기존 기준은 유지돼요.</p>','초기화',()=>{scoreDraft=scoreSeed(scoreTemplateIndex(scoreDraft));drawScoring();});
     else if(action==='score-add-domain'){readScoreDraft();scoreDraft.domains.push({name:'새 영역',questions:[]});drawScoring();$('#score-domain-title-'+(scoreDraft.domains.length-1)).focus();}
     else if(action==='score-delete-domain'){readScoreDraft();const i=Number(button.dataset.index);dialog('영역을 삭제할까요?',`<p>「${escapeHTML(scoreDraft.domains[i].name)}」의 문항도 함께 삭제돼요.</p>`,'삭제',()=>{scoreDraft.domains.splice(i,1);drawScoring();},true);}
     else if(action==='score-add-question'){readScoreDraft();const i=Number(button.dataset.index);scoreDraft.domains[i].questions.push('');drawScoring();$(`#score-question-${i}-${scoreDraft.domains[i].questions.length-1}`).focus();}
@@ -613,7 +642,7 @@
     else if(action==='delete-trash'){const i=Number(button.dataset.index);dialog('기록을 완전히 삭제할까요?','<p>완전히 삭제한 기록은 복원할 수 없어요.</p>','완전삭제',()=>{state.trash.splice(i,1);persist();renderRecords();},true);}
     else if(action==='generate-report'){
       if(reportDays()<3)return true;
-      dialog('리포트를 생성할까요?',`<p>${escapeHTML(state.recipients[recipient].name)} · ${formatDate(reportRange.from)} ~ ${formatDate(reportRange.to)} · 기록 ${reportDays()}일 / 기준 3일.</p><p class="mockup-preview-note">이 목업에서는 생성 흐름만 확인할 수 있어요. 실제 AI 생성은 연결되지 않았어요.</p>`,'생성',()=>{
+      dialog('리포트를 생성할까요?',`<p>${escapeHTML(state.recipients[recipient].name)} · ${formatDate(reportRange.from)} ~ ${formatDate(reportRange.to)} · 기록 ${reportDays()}일 / 기준 3일.</p><p>관찰 기준: ${escapeHTML(currentScoring().title)}</p><p class="mockup-preview-note">이 목업에서는 생성 흐름만 확인할 수 있어요. 실제 AI 생성은 연결되지 않았어요.</p>`,'생성',()=>{
         if(isSampleReportPeriod()){
           state.reportRemoved||={};state.reportRemoved[recipient]=false;state.trash=state.trash.filter(x=>x.type!=='report'||x.recipient!==recipient);persist();render();
           toast('저장된 리포트 예시를 표시했어요.');
@@ -628,27 +657,12 @@
   function showStoredReport(){
     const tpl=$('#report-document');if(!tpl)return;
     $('.reports-layout').replaceChildren(tpl.content.cloneNode(true));
+    $('.reports-layout').insertAdjacentHTML('afterbegin','<p class="observation-legacy-note">이전 기준으로 작성된 리포트 예시예요. 새 관찰 문항으로 다시 계산한 결과가 아니에요.</p>');
     const areas=REPORT_AREAS;
     $('[data-report-changes]').innerHTML=areas.map(([name,score])=>`<article class="configured-report-change-card"><strong>${name}</strong><em>비교하지 않음</em><div><b>${score}점</b></div><small>비교할 이전 주 점수가 없어요.</small></article>`).join('');
     $('[data-report-care]').insertAdjacentHTML('beforeend',areas.map(([name,score,evidence,copy])=>`<article class="configured-report-care-card"><div><strong>${name}</strong><b>${score}점</b></div><em>판정 5/5 · 근거 ${evidence}/5</em><p>${copy}</p></article>`).join(''));
     $('[data-report-questions]').innerHTML=areas.map(([name,score,evidence,copy,questions,scores])=>`<section><h3>${name}</h3><ol>${questions.map((question,i)=>`<li><p>${question}</p><span>${scores[i]===4?'반복 확인 · 100% · 획득 점수 20/20점 · 근거 2일':scores[i]===3?'명확한 수행 · 75% · 획득 점수 15/20점 · 근거 1일':'근거 없음 · 0점 · 영역 내 배점 0/20점'}</span></li>`).join('')}</ol></section>`).join('');
   }
-  const SCORE_TEMPLATE_DOMAINS=[
-    [
-      {name:'신체운동·건강',questions:['몸을 움직이는 놀이와 활동에 즐겁게 참여한다.','이동할 때 몸의 균형과 방향을 상황에 맞게 조절한다.','공과 도구를 손과 눈을 함께 사용해 조작한다.','손가락과 손을 사용하는 놀이에 지속해서 참여한다.','식사와 간식 시간에 건강한 생활 습관을 실천한다.','휴식이 필요할 때 쉬거나 몸의 상태를 표현한다.','손 씻기 등 기본 위생 일과에 참여한다.','안전한 놀이 방법과 생활 약속을 이해하고 따른다.','위험할 수 있는 장소나 물건을 알아차리고 조심한다.','교통과 이동 상황에서 필요한 안전 행동을 시도한다.','아프거나 다쳤을 때 도움을 요청하거나 성인 안내를 따른다.','실내외에서 자신과 다른 사람의 몸을 안전하게 조절한다.']},
-      {name:'의사소통',questions:['상대의 말과 소리에 관심을 보이며 듣는다.','일상적인 안내를 이해하고 자신의 방식으로 반응한다.','자신의 생각, 느낌, 요구를 말·몸짓·그림 등으로 표현한다.','상대와 말이나 비언어 표현을 주고받는다.','놀이와 대화에서 차례를 지키며 말한다.','상대에게 부탁하거나 거절할 때 적절한 표현을 사용한다.','그림, 기호, 표식에서 의미를 찾아본다.','자신의 이름이나 익숙한 글자에 관심을 보인다.','그림책과 이야기 자료를 보고 내용을 이해하려 한다.','이야기의 다음 장면이나 결말을 생각해 본다.','그리기, 끄적이기, 표시하기 등 쓰기 활동을 즐긴다.','책과 이야기, 노래말을 일상 놀이에 활용한다.']},
-      {name:'사회관계',questions:['자신의 이름, 좋아하는 것, 할 수 있는 일을 알아차리고 표현한다.','자신의 감정과 필요를 알아차리고 표현한다.','놀이와 생활에서 스스로 선택하고 시도한다.','가족과 익숙한 사람에게 관심과 애정을 표현한다.','또래에게 관심을 보이고 함께 놀이하려 한다.','다른 사람과 놀잇감, 공간, 차례를 나눈다.','공동생활에 필요한 약속과 규칙을 이해하고 지킨다.','자신과 다른 사람의 생각과 모습을 존중한다.','갈등 상황에서 말하거나 성인의 도움을 받아 해결을 시도한다.','소집단과 전체 활동에서 자신의 역할로 참여한다.','우리 주변의 사람과 직업, 기관에 관심을 보인다.','공동체의 구성원으로서 배려와 책임을 실천한다.']},
-      {name:'예술경험',questions:['자연과 생활 속 색, 소리, 모양의 아름다움에 관심을 보인다.','감각으로 느낀 차이와 변화를 표현한다.','노래, 리듬, 움직임을 즐기며 표현한다.','그리기와 만들기 재료를 탐색하며 표현한다.','여러 재료와 도구를 자신의 생각에 맞게 사용한다.','상상한 장면이나 경험을 놀이와 작품으로 나타낸다.','음악, 미술, 움직임 활동에서 자기만의 방법을 시도한다.','다른 사람의 작품과 표현을 보고 관심을 보인다.','예술 작품이나 공연을 보고 느낀 점을 표현한다.','자신과 친구의 표현을 함께 즐기고 나눈다.']},
-      {name:'자연탐구',questions:['주변의 사물과 현상에 호기심을 보인다.','감각과 도구를 사용해 사물과 재료를 탐색한다.','사물의 같음과 다름을 비교한다.','공통점에 따라 사물과 그림을 분류한다.','반복되는 모양, 소리, 움직임의 규칙을 찾아본다.','생활 속 수량과 수를 세고 비교한다.','위치와 공간 관계를 이해하며 표현한다.','길이, 무게, 크기 등 속성을 비교해 본다.','물체와 재료의 변화, 움직임, 원인을 관찰한다.','식물과 동물, 계절과 날씨의 변화에 관심을 보인다.','생명과 자연을 돌보고 존중하는 행동을 실천한다.','문제가 생기면 여러 방법으로 해결을 시도한다.','탐색한 결과를 말, 그림, 몸짓 등으로 기록하거나 나눈다.']}
-    ],
-    [
-      {name:'국어',questions:['말하는 이를 바라보며 핵심 내용을 듣는다.','자신의 경험과 생각을 문장으로 표현한다.','글과 그림 자료에서 필요한 정보를 찾는다.','읽은 내용과 자신의 경험을 연결해 말한다.','목적에 맞게 짧은 글이나 그림으로 표현한다.']},
-      {name:'수학',questions:['생활 속 수량을 세고 비교한다.','규칙을 찾아 다음 모양이나 수를 예상한다.','여러 방법으로 덧셈과 뺄셈 상황을 해결한다.','위치와 방향을 이해하고 표현한다.','길이와 들이, 무게를 비교해 본다.']},
-      {name:'바른 생활',questions:['일과에 필요한 약속과 규칙을 지킨다.','자신과 다른 사람의 기분을 살피고 배려한다.','맡은 일을 끝까지 해 보려 한다.','안전한 생활 습관을 실천한다.']},
-      {name:'슬기로운 생활',questions:['주변 사람과 장소, 일에 관심을 보인다.','계절과 날씨의 변화를 관찰한다.','관찰한 내용을 기준에 따라 분류한다.','궁금한 점을 탐색하며 해결 방법을 찾는다.']},
-      {name:'즐거운 생활',questions:['노래와 움직임을 즐기며 표현한다.','미술 재료와 도구를 탐색해 표현한다.','놀이에 자신의 생각을 더해 참여한다.','친구의 표현을 보고 함께 즐긴다.']}
-    ]
-  ];
   const REPORT_AREAS=[
       ['국어',15,1,'이웃을 만났을 때 손을 흔드는 것과 함께 밝게 인사말을 건네보세요.', ['글의 중심 내용을 파악한다.','근거를 들어 자신의 의견을 말하거나 쓴다.','상대와 목적에 맞게 대화한다.','다양한 글과 매체를 비판적으로 이해한다.','읽은 내용을 요약하고 자신의 생각을 표현한다.'],[0,0,3,0,0]],
       ['수학',0,0,'이번 기록만으로는 조언을 제안하기 어려워요.', ['문제 상황에 맞는 계산 방법을 선택한다.','규칙과 관계를 식이나 표로 표현한다.','자료를 수집하고 표와 그래프로 나타낸다.','도형의 성질을 활용해 문제를 해결한다.','해결 과정을 설명하고 다른 방법을 비교한다.'],[0,0,0,0,0]],
@@ -656,5 +670,6 @@
       ['과학',35,2,'공원에서 관찰한 나무나 새의 특징을 그림으로 그려보거나 이름을 함께 찾아보세요. 주변의 쓰레기를 줍는 것처럼 자연을 깨끗하게 유지하는 활동을 꾸준히 실천해 보세요.', ['자연 현상에 대해 질문하고 관찰한다.','예상과 실험을 통해 탐구한다.','탐구 결과를 자료로 정리하고 설명한다.','과학 원리를 생활 문제에 적용한다.','환경과 생명을 존중하는 태도를 실천한다.'],[4,0,0,0,3]],
       ['예술·체육',70,4,'오리를 보며 숫자를 세어본 것처럼 주변 사물의 개수를 손가락으로 표현하며 놀이해 보세요. 산책할 때처럼 옆 사람과 보폭을 맞추며 걷는 활동을 즐겨보세요. 외출 후 손을 씻고 수건을 정리하는 습관을 스스로 계속 실천해 보세요.', ['음악과 미술, 움직임으로 생각과 느낌을 표현한다.','다양한 표현 방식을 감상하고 의견을 나눈다.','신체 활동에 꾸준히 참여하며 안전을 지킨다.','협력과 규칙이 필요한 활동에 참여한다.','건강한 생활 습관을 스스로 실천한다.'],[3,0,4,3,4]]
     ];
+  const iep=createCareitIEP({state,persist,toast,dialog,escapeHTML,registerEdits,ageBands});
   applyDesign();render();
 })();
