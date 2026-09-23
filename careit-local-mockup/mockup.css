@@ -107,7 +107,6 @@ textarea,select,.dropdown-trigger,.datefield-trigger,
 .journal-memo-card > .field:first-child .journal-inline-title-field,
 .journal-memo-card > .field:first-child .journal-inline-title-heading > .field-limit { padding-top:0; }
 .journal-memo-card > .field:first-child .journal-inline-title-field::before { top:0; }
-.journal-memo-card > .field:first-child .journal-title-limit { top:calc(-1 * var(--space-4)); line-height:var(--space-4); }
 .journal-title-edit svg { width:16px; height:16px; flex:none; pointer-events:none; }
 .journal-title-edit:focus-visible { outline:2px solid var(--primary-dark); outline-offset:2px; }
 @media(pointer:coarse) { .journal-title-edit { width:44px; height:44px; } }

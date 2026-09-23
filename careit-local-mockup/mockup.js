@@ -163,7 +163,6 @@
   function updateCounter(el) {
     const counter = el.id ? document.getElementById(el.id + '-limit') : null;
     if (counter && el.maxLength > 0) counter.textContent = `${el.value.length}/${el.maxLength}자`;
-    if (el.classList.contains('journal-inline-title-input')) el.parentElement.querySelector('.journal-title-limit').textContent = `${el.value.length}/12자`;
   }
   function captureDraft() {
     const values = {}; $$('input[id],textarea[id]', $('#screen')).forEach(el => values[el.id] = (el.type==='radio'||el.type==='checkbox') ? el.checked : el.value);
