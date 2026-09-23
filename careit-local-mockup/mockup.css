@@ -1,0 +1,230 @@
+/* 로컬 목업 전용 기능. 서비스 화면 스타일은 assets/original.css를 사용합니다. */
+/* 카드·팝업 등 떠 있는 영역의 그림자는 이 값 하나를 사용합니다. */
+:root {
+  --shadow-ui:0 4px 12px rgba(22,32,42,0.05);
+  --shadow-card:var(--shadow-ui);
+  --shadow-hairline:var(--shadow-ui);
+  --shadow-chip:var(--shadow-ui);
+  --shadow-primary:var(--shadow-ui);
+  --shadow-soft:var(--shadow-ui);
+  --shadow-dialog:var(--shadow-ui);
+  --shadow-toast:var(--shadow-ui);
+}
+/* 초안 배지와 텍스트 선택도 서비스의 초록색 강조 색상을 사용합니다. */
+:root,body[data-theme=dark] {
+  --badge-draft-bg:var(--mint-soft);
+  --badge-draft-fg:var(--primary-dark);
+  accent-color:var(--primary-action);
+}
+::selection { background:var(--mint-selected); color:var(--text); }
+/* 짧은 상태 배지의 공통 규칙: 좌우 8px, 위아래 4px, 한 줄 높이 20px. */
+:root {
+  --badge-padding-inline:8px;
+  --badge-padding-block:4px;
+  --badge-line-height:20px;
+}
+.workflow-badge,.record-status,.recipient-card-status,.session-badge,.pricing-badge {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  padding:var(--badge-padding-block) var(--badge-padding-inline);
+  line-height:var(--badge-line-height);
+  min-height:calc(var(--badge-line-height) + 2 * var(--badge-padding-block));
+  white-space:nowrap;
+}
+/* 회색 입력·선택·보조 버튼은 평면으로 표시하며 선택 상태에서도 그림자를 만들지 않습니다. */
+input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=hidden]):not(.journal-inline-title-input),
+textarea,select,.dropdown-trigger,.datefield-trigger,
+.button:not(.primary),.journal-choice-chips,.quick-check-scale,
+.record-tabs,.pricing-audience,.dropdown-list li {
+  --shadow-hairline:none;
+  --shadow-chip:none;
+  box-shadow:none;
+}
+/* 흰색 관리대상 카드의 윤곽도 다른 섹션 카드와 맞춥니다. */
+.recipient-card { border:0; }
+/* 상세 팝업 제목과 닫기를 본문 안쪽 경계에 맞춥니다. */
+.recipient-detail-header,.recipient-detail-body { scrollbar-gutter:stable; }
+.recipient-detail-header {
+  padding-inline:calc(var(--space-7) + var(--space-5));
+  border-bottom:2px solid var(--primary);
+  overflow:hidden;
+}
+@media(max-width:767px) {
+  .recipient-detail-header { padding-inline:calc(2 * var(--space-5)); }
+}
+.confirm-dialog::backdrop,.recipient-detail-dialog::backdrop,
+.score-criteria-dialog::backdrop,.configuration-dialog::backdrop { background:rgb(22 32 42 / 35%); }
+/* 일지 선택 도구: 같은 너비의 세 항목, 한 줄 제목, 항상 보이는 기록 선택. */
+.home-recipient-card .latest-journal-copy {
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:5;
+  line-clamp:5;
+  overflow:hidden;
+}
+.journal-toolbar { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--space-6); }
+.journal-toolbar > .field { min-width:0; width:100%; }
+.journal-toolbar > .field > span { white-space:nowrap; }
+.journal-actions { border:0; }
+/* 본문과 하단 정보는 같은 폭 기준을 사용합니다. 설정은 기존의 좁은 폭을 유지합니다. */
+.app-content { --content-max-width:1120px; }
+@media(min-width:1440px) { .app-content { --content-max-width:1280px; } }
+.app-content:has(.settings-page) { --content-max-width:680px; }
+.app-content .page,.app-content .site-footer { max-width:var(--content-max-width); }
+@media(max-width:767px) { .journal-toolbar { grid-template-columns:1fr; gap:var(--space-4); } }
+/* 기록 필터: 한 달력에서 기간을 선택하고, 오른쪽에서 관리대상을 선택합니다. */
+.records-date-filter { align-items:flex-end; }
+.records-date-filter-fields { padding-top:0; }
+.records-date-filter-field { width:160px; min-width:0; }
+.records-date-range-field { width:280px; }
+.records-date-filter .datefield-trigger { padding-inline:12px; }
+.records-date-filter .datefield-trigger>span { min-width:0; white-space:nowrap; }
+.records-date-filter>.button { flex:none; width:auto; margin-left:auto; }
+/* 리포트도 기록 화면과 같은 기간 달력과 회색 날짜 선택칸을 사용합니다. */
+.reports-page .report-generation-field .datefield { width:100%; display:flex; }
+.reports-page .report-generation-field .datefield-trigger { height:100%; }
+.reports-page .report-generation-field .datefield-trigger>span { min-width:0; overflow-wrap:anywhere; }
+@media(max-width:767px) {
+  .records-date-filter-fields { width:100%; display:grid; grid-template-columns:minmax(0,1fr); }
+  .records-date-filter-field { width:100%; }
+  .records-recipient-filter-field { grid-column:1 / -1; }
+  .records-date-filter .datefield-trigger { gap:4px; padding-inline:8px; font-size:13px; }
+  .records-date-filter .datefield-trigger svg { width:16px; height:16px; }
+}
+/* 제목은 카드 위의 텍스트처럼 표시하고 Lucide 연필로 편집 가능함을 알립니다. */
+.journal-inline-title-field { display:inline-flex; align-items:center; gap:4px; flex:0 1 auto; max-width:calc(100% - 82px); padding-inline:0; isolation:isolate; }
+/* 평소 제목은 메모칸 경계에, 편집 중 글자는 메모칸 안쪽 여백에 맞춥니다. */
+.journal-inline-title-field:has(.journal-inline-title-input:focus) { padding-inline:var(--space-4); }
+.journal-inline-title-field::before { content:""; position:absolute; inset:var(--space-6) 0 0; z-index:-1; border-radius:var(--radius-control); pointer-events:none; }
+.journal-inline-title-field:has(.journal-inline-title-input:focus)::before { background:var(--neutral-soft); box-shadow:none; }
+.journal-inline-title-heading .journal-inline-title-input { field-sizing:content; width:auto; flex:0 1 auto; min-width:2ch; max-width:100%; padding:0; border-radius:0; background:transparent; box-shadow:none; }
+.journal-inline-title-heading .journal-inline-title-input:focus { background:transparent; outline:none; box-shadow:none; }
+.journal-title-edit { display:inline-flex; align-items:center; justify-content:center; flex:none; width:32px; height:42px; padding:0; border:0; border-radius:4px; background:transparent; color:var(--muted); cursor:pointer; }
+.journal-inline-title-field:has(.journal-inline-title-input:focus) .journal-title-edit { color:var(--primary-dark); }
+/* 첫 제목의 추가 상단 공간을 제거해 메모 카드 아래쪽 여백과 균형을 맞춥니다. */
+.journal-memo-card > .field:first-child .journal-inline-title-field,
+.journal-memo-card > .field:first-child .journal-inline-title-heading > .field-limit { padding-top:0; }
+.journal-memo-card > .field:first-child .journal-inline-title-field::before { top:0; }
+.journal-memo-card > .field:first-child .journal-title-limit { top:calc(-1 * var(--space-4)); line-height:var(--space-4); }
+.journal-title-edit svg { width:16px; height:16px; flex:none; pointer-events:none; }
+.journal-title-edit:focus-visible { outline:2px solid var(--primary-dark); outline-offset:2px; }
+@media(pointer:coarse) { .journal-title-edit { width:44px; height:44px; } }
+/* 입력칸과 포커스 테두리 사이의 흰 틈을 없애고 기존 두께·색은 유지합니다. */
+:is(input,textarea,select):focus-visible,
+.field [aria-invalid=true]:focus-visible,
+.quick-check-number input[aria-invalid=true]:focus-visible,
+.dropdown-trigger:focus-visible,
+.datefield-trigger:focus-visible,
+.journal-choice-chips label:has(input:focus-visible) { outline-offset:0; }
+[hidden] { display: none !important; }
+#screen { display: contents; }
+.app-layout.mockup-nav-collapsed .sidebar { display: none; }
+.mockup-toggle { position: fixed; right: 20px; bottom: 18px; z-index: 80; border: 1px solid #d5dfe1; border-radius: 30px; padding: 10px 16px; background: #fff; color: #30443d; box-shadow: var(--shadow-ui); font: 600 13px/1.3 Pretendard,sans-serif; cursor: pointer; }
+.mockup-panel { position: fixed; right: 20px; bottom: 68px; z-index: 81; width: 330px; max-width: calc(100vw - 32px); max-height: calc(100dvh - 100px); overflow-y: auto; padding: 20px; border: 1px solid #d5dfe1; border-radius: 14px; background: #fff; color: #16202a; box-shadow: var(--shadow-ui); font: 14px/1.5 Pretendard,sans-serif; }
+.mockup-panel-heading { display:flex; align-items:center; justify-content:space-between; }
+.mockup-panel-heading strong { font-size:17px; }
+.mockup-panel button { cursor:pointer; border:1px solid #d5dfe1; border-radius:8px; padding:8px 12px; background:#f6f8fa; color:#16202a; font:inherit; }
+.mockup-panel-heading button { border:0; background:transparent; font-size:24px; padding:0 4px; }
+.mockup-panel p { color:#64707e; font-size:13px; }
+.mockup-panel label { display:block; margin:14px 0 6px; font-weight:600; }
+.mockup-panel input[type=color] { height:34px; width:100%; margin-top:6px; padding:2px; border:1px solid #d5dfe1; border-radius:6px; cursor:pointer; }
+.mockup-panel input[type=range] { display:block; width:100%; margin-top:10px; }
+.mockup-panel input[type=checkbox] { accent-color:#05a66b; }
+.mockup-panel textarea { display:block; width:100%; background:#f6f8fa; border:1px solid #d5dfe1; border-radius:8px; padding:10px; color:#16202a; font:12px/1.6 Consolas,monospace; resize:vertical; }
+.mockup-panel output { float:right; color:#64707e; font-weight:400; }
+.mockup-panel-actions { display:flex; gap:6px; margin-top:12px; }
+.mockup-panel-actions button:last-child { background:#06784f; color:white; border-color:#06784f; flex:1; }
+.mockup-panel .mockup-reset { font-size:12px; border:0; padding:0; background:transparent; text-decoration:underline; color:#64707e; }
+.mockup-panel small { display:block; margin-top:14px; padding-top:12px; border-top:1px solid #edf0f1; color:#64707e; font-size:12px; }
+.mockup-toast { position:fixed; z-index:150; bottom:24px; left:50%; transform:translateX(-50%); max-width:calc(100% - 40px); border-radius:10px; padding:12px 20px; background:#16202a; color:#fff; box-shadow:var(--shadow-ui); font-size:14px; }
+body.mockup-editing [contenteditable=true] { outline:1px dashed #05a66b99; outline-offset:3px; cursor:text; }
+body.mockup-editing [contenteditable=true]:focus { outline:2px solid #05a66b; background:#05a66b09; }
+.mockup-listbox { position:absolute; z-index:30; inset-inline:0; top:calc(100% + 6px); min-width:180px; max-height:320px; overflow-y:auto; padding:6px; border-radius:8px; box-shadow:var(--shadow-soft); background:var(--surface); border:1px solid var(--line); }
+.mockup-listbox button { display:block; width:100%; border:0; border-radius:6px; background:transparent; color:var(--text); padding:11px 12px; text-align:left; cursor:pointer; font:inherit; }
+.mockup-listbox button:hover,.mockup-listbox button:focus-visible,.mockup-listbox button[aria-selected=true] { background:var(--mint-soft); color:var(--primary-dark); }
+.mockup-date-popup { position:absolute; z-index:30; top:calc(100% + 6px); left:0; padding:14px; border-radius:10px; background:var(--surface); box-shadow:var(--shadow-soft); width:270px; }
+.mockup-date-popup label { display:grid; gap:8px; }
+.mockup-date-popup input { min-width:0; width:100%; background:var(--neutral); color:var(--text); padding:10px; border:0; border-radius:8px; font:inherit; }
+.dropdown,.datefield { position:relative; }
+/* 촘촘한 퀵체크 선택 항목은 그림자 대신 간격으로 경계를 구분합니다. */
+.journal-choice-chips { gap:8px; }
+.journal-choice-chips label:has(input:checked) { background:var(--mint-selected); color:var(--primary-dark); }
+.mockup-dialog-fields { display:grid; gap:16px; margin:20px 0; }
+.mockup-dialog-fields label { display:grid; gap:8px; }
+.mockup-dialog-fields input { border:0; border-radius:8px; background:var(--neutral); color:var(--text); padding:12px; font:inherit; }
+.mockup-dialog-fields p { margin:0; }
+@media(max-width:600px) { .mockup-toggle { right:12px; bottom:12px; } .mockup-panel { right:12px; bottom:60px; } }
+@media(max-width:1023px) { .sidebar { height:100dvh; overflow-y:auto; } .sidebar .nav-handle { right:8px; top:16px; } .sidebar .nav-handle svg { transform:rotate(90deg); } .sidebar nav a { min-height:52px; font-size:var(--fs-section); } .app-layout:not(.mockup-nav-collapsed) .nav-open-button { display:none; } }
+@media print { .mockup-toggle,.mockup-panel,.mockup-toast { display:none!important; } }
+
+/* 팝업은 트리거 폭/카드 overflow에서 분리하고 뷰포트 안에 배치합니다. */
+.mockup-popup[popover] { position:fixed; inset:auto; margin:0; transform:none; z-index:100; box-sizing:border-box; border:0; background:var(--surface); color:var(--text); max-width:calc(100vw - 16px); box-shadow:var(--shadow-card); }
+.mockup-listbox[popover] { width:max-content; padding:8px; border-radius:var(--radius-card); overflow:auto; overscroll-behavior:contain; }
+.mockup-listbox button { display:flex; align-items:center; justify-content:space-between; gap:20px; min-height:44px; padding:10px 12px; font-size:14px; font-weight:700; line-height:1.45; white-space:nowrap; }
+.mockup-option-copy { display:grid; gap:4px; min-width:0; }
+.mockup-option-copy>span { overflow:hidden; text-overflow:ellipsis; }
+.mockup-option-copy small { color:var(--muted); font-size:12px; font-weight:400; }
+.mockup-listbox svg,.mockup-check-space { width:18px; height:18px; flex:none; }
+.mockup-listbox button:focus-visible { outline:2px solid var(--primary-dark); outline-offset:-2px; }
+.mockup-listbox button:disabled { opacity:.45; cursor:not-allowed; }
+.mockup-listbox button:disabled:hover { background:transparent; color:var(--text); }
+.mockup-popup-empty { margin:8px; color:var(--muted); font-size:14px; }
+.mockup-date-popup[popover] { width:320px; padding:16px; border-radius:var(--radius-card); overflow:auto; gap:12px; }
+.mockup-date-popup[popover]:popover-open { display:grid; }
+.mockup-date-popup .datefield-day { min-height:36px; }
+.mockup-date-popup button:disabled { opacity:.32; cursor:not-allowed; }
+.date-range-prompt { margin:0; color:var(--text); font-size:14px; font-weight:700; }
+.date-range-summary { margin:0; color:var(--muted); font-size:13px; }
+.mockup-date-range .datefield-grid { column-gap:0; }
+.mockup-date-range .datefield-day.is-in-range { background:var(--mint-soft); border-radius:0; color:var(--primary-dark); }
+.mockup-date-range .datefield-day.is-range-start,
+.mockup-date-range .datefield-day.is-range-end { background:var(--primary-action); color:#fff; }
+.mockup-date-range .datefield-day.is-range-start { border-radius:var(--radius-control) 0 0 var(--radius-control); }
+.mockup-date-range .datefield-day.is-range-end { border-radius:0 var(--radius-control) var(--radius-control) 0; }
+.mockup-date-range .datefield-day.is-range-start.is-range-end { border-radius:var(--radius-control); }
+.mockup-date-range .datefield-day:hover { transform:none; }
+.dropdown-trigger>span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.report-recipient-info .dropdown { min-width:180px; }
+body:has(dialog[open]) { overflow:hidden; }
+dialog { color:var(--text); }
+.confirm-dialog { max-height:calc(100dvh - 32px); overflow:auto; }
+.mockup-modal-form { margin:0; min-height:0; display:flex; flex:1; flex-direction:column; }
+.configuration-dialog .quick-check-form { box-shadow:none; }
+.configuration-dialog input,.configuration-dialog textarea,.score-criteria-dialog input,.score-criteria-dialog textarea { max-width:100%; }
+.mockup-quick-options { display:grid; gap:8px; }
+.mockup-option-editor { display:flex; gap:8px; align-items:center; }
+.mockup-option-editor input { flex:1; min-width:0; }
+.mockup-quick-option-form { display:flex; gap:8px; margin-block:12px; }
+.mockup-quick-option-form input { flex:1; min-width:0; }
+.mockup-quick-help { color:var(--muted); font-size:14px; }
+.mockup-quick-number { display:flex; gap:8px; align-items:center; }
+.score-criteria-dialog form { min-height:0; display:flex; flex-direction:column; flex:1; }
+.score-criteria-dialog[open],.configuration-dialog[open],.score-criteria-dialog form { overflow:clip; }
+.score-criteria-body,.configuration-dialog-body { overscroll-behavior:contain; }
+.score-criteria-dialog .score-criteria-summary { flex:none; }
+.score-criteria-dialog .score-criteria-body { min-height:0; }
+.score-criteria-help { position:relative; }
+.score-criteria-help p[role=tooltip] { display:none; }
+.score-criteria-help button[aria-expanded=true]+p[role=tooltip] { display:block; z-index:2; }
+.mockup-score-add { margin:0 32px 16px; align-self:flex-start; }
+.score-template-actions { min-width:0; }
+.score-template-control { min-width:0; }
+.mockup-trash-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.mockup-trash-row { display:flex; justify-content:space-between; gap:16px; padding:20px; background:var(--surface); border-radius:8px; }
+.mockup-trash-row p { color:var(--muted); font-size:14px; }
+.consent-dialog { width:min(600px,calc(100vw - 32px)); text-align:left; }
+.consent-dialog .consent-item label { display:block; }
+.mockup-preview-note { margin:12px 0; font-size:13px; color:var(--muted); }
+@media(max-width:767px) {
+  .mockup-date-popup[popover] { padding:12px; }
+  .mockup-date-popup .datefield-day { min-height:38px; }
+  .configuration-dialog { max-height:calc(100dvh - 16px); }
+  .score-criteria-dialog .score-criteria-dialog-header { padding:20px 16px 12px; }
+  .score-criteria-dialog .score-criteria-summary { margin-inline:0; padding-inline:16px; flex-wrap:wrap; }
+  .score-criteria-dialog .score-criteria-dialog-footer { padding:12px 16px; gap:12px; flex-wrap:wrap; }
+  .mockup-score-add { margin-inline:16px; }
+  .mockup-trash-row { flex-direction:column; }
+  .mockup-quick-option-form,.mockup-option-editor { flex-wrap:wrap; }
+}
