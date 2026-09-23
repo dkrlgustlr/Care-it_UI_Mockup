@@ -7,6 +7,12 @@
 }
 .configured-report-section-header h3,
 .configured-report-page-header.is-compact h2 { font-size:20px; }
+/* 흰 배경의 리포트 구분선은 기존 상단·본문 구분선과 같은 회색을 사용합니다. */
+.configured-report-scores li,
+.configured-report-excerpts li,
+.configured-report-method,
+.configured-report-footer,
+.configured-report-area { border-color:#00000014; }
 /* 카드·팝업 등 떠 있는 영역의 그림자는 이 값 하나를 사용합니다. */
 :root {
   --shadow-ui:0 4px 12px rgba(22,32,42,0.05);
