@@ -1,4 +1,36 @@
 /* UI 동작과 샘플 데이터. 서버 요청 없이 이 브라우저 안에서만 실행됩니다. */
+function createMockupStorage({storage,key,locks,onBlocked}) {
+  let lastSaved=null,blocked=false,pending=0,queue=Promise.resolve();
+  try { lastSaved=storage.getItem(key); } catch {}
+  const initial=lastSaved;
+  function stop(reason) {if(!blocked){blocked=true;onBlocked(reason);}return false;}
+  function check() {
+    if(blocked)return false;
+    try {return storage.getItem(key)===lastSaved||stop('conflict');}
+    catch {return stop('unavailable');}
+  }
+  function save(snapshot) {
+    pending++;
+    const write=()=>{
+      if(!check())return false;
+      try {storage.setItem(key,snapshot);lastSaved=snapshot;return true;}
+      catch {return stop('unavailable');}
+    };
+    // 같은 출처의 탭에서 동시에 저장해도 비교와 쓰기를 한 번에 하나씩 수행합니다.
+    queue=queue.then(()=>locks?locks.request(key,write):write()).catch(()=>stop('unavailable')).finally(()=>pending--);
+    return queue;
+  }
+  return {initial,save,check,get blocked(){return blocked;},get pending(){return pending;}};
+}
+function mockupCheckoutPrice(monthlyPrice, months) {
+  return (monthlyPrice - (months === 12 ? 1000 : 0)) * months;
+}
+function mockupBillingDate(today, months = 0) {
+  const [year, month, day] = today.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1 + months, 1));
+  const lastDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
+  return `${date.getUTCFullYear()}.${String(date.getUTCMonth() + 1).padStart(2, '0')}.${String(Math.min(day, lastDay)).padStart(2, '0')}`;
+}
 (() => {
   'use strict';
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -6,8 +38,9 @@
   const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const embedded = JSON.parse($('#saved-design').textContent || '{}');
   const STORAGE = 'careit-ui-mockup-20260923-v1' + (embedded.exportId ? '-'+embedded.exportId : '');
+  const store=createMockupStorage({storage:localStorage,key:STORAGE,locks:navigator.locks,onBlocked:showStorageBlock});
   let state = {...embedded};
-  try { state = {...state, ...JSON.parse(localStorage.getItem(STORAGE) || '{}')}; } catch {}
+  try { state = {...state, ...JSON.parse(store.initial || '{}')}; } catch {}
   state.edits ||= {};
   state.drafts ||= {};
   state.draftDates ||= {};
@@ -26,14 +59,24 @@
   state.scoring ||= {};
   state.trash ||= [];
   state.reportTemplates ||= {};
+  const checkoutPlans = {starter:{name:'플러스',price:14900},team:{name:'팀',price:29900}};
+  const checkoutCycles = {monthly:{name:'월간',months:1,unit:'월'},yearly:{name:'연간',months:12,unit:'년'}};
+  const won = value => `${value.toLocaleString('ko-KR')}원`;
   const TODAY = '2026-09-23'; // 원본 화면의 기준일. 목업 날짜를 일관되게 유지합니다.
-  const ageBands = ['만 3세 미만','만 3세','만 4세','만 5세','만 6~7세','만 8~12세','만 13~17세','만 18세 이상'];
+  const ageBands = ['만 3세 미만','만 3~5세','만 6~12세','만 13~17세','만 18세 이상'];
   state.recipients ||= [
     {name:'산책 샘플', count:11, date:'2026/09/10', active:true, memo:''},
     {name:'그림책 샘플', count:8, date:'2026/09/10', active:true, memo:''},
     {name:'테스트용 9.14', count:1, date:'2026/09/14', active:true, memo:''},
     {name:'이지훈', count:1, date:'2026/09/13', active:false, memo:''}
   ];
+  const previousAgeBands = {'만 3세':'만 3~5세','만 4세':'만 3~5세','만 5세':'만 3~5세','만 6~7세':'만 6~12세','만 8~12세':'만 6~12세'};
+  let ageBandsChanged = false;
+  for (const person of state.recipients) {
+    if (!Object.hasOwn(previousAgeBands, person.ageBand)) continue;
+    person.ageBand = previousAgeBands[person.ageBand];
+    ageBandsChanged = true;
+  }
   const originalJournalRows = [
     ['2026-09-22','9월 22일 (화)','[합성 QA 2026-09-22] 임시저장 복원과 직접 저장 후 정리 검증용 기록입니다. 실제 돌봄 기록이 아닙니다.'],
     ['2026-09-18','9월 18일 (금)','도윤이는 오늘 왁뿌빵 먹기 체험학습을 했다. 왁뿌 체험을 통해 촉감 교육을 목표하였으나, 옷이 너무 따가워 빨갛게 반점이 생기고 부어올랐다. 그로 인해 기분이 좋지 않아 충분한 교육이 되지 못했다. 관련 알러지 및 아토피 여부를 확인 부탁한다.'],
@@ -56,8 +99,20 @@
   const recordRange = {from:'', to:''};
   const reportRange = {from:'2026-09-11', to:'2026-09-17'};
   let editingRecipient = null, editing = false, toastTimer, activePopupTrigger;
-  const persist = () => { try { localStorage.setItem(STORAGE, JSON.stringify(state)); } catch { $('.mockup-editor-status').textContent = '자동 저장을 사용할 수 없습니다. 수정본 HTML 저장을 눌러 주세요.'; } };
-  function toast(message) { clearTimeout(toastTimer); const el = $('#mockup-toast'); el.textContent = message; el.hidden = false; toastTimer = setTimeout(() => el.hidden = true, 3200); }
+  const persist = () => store.save(JSON.stringify(state));
+  if (ageBandsChanged) persist();
+  function toast(message,allowBlocked=false) { if(store.blocked&&!allowBlocked)return;clearTimeout(toastTimer); const el = $('#mockup-toast'); el.textContent = message; el.hidden = false; toastTimer = setTimeout(() => el.hidden = true, 3200); }
+  function showStorageBlock(reason) {
+    closePopups();clearTimeout(toastTimer);$('#mockup-toast').hidden=true;
+    $('#mockup-storage-title').textContent=reason==='conflict'?'다른 탭에서 내용이 변경됐어요':'자동 저장을 사용할 수 없어요';
+    $('#mockup-storage-message').textContent=reason==='conflict'?'다른 탭의 내용을 덮어쓰지 않도록 이 탭의 저장을 멈췄어요.':'현재 작성 내용은 이 탭에 남아 있어요. 먼저 내려받아 보관해 주세요.';
+    $('.mockup-editor-status').textContent='저장이 중단됐어요. 현재 내용을 내려받아 보관할 수 있어요.';
+    const modal=$('#mockup-storage-dialog');if(!modal.open)modal.showModal();
+  }
+  window.addEventListener('storage',event=>{if(event.storageArea===localStorage&&(event.key===STORAGE||event.key===null))store.check();});
+  window.addEventListener('focus',()=>store.check());
+  window.addEventListener('beforeunload',event=>{if(store.pending){event.preventDefault();event.returnValue='';}});
+  $('#mockup-storage-dialog').addEventListener('cancel',event=>event.preventDefault());
   let confirmAction;
   function dialog(title, html, confirmLabel, onConfirm, danger=false) {
     closePopups();
@@ -112,7 +167,7 @@
     if (route === '/iep') iep.mount($('.iep-page'),recipient);
     if (route === '/records') { updateRecordFilters(); renderRecords(); }
     if (route === '/recipients') renderRecipients();
-    if (route === '/plans') $$('.pricing-features li').forEach(li => li.insertAdjacentHTML('afterbegin','<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>'));
+    if (route === '/plans') preparePlans();
     if (route === '/notifications' && state.notificationsRead) { $$('.notification-list .unread').forEach(x => x.classList.remove('unread')); $$('[data-action="read-notification"]').forEach(x => x.remove()); }
     if (route === '/settings/configuration') prepareConfiguration();
     if (route === '/settings') prepareSettings();
@@ -123,6 +178,7 @@
     }
     if (matchMedia('(max-width:1023px)').matches) { $('.app-layout').classList.add('mockup-nav-collapsed'); $('.nav-open-button').hidden=false; }
     registerEdits(); window.scrollTo(0,0); requestAnimationFrame(scaleReports);
+    if (route === '/plans' && !state.subscription && ['starter','team','pro'].includes(params.get('plan'))) openPlanCheckout(params.get('plan'));
   }
   function prepareJournal() {
     $('[data-quick-checks]').innerHTML = getQuickChecks().map((q,i)=>q.active?quickPreview(q,i,false):'').join('');
@@ -166,9 +222,9 @@
     const counter = el.id ? document.getElementById(el.id + '-limit') : null;
     if (counter && el.maxLength > 0) counter.textContent = `${el.value.length}/${el.maxLength}자`;
   }
-  function captureDraft() {
+  function captureDraft(save=true) {
     const values = {}; $$('input[id],textarea[id]', $('#screen')).forEach(el => values[el.id] = (el.type==='radio'||el.type==='checkbox') ? el.checked : el.value);
-    state.drafts[recipient] = values; state.draftDates[recipient]=$('[data-action="date"]')?.dataset.value||TODAY;persist(); return values;
+    state.drafts[recipient] = values; state.draftDates[recipient]=$('[data-action="date"]')?.dataset.value||TODAY;if(save)persist(); return values;
   }
   function journalRows() {
     let original = recipient===0 ? originalJournalRows : recipient===1 ? [['2026-09-22','9월 22일 (화)','[합성 QA 2026-09-22 상태 안내] 서버 버퍼 저장 완료 안내 검증입니다. 실제 돌봄 기록이 아닙니다.']] : recipient===2 ? [['2026-09-14','9월 14일 (월)',$('#page-home').content.querySelectorAll('.latest-journal-copy')[2].textContent]] : [];
@@ -310,7 +366,7 @@
           if(button.hasAttribute('data-iep-age'))iep.setAgeBand(choice.value);
           else $('#recipient-age-error').hidden=true;
         }else if(kind==='saved-journals')routeTo(`#/journals/new?recipient=${recipient}&entry=${choice.value}`);
-        else if(kind==='report-templates')dialog('관찰 기준을 바꿀까요?','<p>선택한 템플릿의 기본 영역명과 문항으로 저장한 뒤 새 리포트에 적용해요. 기존 리포트는 바뀌지 않아요.</p>','저장하고 적용',()=>{state.scoring[recipient]=scoreSeed(choice.value);state.reportTemplates[recipient]=choice.label;persist();button.querySelector('span').textContent=choice.label;});
+        else if(kind==='report-templates')dialog('관찰 기준을 바꿀까요?','<p>선택한 템플릿의 기본 영역명과 문항으로 저장한 뒤 새 리포트에 적용해요. 기존 리포트는 바뀌지 않아요.</p>','저장하고 적용',async()=>{state.scoring[recipient]=scoreSeed(choice.value);state.reportTemplates[recipient]=choice.label;if(!await persist())return;button.querySelector('span').textContent=choice.label;});
         else if(kind==='quick-type'){readQuickDraft();quickDraft.type=choice.label;drawQuickEditor();}
         else if(kind==='score-templates')dialog('관찰 기준을 바꿀까요?','<p>현재 편집 중인 영역명과 문항을 선택한 템플릿의 기본 내용으로 바꿔요.</p>','바꾸기',()=>{scoreDraft=scoreSeed(choice.value);drawScoring();});
       });menu.append(option);
@@ -345,6 +401,7 @@
     };
     const value=button.dataset.value||'';
     let rangeFrom=activeRange.from,rangeTo=activeRange.to,selectingEnd=false;
+    if(iepRange){rangeFrom=iep.validDate(rangeFrom)?rangeFrom:'';rangeTo=iep.validDate(rangeTo)?rangeTo:'';}
     const max=iepRange?'2100-12-31':TODAY;
     let initialDate=(isRange?rangeFrom:value)||TODAY;
     if(initialDate>max)initialDate=max;
@@ -402,17 +459,21 @@
       if(e.key==='Tab'){const nodes=$$('button:not(:disabled)',popup).filter(b=>b.tabIndex>=0);const i=nodes.indexOf(document.activeElement);if((e.shiftKey&&i===0)||(!e.shiftKey&&i===nodes.length-1)){e.preventDefault();closePopups(true);}}
     });
   }
-  function saveJournal() {
-    const values=captureDraft(); const text=Object.entries(values).filter(([id,v])=>id.startsWith('journal-')&&!id.includes('field-label')&&typeof v==='string'&&v.trim()).map(([,v])=>v).join('\n');
+  async function saveJournal() {
+    const values=captureDraft(false); const text=Object.entries(values).filter(([id,v])=>id.startsWith('journal-')&&!id.includes('field-label')&&typeof v==='string'&&v.trim()).map(([,v])=>v).join('\n');
     if(!text.trim()){toast('메모를 입력해 주세요.');$('#journal-raw').focus();return;}
     const date=$('[data-action="date"]').dataset.value||'2026-09-23';
     const existing=state.savedJournals.find(x=>x.recipient===recipient&&x.date===date);
     if(existing)Object.assign(existing,{text,values});else{state.savedJournals.unshift({recipient,date,text,values});state.recipients[recipient].count++;}
-    persist();toast('이 브라우저에 일지를 저장했어요. 실제 서비스에는 반영되지 않아요.');routeTo('#/records?recipient='+recipient);
+    if(!await persist())return;toast('이 브라우저에 일지를 저장했어요. 실제 서비스에는 반영되지 않아요.');routeTo('#/records?recipient='+recipient);
   }
-  function exportHTML() {
-    if(document.querySelector('script[src]')){toast('careit-mockup.html 단일 파일을 열면 수정본을 한 파일로 저장할 수 있어요.');return;}
-    state.css=$('#mockup-css').value;applyDesign();persist();
+  async function exportHTML({save=true}={}) {
+    if(document.querySelector('script[src]')){
+      if(save){toast('careit-mockup.html 단일 파일을 열면 수정본을 한 파일로 저장할 수 있어요.');return;}
+      const url=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json;charset=utf-8'})),a=document.createElement('a');
+      a.href=url;a.download='careit-mockup-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('현재 내용 JSON 내려받기를 요청했어요.',true);return;
+    }
+    state.css=$('#mockup-css').value;applyDesign();if(save&&!await persist())return;
     const clone=document.documentElement.cloneNode(true);
     clone.querySelector('#saved-design').textContent=JSON.stringify({...state,exportId:Date.now().toString(36)}).replace(/</g,'\\u003c');
     clone.querySelector('#screen').innerHTML='';
@@ -421,10 +482,10 @@
     clone.querySelectorAll('[contenteditable]').forEach(el=>el.removeAttribute('contenteditable'));
     clone.querySelectorAll('dialog').forEach(el=>el.removeAttribute('open'));
     clone.querySelectorAll('[aria-expanded="true"][data-options],[aria-expanded="true"][data-action="date"]').forEach(el=>{el.setAttribute('aria-expanded','false');el.removeAttribute('aria-controls');});
-    clone.querySelectorAll('.mockup-popup,#quick-dialog,#scoring-dialog,#consent-dialog').forEach(el=>el.remove());
-    const blob=new Blob(['<!doctype html>\n'+clone.outerHTML],{type:'text/html;charset=utf-8'}); const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='careit-mockup-edited.html';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('수정본 HTML을 저장했어요. 이 파일 하나를 전달하면 됩니다.');
+    clone.querySelectorAll('.mockup-popup,#quick-dialog,#scoring-dialog,#consent-dialog,#checkout-dialog,#team-invite-dialog').forEach(el=>el.remove());
+    const blob=new Blob(['<!doctype html>\n'+clone.outerHTML],{type:'text/html;charset=utf-8'}); const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=save?'careit-mockup-edited.html':'careit-mockup-backup.html';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('현재 내용을 담은 HTML 내려받기를 요청했어요.',true);
   }
-  document.addEventListener('click',e=>{
+  document.addEventListener('click',async e=>{
     const editable=e.target.closest('[contenteditable="true"]'); if(editing&&editable){e.preventDefault();return;}
     if(e.composedPath().some(el=>el.classList?.contains('mockup-popup')))return;
     const policy=e.target.closest('a[href="#/privacy"],a[href="#/terms"]');
@@ -444,8 +505,10 @@
     else if(action==='theme'){const dark=document.body.dataset.theme!=='dark';document.body.dataset.theme=dark?'dark':'light';button.setAttribute('aria-label',dark?'라이트 모드로 변경':'다크 모드로 변경');}
     else if(action==='date')datePicker(button);
     else if(action==='close-editor'){$('#mockup-panel').hidden=true;$('#mockup-toggle').setAttribute('aria-expanded','false');setEditMode(false);}
-    else if(action==='apply-css'){state.css=$('#mockup-css').value;applyDesign();persist();toast('CSS를 적용했어요.');}
+    else if(action==='apply-css'){state.css=$('#mockup-css').value;applyDesign();if(await persist())toast('CSS를 적용했어요.');}
     else if(action==='export-html')exportHTML();
+    else if(action==='storage-backup')exportHTML({save:false});
+    else if(action==='storage-reload')location.reload();
     else if(action==='close-dialog')$('#mockup-dialog').close();
     else if(action==='save-journal')saveJournal();
     else if(action==='add-recipient')openRecipientForm();
@@ -453,28 +516,28 @@
     else if(action==='close-recipient')$('#recipient-dialog').close();
     else if(action==='edit-recipient'){$('#recipient-dialog').close();openRecipientForm(detailRecipient);}
     else if(action==='read-notification'){button.closest('li').classList.remove('unread');button.remove();}
-    else if(action==='read-all'){state.notificationsRead=true;persist();$$('.notification-list .unread').forEach(x=>x.classList.remove('unread'));$$('[data-action="read-notification"]').forEach(x=>x.remove());}
+    else if(action==='read-all'){state.notificationsRead=true;if(!await persist())return;$$('.notification-list .unread').forEach(x=>x.classList.remove('unread'));$$('[data-action="read-notification"]').forEach(x=>x.remove());}
     else if(action==='print-report')window.print();
     else if(action==='word-report')dialog('Word 다운로드','<p>이 목업은 UI 검토용입니다. 문서 생성은 연결되지 않았습니다. 인쇄 버튼에서 PDF로 저장할 수 있어요.</p>');
   });
-  document.addEventListener('submit',e=>{
+  document.addEventListener('submit',async e=>{
     e.preventDefault();
     if(e.target.id==='quick-edit-form'){saveQuick();return;}
     if(e.target.id==='score-edit-form'){saveScoring();return;}
-    if(e.target.id==='configuration-form'){const values=$$('input',e.target).map(x=>x.value.trim());if(values.some(x=>!x)){toast('영역 이름을 모두 입력해 주세요.');return;}dialog('일지 영역 이름을 바꿀까요?','<p>이미 저장된 일지는 그때 이름 그대로 남아요.</p>','바꾸기',()=>{state.configuration[recipient]=values;persist();prepareConfiguration();toast('일지 영역 이름을 저장했어요.');});return;}
+    if(e.target.id==='configuration-form'){const values=$$('input',e.target).map(x=>x.value.trim());if(values.some(x=>!x)){toast('영역 이름을 모두 입력해 주세요.');return;}dialog('일지 영역 이름을 바꿀까요?','<p>이미 저장된 일지는 그때 이름 그대로 남아요.</p>','바꾸기',async()=>{state.configuration[recipient]=values;if(!await persist())return;prepareConfiguration();toast('일지 영역 이름을 저장했어요.');});return;}
     if(e.target.id!=='recipient-form')return;
     const name=$('#recipient-name').value.trim();if(!name){$('#recipient-name').focus();return;}
     const ageBand=$('#recipient-age-band').dataset.value;
     if(!ageBands.includes(ageBand)){$('#recipient-age-error').hidden=false;$('#recipient-age-band').setAttribute('aria-invalid','true');$('#recipient-age-band').focus();return;}
     // 기존 이름·메모 및 대상 인덱스는 유지합니다. 새 등록에는 자유 메모를 수집하지 않습니다.
     if(editingRecipient!==null)Object.assign(state.recipients[editingRecipient],{name,ageBand});else state.recipients.push({name,ageBand,count:0,date:'2026/09/23',active:true});
-    persist();$('.recipient-form-card').hidden=true;renderRecipients();toast('이 브라우저에 관리대상을 저장했어요.');
+    if(!await persist())return;$('.recipient-form-card').hidden=true;renderRecipients();toast('이 브라우저에 관리대상을 저장했어요.');
   });
-  document.addEventListener('input',e=>{
+  document.addEventListener('input',async e=>{
     const el=e.target;
     if(el.dataset.editKey&&editing){state.edits[el.dataset.editKey]=el.textContent;persist();return;}
     updateCounter(el);
-    if(route==='/journals/new'&&el.closest('#screen')){captureDraft();$('[data-draft-status]').textContent='이 브라우저에 임시 저장했어요.';}
+    if(route==='/journals/new'&&el.closest('#screen')){captureDraft(false);const saved=await persist();const status=$('[data-draft-status]');if(status)status.textContent=saved?'이 브라우저에 임시 저장했어요.':'임시 저장이 중단됐어요.';}
   });
   document.addEventListener('change',e=>{if(route==='/journals/new'&&e.target.closest('[data-quick-checks]'))captureDraft();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(popupPanel){e.preventDefault();e.stopImmediatePropagation();closePopups(true);return;}if(editing){setEditMode(false);toast('문구 편집을 마쳤어요.');}}},true);
@@ -523,6 +586,158 @@
     if(id==='scoring-dialog'){readScoreDraft();dirty=JSON.stringify(scoreDraft)!==scoreSnapshot;}
     if(dirty)confirmDiscard(()=>modal.close());else modal.close();
   }
+  function openPlanCheckout(selected = 'starter') {
+    if (state.subscription) { openPaymentResult(false); return; }
+    const plans = checkoutPlans;
+    if (selected === 'pro') selected = 'team';
+    if (!Object.hasOwn(plans, selected)) selected = 'starter';
+    const plan = plans[selected];
+    const cycles = checkoutCycles;
+    const today = new Date().toLocaleDateString('sv-SE', {timeZone:'Asia/Seoul'});
+    const modal = editorDialog('checkout-dialog','checkout-dialog',`${plan.name} 요금제`,`
+      <form id="checkout-form" class="checkout-body" novalidate>
+        <fieldset class="checkout-plans"><legend class="sr-only">결제 주기</legend>
+          ${Object.entries(cycles).map(([key, cycle])=>`<label class="checkout-option">
+            <input class="sr-only" type="radio" name="checkout-cycle" value="${key}" ${key==='monthly'?'checked':''}>
+            <span class="checkout-plan-name">${cycle.name}</span>
+            <strong class="checkout-plan-price">${won(mockupCheckoutPrice(plan.price,cycle.months))}<span> / ${cycle.unit}</span></strong>
+            <span class="checkout-plan-limit">${key==='monthly'?'매월 결제':`월 ${won(mockupCheckoutPrice(plan.price,12)/12)} 기준`}</span>
+          </label>`).join('')}
+        </fieldset>
+        <section class="checkout-summary" aria-labelledby="checkout-amount-title">
+          <div class="checkout-total"><h3 id="checkout-amount-title">오늘 결제 금액</h3><strong data-checkout-price aria-live="polite"></strong></div>
+          <p class="checkout-tax">부가가치세 포함</p>
+          <details class="checkout-schedule"><summary>결제 일정 보기</summary>
+            <dl><div><dt>오늘 · ${mockupBillingDate(today)}</dt><dd data-checkout-price></dd></div><div><dt data-checkout-next></dt><dd data-checkout-price></dd></div></dl>
+          </details>
+        </section>
+        <p class="checkout-renewal"></p>
+        <div class="checkout-footer">
+          <div class="checkout-consent"><input type="checkbox" id="checkout-agree" required><label for="checkout-agree"><a href="#/terms">이용약관</a> 및 정기 결제에 동의해요.</label></div>
+          <button type="submit" class="button primary checkout-submit" disabled></button>
+          <p class="checkout-preview-note">목업 화면으로 실제 결제는 진행되지 않아요.</p>
+        </div>
+      </form>`);
+    const form = $('#checkout-form',modal);
+    let submitting = false;
+    const update = () => {
+      const cycle = cycles[$('input[name="checkout-cycle"]:checked',form)?.value];
+      if (!cycle) return;
+      const amount = won(mockupCheckoutPrice(plan.price,cycle.months));
+      $$('[data-checkout-price]',form).forEach(el=>el.textContent=amount);
+      $('[data-checkout-next]',form).textContent=`다음 결제 · ${mockupBillingDate(today,cycle.months)}`;
+      $('.checkout-renewal',form).textContent=`${cycle.months===12?'매년':'매월'} ${amount}이 정기 결제돼요.`;
+      const submit = $('.checkout-submit',form);
+      submit.textContent='결제하기';
+      submit.disabled=submitting||!$('#checkout-agree',form).checked;
+    };
+    form.addEventListener('change',update);
+    form.addEventListener('submit',async event=>{
+      event.preventDefault();
+      const cycleKey = $('input[name="checkout-cycle"]:checked',form)?.value;
+      if (submitting || state.subscription || !$('#checkout-agree',form).checked || !Object.hasOwn(cycles,cycleKey)) return;
+      submitting = true;
+      $('.checkout-submit',form).disabled = true;
+      $('.checkout-submit',form).textContent = '결제 처리 중';
+      const months = cycles[cycleKey].months;
+      state.subscription = {plan:selected,cycle:cycleKey,paidOn:today,amount:mockupCheckoutPrice(plan.price,months),nextBillingOn:mockupBillingDate(today,months),invites:[]};
+      if (!await persist()) { delete state.subscription; submitting=false; update(); return; }
+      history.replaceState(null,'','#/plans');
+      render();
+      openPaymentResult(true);
+    });
+    update();
+  }
+  function subscriptionDetails() {
+    const sub=state.subscription, cycle=checkoutCycles[sub.cycle];
+    return `<dl class="subscription-details">
+      <div><dt>결제 금액</dt><dd>${won(sub.amount)}<small>부가가치세 포함</small></dd></div>
+      <div><dt>결제일</dt><dd>${mockupBillingDate(sub.paidOn)}</dd></div>
+      <div><dt>다음 결제일</dt><dd>${sub.nextBillingOn}</dd></div>
+      <div><dt>다음 결제 금액</dt><dd>${won(sub.amount)}<small>${cycle.months===12?'매년':'매월'} 정기 결제</small></dd></div>
+    </dl>`;
+  }
+  function preparePlans() {
+    $$('.pricing-features li').forEach(li=>li.insertAdjacentHTML('afterbegin','<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>'));
+    const sub=state.subscription;
+    if (!sub) return;
+    const plan=checkoutPlans[sub.plan], cycle=checkoutCycles[sub.cycle];
+    const audience=$('.pricing-audience'), grid=$('.pricing-grid');
+    const comparison=document.createElement('details');
+    comparison.className='subscription-comparison';
+    comparison.innerHTML='<summary>전체 요금제 보기</summary>';
+    audience.before(comparison); comparison.append(grid); audience.remove();
+    $$('.pricing-card',grid).forEach(card=>{
+      const button=$('.button',card);
+      if (button.dataset.plan===sub.plan) { card.classList.add('is-current'); $('h2',card).insertAdjacentHTML('beforeend','<span class="subscription-badge">이용 중</span>'); }
+      button.remove();
+    });
+    comparison.insertAdjacentHTML('beforebegin',`<section class="subscription-card" aria-labelledby="subscription-title">
+      <header class="subscription-header"><div><div class="subscription-heading"><h2 id="subscription-title" tabindex="-1">${plan.name} 이용 중</h2><span class="subscription-badge">${cycle.name}</span></div><p>${sub.plan==='team'?'3명 이용 · 1인당 관리대상 최대 5명':'관리대상 최대 5명'}</p></div><button type="button" class="button tertiary" data-action="payment-details">결제 내역</button></header>
+      ${subscriptionDetails()}
+      <footer class="subscription-footer"><p>목업 예시 · 실제 결제는 진행되지 않았어요.</p><div class="subscription-actions"><button type="button" class="button tertiary" data-action="payment-back">결제 전으로 돌아가기</button><a href="#/journals/new" class="button primary">일지 작성하기</a></div></footer>
+    </section>${sub.plan==='team'?teamMembersHTML():''}`);
+  }
+  function teamMembersHTML() {
+    const invites=state.subscription.invites;
+    return `<section class="subscription-card" aria-labelledby="team-members-title"><header class="subscription-header"><div class="subscription-heading"><h2 id="team-members-title">팀 멤버</h2><span class="subscription-badge">${1+invites.length}/3명</span></div></header>
+      <p class="team-records-note">각자 계정으로 기록하며, 서로의 기록은 공유되지 않아요.</p>
+      <ul class="team-member-list"><li><div><strong>나</strong><span>결제자</span></div><span class="subscription-badge">이용 중</span></li>
+        ${invites.map((email,i)=>`<li><div><strong>${escapeHTML(email)}</strong><span>초대 대기</span></div><button type="button" class="button tertiary" data-action="cancel-team-invite" data-index="${i}" aria-label="${escapeHTML(email)} 초대 취소">초대 취소</button></li>`).join('')}
+        ${Array.from({length:2-invites.length},(_,i)=>`<li><div><strong>초대 가능한 자리</strong><span>멤버 ${invites.length+i+2}</span></div><button type="button" class="button tertiary" data-action="team-invite" aria-label="멤버 ${invites.length+i+2} 초대하기">초대하기</button></li>`).join('')}
+      </ul></section>`;
+  }
+  function openPaymentResult(completed) {
+    const sub=state.subscription;
+    if (!sub) return;
+    const plan=checkoutPlans[sub.plan], cycle=checkoutCycles[sub.cycle];
+    const modal=editorDialog('checkout-dialog','checkout-dialog',completed?'결제가 완료됐어요':'결제 내역',`<div class="checkout-body">
+      <div class="payment-result-heading">${completed?'<span class="payment-success-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4 10-10"/></svg></span>':''}<div><h3>${plan.name} · ${cycle.name}</h3><p>${!completed?'현재 이용 중인 요금제예요.':sub.plan==='team'?'이제 함께 이용할 멤버를 초대해 보세요.':'이제 플러스 기능을 이용할 수 있어요.'}</p></div></div>
+      ${subscriptionDetails()}
+      <div class="payment-result-actions"><button type="button" class="button secondary" data-action="close-modal" data-modal="checkout-dialog">요금제 보기</button><button type="button" class="button primary" data-action="${sub.plan==='team'?(completed?'team-invite':'team-members'):'payment-start'}">${sub.plan==='team'?(completed?'멤버 초대하기':'팀 멤버 보기'):'일지 작성하기'}</button></div>
+      <p class="checkout-preview-note">목업 예시로 실제 결제는 진행되지 않았어요.</p>
+      <button type="button" class="button tertiary payment-back" data-action="payment-back">결제 전으로 돌아가기</button>
+    </div>`);
+    $('#checkout-dialog-title',modal).tabIndex=-1;
+    $('#checkout-dialog-title',modal).focus();
+    modal.addEventListener('close',()=>$('#subscription-title')?.focus(),{once:true});
+  }
+  function openTeamInvite() {
+    const sub=state.subscription;
+    if (sub?.plan!=='team') return;
+    $('#checkout-dialog')?.close();
+    if (sub.invites.length>=2) { toast('초대할 수 있는 자리가 없어요.'); return; }
+    const modal=editorDialog('team-invite-dialog','checkout-dialog','팀 멤버 초대',`<form id="team-invite-form" class="checkout-body" novalidate>
+      <p class="team-invite-note">최대 2명을 초대해 플러스 기능을 함께 이용해요.</p>
+      <div class="field"><label for="team-invite-email">이메일</label><input id="team-invite-email" type="email" maxlength="254" placeholder="예: member@example.com" autocomplete="off" required aria-describedby="team-invite-error"><p id="team-invite-error" class="team-invite-error" role="alert" hidden></p></div>
+      <button type="submit" class="button primary checkout-submit">초대하기</button><p class="checkout-preview-note">목업 예시로 실제 초대 메일은 발송되지 않아요.</p>
+    </form>`);
+    const form=$('#team-invite-form',modal), input=$('#team-invite-email',modal), error=$('#team-invite-error',modal);
+    let sending=false;
+    input.focus();
+    input.addEventListener('input',()=>{error.hidden=true;input.removeAttribute('aria-invalid');});
+    form.addEventListener('submit',async event=>{
+      event.preventDefault(); if (sending) return;
+      const email=input.value.trim().toLowerCase(); input.value=email;
+      const ownEmail=$('.account-summary>div>span')?.textContent.trim().toLowerCase();
+      const message=!email||!input.validity.valid?'이메일 주소를 확인해 주세요.':email===ownEmail?'본인 계정은 이미 팀에 포함되어 있어요.':sub.invites.includes(email)?'이미 초대 대기 중인 이메일이에요.':sub.invites.length>=2?'초대할 수 있는 자리가 없어요.':'';
+      if (message) {error.textContent=message;error.hidden=false;input.setAttribute('aria-invalid','true');input.focus();return;}
+      sending=true;$('.checkout-submit',form).disabled=true;
+      sub.invites.push(email);
+      if (!await persist()) {sub.invites.pop();sending=false;$('.checkout-submit',form).disabled=false;return;}
+      render();$('#team-members-title')?.scrollIntoView({block:'nearest'});toast('초대 대기 상태를 표시했어요. 실제 메일은 발송되지 않아요.');
+    });
+  }
+  async function resetPaymentSimulation() {
+    const previous=state.subscription;
+    delete state.subscription;
+    if(!await persist()){state.subscription=previous;return;}
+    history.replaceState(null,'','#/plans');
+    $('#mockup-panel').hidden=true;
+    $('#mockup-toggle').setAttribute('aria-expanded','false');
+    render();
+    toast('다시 결제를 시연할 수 있어요.');
+  }
   function openQuickEditor(index=null){
     quickIndex=index;quickDraft=copy(index===null?{name:'',type:'선택형',multiple:false,active:true,choices:[],min:'',max:'',unit:'',maxLength:500}:getQuickChecks()[index]);
     quickSnapshot=JSON.stringify(quickDraft);drawQuickEditor();
@@ -544,7 +759,7 @@
     readQuickDraft();const target=$('[data-quick-option-editor]');
     target.innerHTML=`<div class="mockup-quick-option-form"><input id="quick-option-name" aria-label="선택 항목 이름" maxlength="30" value="${escapeHTML(index===null?'':quickDraft.choices[index].name)}" placeholder="항목 이름"><button type="button" class="button primary" data-action="quick-option-save" data-index="${index??''}">${index===null?'추가':'저장'}</button><button type="button" class="button secondary" data-action="quick-option-cancel">취소</button></div>`;$('#quick-option-name').focus();
   }
-  function saveQuick(){
+  async function saveQuick(){
     readQuickDraft();const q=quickDraft; q.name=q.name.trim();let error='';
     if(!q.name)error='섹션 이름을 입력해 주세요.';
     else if(q.type==='선택형'&&!q.choices.some(c=>c.active))error='선택 항목을 하나 이상 추가하거나 켜 주세요.';
@@ -553,7 +768,7 @@
     else if(q.type==='텍스트'&&(!Number.isInteger(Number(q.maxLength))||q.maxLength<1||q.maxLength>2000))error='최대 글자 수는 1~2000 사이의 정수로 설정해 주세요.';
     if(error){$('[data-quick-error]').textContent=error;return;}
     const items=copy(getQuickChecks());if(quickIndex===null)items.push(copy(q));else items[quickIndex]=copy(q);
-    state.quickChecks[recipient]=items;persist();$('#quick-dialog').close();prepareConfiguration();toast('퀵체크를 저장했어요.');
+    state.quickChecks[recipient]=items;if(!await persist())return;$('#quick-dialog').close();prepareConfiguration();toast('퀵체크를 저장했어요.');
   }
   function scoreSeed(template=2){
     const t=CAREIT_OBSERVATION.templates[template]||CAREIT_OBSERVATION.templates[2];
@@ -575,9 +790,9 @@
     const card=(d,i)=>`<article class="score-domain-card"><div class="score-domain-head"><div class="score-domain-field"><label class="sr-only" for="score-domain-title-${i}">${i+1}번째 영역명</label><input id="score-domain-title-${i}" maxlength="40" value="${escapeHTML(d.name)}" aria-describedby="score-domain-title-${i}-limit"></div><span class="field-limit score-domain-limit" id="score-domain-title-${i}-limit">${d.name.length}/40자</span><button type="button" class="score-domain-delete icon-button" data-action="score-delete-domain" data-index="${i}" aria-label="${escapeHTML(d.name)} 영역 삭제"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12ZM8 9h8v10H8V9Zm7.5-5-1-1h-5l-1 1H5v2h14V4z"/></svg></button></div><details class="score-domain-details" open><summary><span>${d.questions.length}문항</span></summary><ol class="score-question-list">${d.questions.map((q,j)=>`<li><span>${j+1}</span><div><label class="sr-only" for="score-question-${i}-${j}">${escapeHTML(d.name)} ${j+1}번 문항</label><textarea id="score-question-${i}-${j}" data-score-question="${i}" maxlength="80" rows="2" aria-describedby="score-question-${i}-${j}-limit">${escapeHTML(q)}</textarea><small class="field-limit score-input-limit" id="score-question-${i}-${j}-limit">${q.length}/80자</small></div><button class="button tertiary" type="button" data-action="score-delete-question" data-index="${i}" data-question="${j}" aria-label="${escapeHTML(d.name)} ${j+1}번 문항 삭제">삭제</button></li>`).join('')}</ol><button class="score-question-add" type="button" data-action="score-add-question" data-index="${i}" ${d.questions.length>=15?'disabled':''}>맞춤 문항 추가 (${d.questions.length}/15)</button></details></article>`;
     editorDialog('scoring-dialog','score-criteria-dialog','리포트 관찰 문항',`<form id="score-edit-form"><div class="score-criteria-summary"><div class="score-template-title-field"><label class="sr-only" for="score-template-title">템플릿 이름</label><input id="score-template-title" maxlength="40" value="${escapeHTML(scoreDraft.title)}" aria-describedby="score-template-title-limit"><small class="field-limit score-input-limit" id="score-template-title-limit">${scoreDraft.title.length}/40자</small></div><strong>현재 문항 <span>${total}개</span></strong><div class="score-criteria-help"><button type="button" data-action="score-help" aria-label="리포트 사용 기준 도움말" aria-expanded="false" aria-controls="score-help"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7h.01"/></svg></button><p id="score-help" role="tooltip">영역당 최대 15문항, 문항당 80자예요. 저장은 초안으로 가능하고, 리포트는 영역 3~5개와 영역별 문항 5개 이상이 필요해요.</p></div></div><div class="score-criteria-body"><div class="score-criteria-list">${[0,1].map(col=>`<div class="score-domain-column">${domains.map((d,i)=>i%2===col?card(d,i):'').join('')}</div>`).join('')}</div><button type="button" class="button secondary mockup-score-add" data-action="score-add-domain" ${domains.length>=5?'disabled':''}>+ 영역 추가 (${domains.length}/5)</button></div><footer class="score-criteria-dialog-footer"><div class="score-template-actions"><div class="score-template-control"><label class="score-template-label">템플릿 변경</label><div class="dropdown"><button type="button" class="dropdown-trigger" data-options="score-templates" aria-label="관찰 기준 템플릿" aria-haspopup="listbox" aria-expanded="false"><span>${escapeHTML(scoreDraft.title)}</span></button></div></div><button class="button tertiary" type="button" data-action="score-reset">초기화</button></div><div class="score-criteria-save"><p class="score-criteria-save-status" role="status" data-score-status></p><button class="button primary" type="submit">저장</button></div></footer></form>`);
   }
-  function saveScoring(){
+  async function saveScoring(){
     readScoreDraft();if(!scoreDraft.title.trim()){$('[data-score-status]').textContent='템플릿 이름을 입력해 주세요.';$('#score-template-title').focus();return;}
-    state.scoring[detailRecipient]=copy(scoreDraft);state.reportTemplates[detailRecipient]=scoreDraft.title;persist();scoreSnapshot=JSON.stringify(scoreDraft);
+    state.scoring[detailRecipient]=copy(scoreDraft);state.reportTemplates[detailRecipient]=scoreDraft.title;if(!await persist())return;scoreSnapshot=JSON.stringify(scoreDraft);
     $('[data-score-status]').textContent='저장했어요. 새 리포트부터 적용돼요.';
   }
   function prepareSettings(){
@@ -597,8 +812,8 @@
     if(all){title='다른 기기에서 모두 로그아웃할까요?';message='현재 브라우저를 제외한 모든 기기의 로그인이 해제돼요.';}
     if(label==='계정 탈퇴'){title='계정 탈퇴를 신청할까요?';message='모든 기기에서 즉시 로그아웃되고 다시 로그인할 수 없어요. 기록은 30일 후 완전히 삭제돼요.';confirm='탈퇴 신청';}
     if(label==='완전삭제'){const name=state.recipients[Number(button.dataset.index)]?.name||'이지훈';title=`「${name}」 관리대상을 완전삭제할까요?`;message=`「${name}」의 관리대상 정보·일지(휴지통 포함)·리포트·퀵체크·템플릿이 모두 삭제되고 복원할 수 없어요. 백업본은 기존 보관 기간이 지나면 삭제돼요.`;confirm='완전삭제';}
-    dialog(title,`<p>${escapeHTML(message)}</p>`,confirm,()=>{
-      if(label==='완전삭제'){state.recipients[Number(button.dataset.index)].deleted=true;persist();prepareSettings();}
+    dialog(title,`<p>${escapeHTML(message)}</p>`,confirm,async()=>{
+      if(label==='완전삭제'){state.recipients[Number(button.dataset.index)].deleted=true;if(!await persist())return;prepareSettings();}
       else if(button.getAttribute('aria-label')?.includes('세션'))button.closest('li')?.remove();
       else if(all)$$('.session-list li').filter(li=>!$('.session-badge',li)).forEach(li=>li.remove());
       toast('목업에서 확인했어요. 실제 계정과 데이터는 변경되지 않아요.');
@@ -627,30 +842,40 @@
     else if(action==='score-add-question'){readScoreDraft();const i=Number(button.dataset.index);scoreDraft.domains[i].questions.push('');drawScoring();$(`#score-question-${i}-${scoreDraft.domains[i].questions.length-1}`).focus();}
     else if(action==='score-delete-question'){readScoreDraft();scoreDraft.domains[Number(button.dataset.index)].questions.splice(Number(button.dataset.question),1);drawScoring();}
     else if(action==='ai-consent'){
-      if(state.aiConsent)dialog('AI 기능 동의를 철회할까요?','<p>이제 일지 내용이 외부로 전송되지 않아요. 문장 다듬기·주간 리포트 생성이 함께 꺼져요. 이미 다듬어 저장한 일지는 그대로 남고, 언제든 다시 동의할 수 있어요.</p>','철회',()=>{state.aiConsent=false;persist();prepareSettings();},true);
+      if(state.aiConsent)dialog('AI 기능 동의를 철회할까요?','<p>이제 일지 내용이 외부로 전송되지 않아요. 문장 다듬기·주간 리포트 생성이 함께 꺼져요. 이미 다듬어 저장한 일지는 그대로 남고, 언제든 다시 동의할 수 있어요.</p>','철회',async()=>{state.aiConsent=false;if(!await persist())return;prepareSettings();},true);
       else openConsent();
     }
-    else if(action==='accept-consent'){state.aiConsent=true;persist();$('#consent-dialog').close();if(route==='/settings')prepareSettings();toast('목업 안에서 AI 기능을 켰어요.');}
+    else if(action==='accept-consent'){state.aiConsent=true;persist().then(saved=>{if(!saved)return;$('#consent-dialog').close();if(route==='/settings')prepareSettings();toast('목업 안에서 AI 기능을 켰어요.');});}
     else if(action==='ai-preview'){
       if(!state.aiConsent)openConsent();else dialog('AI로 다듬을까요?','<p>작성한 메모를 바탕으로 일지 문장을 다듬어요. 저장 전에 결과를 확인할 수 있어요.</p><p class="mockup-preview-note">이 목업에서는 입력한 내용을 결과 예시로 표시해요.</p>','다듬기',()=>dialog('다듬은 일지 확인',`<div class="mockup-dialog-fields"><label for="ai-result">일지 내용</label><textarea id="ai-result" rows="6" maxlength="300">${escapeHTML($('#journal-raw').value)}</textarea></div>`,'적용',()=>{$('#journal-raw').value=$('#ai-result').value;updateCounter($('#journal-raw'));captureDraft();}));
     }
     else if(action==='account-preview')accountDialog(button);
-    else if(action==='reactivate'){const i=Number(button.dataset.index);dialog('관리대상을 다시 활성화할까요?',`<p>「${escapeHTML(state.recipients[i].name)}」을 홈과 기록 작성 목록에서 다시 볼 수 있어요.</p>`,'활성화',()=>{state.recipients[i].active=true;persist();prepareSettings();});}
-    else if(action==='toggle-recipient'){const r=state.recipients[detailRecipient];dialog(r.active?'관리대상을 비활성화할까요?':'관리대상을 다시 활성화할까요?',`<p>${r.active?'홈과 기록 작성 목록에서 제외돼요. 기존 일지와 리포트는 보관돼요.':'홈과 기록 작성 목록에 다시 표시돼요.'}</p>`,r.active?'비활성화':'활성화',()=>{r.active=!r.active;persist();$('#recipient-dialog').close();renderRecipients();});}
-    else if(action==='trash-report')dialog('리포트를 휴지통으로 옮길까요?','<p>30일 동안 휴지통에서 복원할 수 있어요.</p>','휴지통으로',()=>{state.reportRemoved||={};state.reportRemoved[recipient]=true;if(!state.trash.some(x=>x.type==='report'&&x.recipient===recipient))state.trash.push({type:'report',recipient,date:TODAY,title:'8월 28일 ~ 9월 3일 주간 리포트'});persist();render();toast('리포트를 휴지통으로 옮겼어요.');},true);
-    else if(action==='restore-trash'){const i=Number(button.dataset.index);dialog('기록을 복원할까요?','<p>복원한 기록은 기록 목록에서 다시 볼 수 있어요.</p>','복원',()=>{const item=state.trash[i];if(item.type==='report')state.reportRemoved[item.recipient]=false;state.trash.splice(i,1);persist();renderRecords();});}
-    else if(action==='delete-trash'){const i=Number(button.dataset.index);dialog('기록을 완전히 삭제할까요?','<p>완전히 삭제한 기록은 복원할 수 없어요.</p>','완전삭제',()=>{state.trash.splice(i,1);persist();renderRecords();},true);}
+    else if(action==='reactivate'){const i=Number(button.dataset.index);dialog('관리대상을 다시 활성화할까요?',`<p>「${escapeHTML(state.recipients[i].name)}」을 홈과 기록 작성 목록에서 다시 볼 수 있어요.</p>`,'활성화',async()=>{state.recipients[i].active=true;if(!await persist())return;prepareSettings();});}
+    else if(action==='toggle-recipient'){const r=state.recipients[detailRecipient];dialog(r.active?'관리대상을 비활성화할까요?':'관리대상을 다시 활성화할까요?',`<p>${r.active?'홈과 기록 작성 목록에서 제외돼요. 기존 일지와 리포트는 보관돼요.':'홈과 기록 작성 목록에 다시 표시돼요.'}</p>`,r.active?'비활성화':'활성화',async()=>{r.active=!r.active;if(!await persist())return;$('#recipient-dialog').close();renderRecipients();});}
+    else if(action==='trash-report')dialog('리포트를 휴지통으로 옮길까요?','<p>30일 동안 휴지통에서 복원할 수 있어요.</p>','휴지통으로',async()=>{state.reportRemoved||={};state.reportRemoved[recipient]=true;if(!state.trash.some(x=>x.type==='report'&&x.recipient===recipient))state.trash.push({type:'report',recipient,date:TODAY,title:'8월 28일 ~ 9월 3일 주간 리포트'});if(!await persist())return;render();toast('리포트를 휴지통으로 옮겼어요.');},true);
+    else if(action==='restore-trash'){const i=Number(button.dataset.index);dialog('기록을 복원할까요?','<p>복원한 기록은 기록 목록에서 다시 볼 수 있어요.</p>','복원',async()=>{const item=state.trash[i];if(item.type==='report')state.reportRemoved[item.recipient]=false;state.trash.splice(i,1);if(!await persist())return;renderRecords();});}
+    else if(action==='delete-trash'){const i=Number(button.dataset.index);dialog('기록을 완전히 삭제할까요?','<p>완전히 삭제한 기록은 복원할 수 없어요.</p>','완전삭제',async()=>{state.trash.splice(i,1);if(!await persist())return;renderRecords();},true);}
     else if(action==='generate-report'){
       if(reportDays()<3)return true;
-      dialog('리포트를 생성할까요?',`<p>${escapeHTML(state.recipients[recipient].name)} · ${formatDate(reportRange.from)} ~ ${formatDate(reportRange.to)} · 기록 ${reportDays()}일 / 기준 3일.</p><p>관찰 기준: ${escapeHTML(currentScoring().title)}</p><p class="mockup-preview-note">이 목업에서는 생성 흐름만 확인할 수 있어요. 실제 AI 생성은 연결되지 않았어요.</p>`,'생성',()=>{
+      dialog('리포트를 생성할까요?',`<p>${escapeHTML(state.recipients[recipient].name)} · ${formatDate(reportRange.from)} ~ ${formatDate(reportRange.to)} · 기록 ${reportDays()}일 / 기준 3일.</p><p>관찰 기준: ${escapeHTML(currentScoring().title)}</p><p class="mockup-preview-note">이 목업에서는 생성 흐름만 확인할 수 있어요. 실제 AI 생성은 연결되지 않았어요.</p>`,'생성',async()=>{
         if(isSampleReportPeriod()){
-          state.reportRemoved||={};state.reportRemoved[recipient]=false;state.trash=state.trash.filter(x=>x.type!=='report'||x.recipient!==recipient);persist();render();
+          state.reportRemoved||={};state.reportRemoved[recipient]=false;state.trash=state.trash.filter(x=>x.type!=='report'||x.recipient!==recipient);if(!await persist())return;render();
           toast('저장된 리포트 예시를 표시했어요.');
         }else toast('선택한 기간으로 생성 요청을 확인했어요. 실제 AI 생성은 연결되지 않았어요.');
       });
     }
-    else if(action==='reset-design')dialog('편집 내용을 초기화할까요?','<p>수정한 문구와 스타일을 초기화해요. 저장한 일지와 관리대상은 유지돼요.</p>','초기화',()=>{state.edits={};delete state.css;delete state.color;delete state.radius;persist();location.reload();});
-    else if(action==='plan'){e.preventDefault();dialog('스타터 요금제를 선택했어요','<p>월 14,900원 · 부가가치세 포함</p><p>유료 요금제 신청과 결제는 준비 중이에요.</p>');}
+    else if(action==='reset-design')dialog('편집 내용을 초기화할까요?','<p>수정한 문구와 스타일을 초기화해요. 저장한 일지와 관리대상은 유지돼요.</p>','초기화',async()=>{state.edits={};delete state.css;delete state.color;delete state.radius;if(!await persist())return;location.reload();});
+    else if(action==='plan'){e.preventDefault();openPlanCheckout(button.dataset.plan||'starter');}
+    else if(action==='payment-details')openPaymentResult(false);
+    else if(action==='payment-start'){$('#checkout-dialog').close();routeTo('#/journals/new');}
+    else if(action==='team-invite')openTeamInvite();
+    else if(action==='team-members'){$('#checkout-dialog').close();$('#team-members-title')?.scrollIntoView({block:'nearest'});}
+    else if(action==='cancel-team-invite'){
+      const sub=state.subscription,index=Number(button.dataset.index);
+      if(sub?.invites[index])dialog('초대를 취소할까요?',`<p>${escapeHTML(sub.invites[index])}</p>`,'초대 취소',async()=>{const removed=sub.invites.splice(index,1);if(!await persist()){sub.invites.splice(index,0,...removed);return;}render();});
+    }
+    else if(action==='payment-back')resetPaymentSimulation();
+    else if(action==='reset-payment')dialog('결제 시연을 초기화할까요?','<p>목업의 결제·초대 상태만 지워요. 저장한 일지와 계획은 유지돼요.</p>','초기화',resetPaymentSimulation);
     else return false;
     return true;
   }
@@ -671,5 +896,8 @@
       ['예술·체육',70,4,'오리를 보며 숫자를 세어본 것처럼 주변 사물의 개수를 손가락으로 표현하며 놀이해 보세요. 산책할 때처럼 옆 사람과 보폭을 맞추며 걷는 활동을 즐겨보세요. 외출 후 손을 씻고 수건을 정리하는 습관을 스스로 계속 실천해 보세요.', ['음악과 미술, 움직임으로 생각과 느낌을 표현한다.','다양한 표현 방식을 감상하고 의견을 나눈다.','신체 활동에 꾸준히 참여하며 안전을 지킨다.','협력과 규칙이 필요한 활동에 참여한다.','건강한 생활 습관을 스스로 실천한다.'],[3,0,4,3,4]]
     ];
   const iep=createCareitIEP({state,persist,toast,dialog,escapeHTML,registerEdits,ageBands});
+  $('#iep-mock-tier').addEventListener('change',event=>iep.simulate('tier',event.target.value));
+  $('#iep-mock-outcome').addEventListener('change',event=>iep.simulate('outcome',event.target.value));
+  $('#iep-mock-cycle').addEventListener('click',()=>iep.simulate('cycle'));
   applyDesign();render();
 })();

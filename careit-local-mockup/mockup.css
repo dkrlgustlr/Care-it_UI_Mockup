@@ -1,4 +1,100 @@
 /* 로컬 목업 전용 기능. 서비스 화면 스타일은 assets/original.css를 사용합니다. */
+/* 요금 안내를 두 줄 높이로 맞춰 선택 버튼과 기능 목록을 정렬합니다. */
+.pricing-price-note { min-height:2lh; }
+/* 결제 팝업은 기존 모달·컨트롤·타이포 토큰을 공유합니다. */
+.checkout-dialog {
+  width:min(520px,calc(100vw - 32px)); max-height:calc(100dvh - 32px);
+  padding:0; border:0; border-radius:var(--radius-dialog);
+  background:var(--surface); color:var(--text); box-shadow:var(--shadow-dialog); overflow:auto;
+}
+.checkout-dialog::backdrop { background:rgb(22 32 42 / 35%); }
+body:has(.checkout-dialog[open]) { overflow:hidden; }
+.checkout-dialog-header { display:flex; align-items:center; justify-content:space-between; gap:var(--space-4); padding:var(--space-7) var(--space-7) var(--space-6); }
+.checkout-dialog-header h2 { margin:0; font:var(--type-dialog-title); }
+.checkout-dialog-header .button { flex:none; }
+.checkout-body { display:grid; gap:var(--space-6); padding:0 var(--space-7) var(--space-7); }
+.checkout-plans { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-3); margin:0; padding:0; border:0; min-width:0; }
+.checkout-option { position:relative; display:flex; flex-direction:column; gap:var(--space-2); padding:var(--space-4); border:1px solid var(--line); border-radius:var(--radius-control); cursor:pointer; }
+.checkout-option:has(input:checked) { border-color:var(--primary-action); background:var(--mint-soft); }
+.checkout-option:has(input:focus-visible) { outline:2px solid var(--primary-action); outline-offset:2px; }
+.checkout-plan-name { font-size:var(--fs-body-sm); font-weight:700; }
+.checkout-plan-price { font-size:var(--fs-section); line-height:1.5; white-space:nowrap; }
+.checkout-plan-price>span { color:var(--muted); font-size:var(--fs-body-sm); font-weight:400; }
+.checkout-plan-limit,.checkout-tax,.checkout-schedule,.checkout-renewal,.checkout-consent,.checkout-preview-note { font-size:var(--fs-caption); line-height:1.5; }
+.checkout-plan-limit { color:var(--muted); }
+.checkout-summary { padding:var(--space-5); border-radius:var(--radius-card); background:var(--neutral-soft); }
+.checkout-total { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:var(--space-2) var(--space-4); }
+.checkout-total h3 { margin:0; font-size:var(--fs-body-sm); font-weight:700; }
+.checkout-total>strong { margin-left:auto; white-space:nowrap; font-size:var(--fs-page); line-height:1.4; font-variant-numeric:tabular-nums; }
+.checkout-tax { margin:var(--space-1) 0 0; color:var(--muted); text-align:right; }
+.checkout-schedule { margin-top:var(--space-4); }
+.checkout-schedule>summary { display:flex; align-items:center; gap:var(--space-2); width:fit-content; color:var(--muted); cursor:pointer; list-style:none; }
+.checkout-schedule>summary::-webkit-details-marker { display:none; }
+.checkout-schedule>summary::after { margin-left:0; }
+.checkout-schedule dl { display:grid; gap:var(--space-3); margin:var(--space-4) 0 0; padding-top:var(--space-4); border-top:1px solid var(--line); }
+.checkout-schedule dl>div { display:flex; justify-content:space-between; gap:var(--space-3); }
+.checkout-schedule dt { color:var(--muted); }
+.checkout-schedule dd { margin:0; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.checkout-renewal { margin:calc(-1 * var(--space-3)) 0 0; color:var(--muted); }
+.checkout-footer { display:grid; gap:var(--space-4); padding-top:var(--space-5); border-top:1px solid var(--line); }
+.checkout-consent { display:flex; align-items:flex-start; gap:var(--space-2); }
+.checkout-consent>input { width:18px; height:18px; margin:2px 0 0; flex:none; accent-color:var(--primary-action); }
+.checkout-consent>label { cursor:pointer; }
+.checkout-consent a { color:var(--primary-dark); text-underline-offset:3px; }
+.checkout-submit { width:100%; min-height:44px; }
+.checkout-preview-note { margin:calc(-1 * var(--space-2)) 0 0; color:var(--muted); text-align:center; }
+.subscription-card { margin-bottom:var(--space-5); padding:var(--space-6); background:var(--surface); border-radius:var(--radius-card); box-shadow:var(--shadow-card); }
+.subscription-header,.subscription-heading,.subscription-footer { display:flex; align-items:center; justify-content:space-between; gap:var(--space-4); }
+.subscription-header { flex-wrap:wrap; }
+.subscription-heading { justify-content:flex-start; gap:var(--space-3); }
+.subscription-heading h2 { margin:0; font:var(--type-card-title); }
+.subscription-header p,.team-records-note,.team-invite-note { margin:var(--space-2) 0 0; color:var(--muted); font-size:var(--fs-body-sm); line-height:1.65; }
+.subscription-badge { display:inline-block; flex:none; padding:4px 8px; border-radius:var(--radius-control); color:var(--primary-dark); background:var(--mint-soft); font-size:var(--fs-body-sm); font-weight:650; line-height:20px; }
+.subscription-details { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-6); margin:0; padding:var(--space-5); background:var(--neutral-soft); border-radius:var(--radius-control); }
+.subscription-card>.subscription-details { grid-template-columns:repeat(4,minmax(0,1fr)); margin-top:var(--space-6); }
+.subscription-details dt { color:var(--muted); font-size:var(--fs-body-sm); }
+.subscription-details dd { margin:var(--space-2) 0 0; font-size:var(--fs-body); font-weight:650; font-variant-numeric:tabular-nums; }
+.subscription-details small { display:block; margin-top:var(--space-1); font-size:var(--fs-caption); font-weight:400; color:var(--muted); }
+.subscription-footer { margin-top:var(--space-5); flex-wrap:wrap; }
+.subscription-footer p { margin:0; font-size:var(--fs-caption); color:var(--muted); }
+.subscription-actions { display:flex; flex-wrap:wrap; gap:var(--space-3); }
+.payment-back { justify-self:center; }
+.subscription-comparison { margin:var(--space-6) 0; }
+.subscription-comparison>summary { width:fit-content; color:var(--primary-dark); cursor:pointer; font-size:var(--fs-body-sm); font-weight:650; }
+.subscription-comparison .pricing-grid { margin-top:var(--space-5); }
+.payment-result-heading { display:flex; align-items:center; gap:var(--space-4); }
+.payment-success-icon { display:grid; place-items:center; flex:none; width:48px; height:48px; border-radius:50%; background:var(--mint-soft); color:var(--primary-action); }
+.payment-success-icon svg { width:28px; height:28px; }
+.payment-result-heading h3 { margin:0; font-size:var(--fs-section); line-height:1.5; }
+.payment-result-heading p { margin:var(--space-1) 0 0; color:var(--muted); font-size:var(--fs-body-sm); line-height:1.65; }
+.payment-result-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-3); }
+.payment-result-actions .button { min-width:0; min-height:44px; }
+.team-member-list { margin:var(--space-5) 0 0; padding:0; list-style:none; }
+.team-member-list li { display:flex; align-items:center; justify-content:space-between; gap:var(--space-4); padding:var(--space-4) 0; border-top:1px solid var(--line); }
+.team-member-list li>div { min-width:0; }
+.team-member-list strong { display:block; font-size:var(--fs-body); font-weight:650; overflow-wrap:anywhere; }
+.team-member-list li>div>span { display:block; margin-top:var(--space-1); font-size:var(--fs-caption); color:var(--muted); }
+.team-member-list .button { flex:none; }
+.team-invite-note { margin:0; }
+.team-invite-error { margin:var(--space-2) 0 0; color:var(--danger,#b42318); font-size:var(--fs-body-sm); }
+@media(max-width:767px) {
+  .subscription-card { padding:var(--space-5); }
+  .subscription-card>.subscription-details { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(max-width:359px) {
+  .subscription-details { gap:var(--space-4); padding:var(--space-4); }
+  .payment-result-actions { grid-template-columns:1fr; }
+}
+@media(max-width:479px) {
+  .checkout-dialog-header { padding:var(--space-6) var(--space-5) var(--space-5); }
+  .checkout-body { padding:0 var(--space-5) var(--space-6); gap:var(--space-5); }
+  .checkout-option { padding:var(--space-3); }
+  .checkout-summary { padding:var(--space-4); }
+  .checkout-plan-price>span { display:block; }
+}
+@media(max-width:359px) {
+  .checkout-option { padding-inline:var(--space-2); }
+}
 /* 글자 크기: 작은 안내는 14px, 기존 18px 제목은 20px로 통일합니다. */
 :root {
   --fs-brand-tagline:calc(14px * var(--native-text-scale,1));
