@@ -22,14 +22,29 @@ function createMockupStorage({storage,key,locks,onBlocked}) {
   }
   return {initial,save,check,get blocked(){return blocked;},get pending(){return pending;}};
 }
-function mockupCheckoutPrice(monthlyPrice, months) {
-  return (monthlyPrice - (months === 12 ? 1000 : 0)) * months;
+function mockupCheckoutPrice(plan) {
+  return ({starter:14900,team:39900})[plan] ?? null;
 }
 function mockupBillingDate(today, months = 0) {
   const [year, month, day] = today.split('-').map(Number);
   const date = new Date(Date.UTC(year, month - 1 + months, 1));
   const lastDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
   return `${date.getUTCFullYear()}.${String(date.getUTCMonth() + 1).padStart(2, '0')}.${String(Math.min(day, lastDay)).padStart(2, '0')}`;
+}
+function mockupCheckoutSubscription(plan, today, consent, acceptedAt) {
+  const amount=mockupCheckoutPrice(plan);
+  if (!Number.isInteger(amount) || consent.terms!==true || consent.renewal!==true) return null;
+  const nextBillingOn=mockupBillingDate(today,1);
+  return {plan,cycle:'monthly',paidOn:today,amount,nextBillingOn,autoRenew:true,invites:[],
+    consent:{version:'2026-10-12-checkout',acceptedAt,terms:true,renewal:true,plan,cycle:'monthly',amount,currency:'KRW',nextBillingOn}};
+}
+function mockupSubscriptionPeriod(sub, today) {
+  const [year,month,day]=sub.nextBillingOn.split('.').map(Number);
+  const end=new Date(Date.UTC(year,month-1,day-1)).toISOString().slice(0,10).replaceAll('-','.');
+  return {end,ended:sub.autoRenew===false && today.replaceAll('-','.')>=sub.nextBillingOn};
+}
+function mockupStopRenewal(sub, cancelledAt) {
+  return {...sub,autoRenew:false,cancelledAt};
 }
 (() => {
   'use strict';
@@ -59,9 +74,11 @@ function mockupBillingDate(today, months = 0) {
   state.scoring ||= {};
   state.trash ||= [];
   state.reportTemplates ||= {};
-  const checkoutPlans = {starter:{name:'플러스',price:14900},team:{name:'팀',price:29900}};
+  const checkoutPlans = {starter:{name:'플러스'},team:{name:'팀'}};
+  // 연간은 이전에 저장된 결제 내역을 표시할 때만 사용합니다. 새 결제는 월간만 제공합니다.
   const checkoutCycles = {monthly:{name:'월간',months:1,unit:'월'},yearly:{name:'연간',months:12,unit:'년'}};
   const won = value => `${value.toLocaleString('ko-KR')}원`;
+  const checkoutToday = () => new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'});
   const TODAY = '2026-09-23'; // 원본 화면의 기준일. 목업 날짜를 일관되게 유지합니다.
   const ageBands = ['만 3세 미만','만 3~5세','만 6~12세','만 13~17세','만 18세 이상'];
   state.recipients ||= [
@@ -482,7 +499,7 @@ function mockupBillingDate(today, months = 0) {
     clone.querySelectorAll('[contenteditable]').forEach(el=>el.removeAttribute('contenteditable'));
     clone.querySelectorAll('dialog').forEach(el=>el.removeAttribute('open'));
     clone.querySelectorAll('[aria-expanded="true"][data-options],[aria-expanded="true"][data-action="date"]').forEach(el=>{el.setAttribute('aria-expanded','false');el.removeAttribute('aria-controls');});
-    clone.querySelectorAll('.mockup-popup,#quick-dialog,#scoring-dialog,#consent-dialog,#checkout-dialog,#team-invite-dialog').forEach(el=>el.remove());
+    clone.querySelectorAll('.mockup-popup,#quick-dialog,#scoring-dialog,#consent-dialog,#checkout-dialog,#checkout-policy-dialog,#team-invite-dialog').forEach(el=>el.remove());
     const blob=new Blob(['<!doctype html>\n'+clone.outerHTML],{type:'text/html;charset=utf-8'}); const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=save?'careit-mockup-edited.html':'careit-mockup-backup.html';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('현재 내용을 담은 HTML 내려받기를 요청했어요.',true);
   }
   document.addEventListener('click',async e=>{
@@ -592,55 +609,41 @@ function mockupBillingDate(today, months = 0) {
     if (selected === 'pro') selected = 'team';
     if (!Object.hasOwn(plans, selected)) selected = 'starter';
     const plan = plans[selected];
-    const cycles = checkoutCycles;
-    const today = new Date().toLocaleDateString('sv-SE', {timeZone:'Asia/Seoul'});
+    const today = checkoutToday(), amount=mockupCheckoutPrice(selected), nextBillingOn=mockupBillingDate(today,1);
     const modal = editorDialog('checkout-dialog','checkout-dialog',`${plan.name} 요금제`,`
       <form id="checkout-form" class="checkout-body" novalidate>
-        <fieldset class="checkout-plans"><legend class="sr-only">결제 주기</legend>
-          ${Object.entries(cycles).map(([key, cycle])=>`<label class="checkout-option">
-            <input class="sr-only" type="radio" name="checkout-cycle" value="${key}" ${key==='monthly'?'checked':''}>
-            <span class="checkout-plan-name">${cycle.name}</span>
-            <strong class="checkout-plan-price">${won(mockupCheckoutPrice(plan.price,cycle.months))}<span> / ${cycle.unit}</span></strong>
-            <span class="checkout-plan-limit">${key==='monthly'?'매월 결제':`월 ${won(mockupCheckoutPrice(plan.price,12)/12)} 기준`}</span>
-          </label>`).join('')}
-        </fieldset>
         <section class="checkout-summary" aria-labelledby="checkout-amount-title">
-          <div class="checkout-total"><h3 id="checkout-amount-title">오늘 결제 금액</h3><strong data-checkout-price aria-live="polite"></strong></div>
+          <div class="checkout-total"><h3 id="checkout-amount-title">오늘 결제 금액</h3><strong>${won(amount)}</strong></div>
           <p class="checkout-tax">부가가치세 포함</p>
-          <details class="checkout-schedule"><summary>결제 일정 보기</summary>
-            <dl><div><dt>오늘 · ${mockupBillingDate(today)}</dt><dd data-checkout-price></dd></div><div><dt data-checkout-next></dt><dd data-checkout-price></dd></div></dl>
-          </details>
+          <dl class="checkout-billing"><div><dt>결제 주기</dt><dd>매월 자동결제</dd></div><div><dt>다음 결제일</dt><dd>${nextBillingOn}</dd></div><div><dt>다음 결제 금액</dt><dd>${won(amount)}</dd></div></dl>
         </section>
-        <p class="checkout-renewal"></p>
+        <div class="checkout-notices"><p>결제 후 바로 이용할 수 있어요. 해지 전까지 매월 ${won(amount)}이 자동 결제돼요.</p><p>요금제에서 언제든 자동갱신을 해지할 수 있어요. 해지 후에도 결제한 기간까지 이용해요.</p><p>결제 후 7일 이내 · 유료 기능 미사용 시 전액 환불해요. 사용 후·7일 경과 시의 제한과 법령상 예외는 환불 기준에서 확인해 주세요.</p></div>
         <div class="checkout-footer">
-          <div class="checkout-consent"><input type="checkbox" id="checkout-agree" required><label for="checkout-agree"><a href="#/terms">이용약관</a> 및 정기 결제에 동의해요.</label></div>
-          <button type="submit" class="button primary checkout-submit" disabled></button>
+          <div class="checkout-consent"><input type="checkbox" id="checkout-terms-agree" required><label for="checkout-terms-agree">이용약관·환불 기준에 동의해요. <span class="checkout-required">(필수)</span></label><button type="button" class="checkout-policy-link" data-action="checkout-policy" data-policy="terms" aria-label="이용약관과 환불 기준 보기">보기</button></div>
+          <div class="checkout-consent"><input type="checkbox" id="checkout-renewal-agree" required><label for="checkout-renewal-agree">정기결제·자동갱신에 동의해요. <span class="checkout-required">(필수)</span></label><button type="button" class="checkout-policy-link" data-action="checkout-policy" data-policy="renewal" data-plan="${selected}" data-date="${today}" aria-label="정기결제와 자동갱신 조건 보기">보기</button></div>
+          <button type="submit" class="button primary checkout-submit" disabled>결제하기</button>
           <p class="checkout-preview-note">목업 화면으로 실제 결제는 진행되지 않아요.</p>
         </div>
       </form>`);
     const form = $('#checkout-form',modal);
     let submitting = false;
+    const consent = () => ({terms:$('#checkout-terms-agree',form).checked,renewal:$('#checkout-renewal-agree',form).checked});
     const update = () => {
-      const cycle = cycles[$('input[name="checkout-cycle"]:checked',form)?.value];
-      if (!cycle) return;
-      const amount = won(mockupCheckoutPrice(plan.price,cycle.months));
-      $$('[data-checkout-price]',form).forEach(el=>el.textContent=amount);
-      $('[data-checkout-next]',form).textContent=`다음 결제 · ${mockupBillingDate(today,cycle.months)}`;
-      $('.checkout-renewal',form).textContent=`${cycle.months===12?'매년':'매월'} ${amount}이 정기 결제돼요.`;
       const submit = $('.checkout-submit',form);
       submit.textContent='결제하기';
-      submit.disabled=submitting||!$('#checkout-agree',form).checked;
+      submit.disabled=submitting||!consent().terms||!consent().renewal;
     };
     form.addEventListener('change',update);
     form.addEventListener('submit',async event=>{
       event.preventDefault();
-      const cycleKey = $('input[name="checkout-cycle"]:checked',form)?.value;
-      if (submitting || state.subscription || !$('#checkout-agree',form).checked || !Object.hasOwn(cycles,cycleKey)) return;
+      if (submitting || state.subscription) return;
+      if (today!==checkoutToday()) { openPlanCheckout(selected); toast('결제일이 바뀌었어요. 결제 내용을 다시 확인해 주세요.'); return; }
+      const subscription=mockupCheckoutSubscription(selected,today,consent(),new Date().toISOString());
+      if (!subscription) return;
       submitting = true;
       $('.checkout-submit',form).disabled = true;
       $('.checkout-submit',form).textContent = '결제 처리 중';
-      const months = cycles[cycleKey].months;
-      state.subscription = {plan:selected,cycle:cycleKey,paidOn:today,amount:mockupCheckoutPrice(plan.price,months),nextBillingOn:mockupBillingDate(today,months),invites:[]};
+      state.subscription = subscription;
       if (!await persist()) { delete state.subscription; submitting=false; update(); return; }
       history.replaceState(null,'','#/plans');
       render();
@@ -650,18 +653,38 @@ function mockupBillingDate(today, months = 0) {
   }
   function subscriptionDetails() {
     const sub=state.subscription, cycle=checkoutCycles[sub.cycle];
+    const period=mockupSubscriptionPeriod(sub,checkoutToday());
     return `<dl class="subscription-details">
       <div><dt>결제 금액</dt><dd>${won(sub.amount)}<small>부가가치세 포함</small></dd></div>
       <div><dt>결제일</dt><dd>${mockupBillingDate(sub.paidOn)}</dd></div>
-      <div><dt>다음 결제일</dt><dd>${sub.nextBillingOn}</dd></div>
-      <div><dt>다음 결제 금액</dt><dd>${won(sub.amount)}<small>${cycle.months===12?'매년':'매월'} 정기 결제</small></dd></div>
+      <div><dt>${sub.autoRenew===false?'유료 이용 종료일':'다음 결제일'}</dt><dd>${sub.autoRenew===false?period.end:sub.nextBillingOn}</dd></div>
+      <div><dt>다음 결제</dt><dd>${sub.autoRenew===false?'없음':won(sub.amount)}<small>${sub.autoRenew===false?'자동갱신 해지됨':`${cycle.months===12?'매년':'매월'} 정기 결제`}</small></dd></div>
     </dl>`;
+  }
+  function openCheckoutPolicy(type,plan,date) {
+    const renewal=type==='renewal', amount=mockupCheckoutPrice(plan);
+    if (renewal && (!Number.isInteger(amount) || !/^\d{4}-\d{2}-\d{2}$/.test(date||''))) return;
+    const html=renewal?`<p><strong>${checkoutPlans[plan].name} · 월 ${won(amount)}</strong> (부가가치세 포함)</p><p>첫 결제는 ${mockupBillingDate(date)}, 다음 결제는 ${mockupBillingDate(date,1)}에 ${won(amount)}이에요. 이후에도 첫 결제일과 같은 날짜에 매월 자동 결제돼요. 해당 날짜가 없는 달에는 마지막 날에 결제해요.</p><p>결제 직후 유료 기능이 제공돼요. 요금제 → 자동갱신 해지 또는 support@careit.kr를 통해 다음 결제부터 해지할 수 있어요. 이미 결제한 기간까지 이용할 수 있으며, 자동갱신 해지는 환불 신청과 달라요.</p>${plan==='team'?'<p>팀의 해지·환불은 결제자가 요청해요. 이용기간이 끝나면 결제자와 팀원 모두 무료 요금제로 전환돼요.</p>':''}<p>요금이 인상되는 경우 변경 금액과 적용 시점을 미리 안내하고 별도 동의를 받아요.</p>`:$('#checkout-policy-template').innerHTML;
+    const modal=editorDialog('checkout-policy-dialog','checkout-dialog',renewal?'정기결제·자동갱신':'이용약관·환불 기준',`<div class="checkout-body"><div class="checkout-policy-copy">${html}</div><button type="button" class="button secondary" data-action="close-modal" data-modal="checkout-policy-dialog">확인</button></div>`);
+    const title=$('#checkout-policy-dialog-title',modal);title.tabIndex=-1;title.focus();
+  }
+  function cancelSubscriptionRenewal() {
+    const sub=state.subscription;
+    if (!sub || sub.autoRenew===false) return;
+    const period=mockupSubscriptionPeriod(sub,checkoutToday());
+    dialog('자동갱신을 해지할까요?',`<p><strong>${sub.nextBillingOn}부터 결제되지 않아요.</strong></p><p>${period.end}까지 ${checkoutPlans[sub.plan].name} 기능을 이용할 수 있어요.${sub.plan==='team'?' 이후 결제자와 팀원 모두 무료 요금제로 전환돼요.':''}</p><p>이미 결제한 금액의 환불은 별도로 요청해 주세요.</p>`,'자동갱신 해지',async()=>{
+      if (state.subscription!==sub || sub.autoRenew===false) return;
+      state.subscription=mockupStopRenewal(sub,new Date().toISOString());
+      if (!await persist()) {state.subscription=sub;return;}
+      render();$('#subscription-title')?.focus();toast('자동갱신을 해지했어요. 다음 결제는 없어요.');
+    });
   }
   function preparePlans() {
     $$('.pricing-features li').forEach(li=>li.insertAdjacentHTML('afterbegin','<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>'));
     const sub=state.subscription;
     if (!sub) return;
     const plan=checkoutPlans[sub.plan], cycle=checkoutCycles[sub.cycle];
+    const period=mockupSubscriptionPeriod(sub,checkoutToday());
     const audience=$('.pricing-audience'), grid=$('.pricing-grid');
     const comparison=document.createElement('details');
     comparison.className='subscription-comparison';
@@ -669,14 +692,16 @@ function mockupBillingDate(today, months = 0) {
     audience.before(comparison); comparison.append(grid); audience.remove();
     $$('.pricing-card',grid).forEach(card=>{
       const button=$('.button',card);
-      if (button.dataset.plan===sub.plan) { card.classList.add('is-current'); $('h2',card).insertAdjacentHTML('beforeend','<span class="subscription-badge">이용 중</span>'); }
+      if (period.ended?button.disabled:button.dataset.plan===sub.plan) { card.classList.add('is-current'); $('h2',card).insertAdjacentHTML('beforeend','<span class="subscription-badge">이용 중</span>'); }
       button.remove();
     });
     comparison.insertAdjacentHTML('beforebegin',`<section class="subscription-card" aria-labelledby="subscription-title">
-      <header class="subscription-header"><div><div class="subscription-heading"><h2 id="subscription-title" tabindex="-1">${plan.name} 이용 중</h2><span class="subscription-badge">${cycle.name}</span></div><p>${sub.plan==='team'?'3명 이용 · 1인당 관리대상 최대 5명':'관리대상 최대 5명'}</p></div><button type="button" class="button tertiary" data-action="payment-details">결제 내역</button></header>
+      <header class="subscription-header"><div><div class="subscription-heading"><h2 id="subscription-title" tabindex="-1">${period.ended?'무료':plan.name} 이용 중</h2><span class="subscription-badge">${sub.autoRenew===false?'자동갱신 해지됨':cycle.name}</span></div><p>${period.ended?'유료 이용기간이 종료됐어요.':sub.plan==='team'?'3명 이용 · 1인당 관리대상 최대 5명':'관리대상 최대 5명'}</p></div><button type="button" class="button tertiary" data-action="payment-details">결제 내역</button></header>
       ${subscriptionDetails()}
+      ${sub.autoRenew===false?`<p class="subscription-status">${period.ended?'결제한 이용기간이 끝나 무료 요금제로 전환됐어요.':`${period.end}까지 ${plan.name} 기능을 이용할 수 있어요.${sub.plan==='team'?' 이후 결제자와 팀원 모두 무료 요금제로 전환돼요.':''}`}</p>`:''}
+      <div class="subscription-management">${sub.autoRenew!==false?'<button type="button" class="button tertiary" data-action="cancel-renewal">자동갱신 해지</button>':''}<button type="button" class="button tertiary" data-action="checkout-policy" data-policy="terms">환불 기준·문의</button></div>
       <footer class="subscription-footer"><p>목업 예시 · 실제 결제는 진행되지 않았어요.</p><div class="subscription-actions"><button type="button" class="button tertiary" data-action="payment-back">결제 전으로 돌아가기</button><a href="#/journals/new" class="button primary">일지 작성하기</a></div></footer>
-    </section>${sub.plan==='team'?teamMembersHTML():''}`);
+    </section>${sub.plan==='team'&&!period.ended?teamMembersHTML():''}`);
   }
   function teamMembersHTML() {
     const invites=state.subscription.invites;
@@ -692,9 +717,9 @@ function mockupBillingDate(today, months = 0) {
     if (!sub) return;
     const plan=checkoutPlans[sub.plan], cycle=checkoutCycles[sub.cycle];
     const modal=editorDialog('checkout-dialog','checkout-dialog',completed?'결제가 완료됐어요':'결제 내역',`<div class="checkout-body">
-      <div class="payment-result-heading">${completed?'<span class="payment-success-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4 10-10"/></svg></span>':''}<div><h3>${plan.name} · ${cycle.name}</h3><p>${!completed?'현재 이용 중인 요금제예요.':sub.plan==='team'?'이제 함께 이용할 멤버를 초대해 보세요.':'이제 플러스 기능을 이용할 수 있어요.'}</p></div></div>
+      <div class="payment-result-heading">${completed?'<span class="payment-success-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4 10-10"/></svg></span>':''}<div><h3>${plan.name} · ${cycle.name}</h3><p>${!completed?'결제한 요금제 내역이에요.':sub.plan==='team'?'이제 함께 이용할 멤버를 초대해 보세요.':'이제 플러스 기능을 이용할 수 있어요.'}</p></div></div>
       ${subscriptionDetails()}
-      <div class="payment-result-actions"><button type="button" class="button secondary" data-action="close-modal" data-modal="checkout-dialog">요금제 보기</button><button type="button" class="button primary" data-action="${sub.plan==='team'?(completed?'team-invite':'team-members'):'payment-start'}">${sub.plan==='team'?(completed?'멤버 초대하기':'팀 멤버 보기'):'일지 작성하기'}</button></div>
+      <div class="payment-result-actions"><button type="button" class="button secondary" data-action="close-modal" data-modal="checkout-dialog">요금제 보기</button><button type="button" class="button primary" data-action="${sub.plan==='team'&&!mockupSubscriptionPeriod(sub,checkoutToday()).ended?(completed?'team-invite':'team-members'):'payment-start'}">${sub.plan==='team'&&!mockupSubscriptionPeriod(sub,checkoutToday()).ended?(completed?'멤버 초대하기':'팀 멤버 보기'):'일지 작성하기'}</button></div>
       <p class="checkout-preview-note">목업 예시로 실제 결제는 진행되지 않았어요.</p>
       <button type="button" class="button tertiary payment-back" data-action="payment-back">결제 전으로 돌아가기</button>
     </div>`);
@@ -704,7 +729,7 @@ function mockupBillingDate(today, months = 0) {
   }
   function openTeamInvite() {
     const sub=state.subscription;
-    if (sub?.plan!=='team') return;
+    if (sub?.plan!=='team' || mockupSubscriptionPeriod(sub,checkoutToday()).ended) return;
     $('#checkout-dialog')?.close();
     if (sub.invites.length>=2) { toast('초대할 수 있는 자리가 없어요.'); return; }
     const modal=editorDialog('team-invite-dialog','checkout-dialog','팀 멤버 초대',`<form id="team-invite-form" class="checkout-body" novalidate>
@@ -867,6 +892,8 @@ function mockupBillingDate(today, months = 0) {
     else if(action==='reset-design')dialog('편집 내용을 초기화할까요?','<p>수정한 문구와 스타일을 초기화해요. 저장한 일지와 관리대상은 유지돼요.</p>','초기화',async()=>{state.edits={};delete state.css;delete state.color;delete state.radius;if(!await persist())return;location.reload();});
     else if(action==='plan'){e.preventDefault();openPlanCheckout(button.dataset.plan||'starter');}
     else if(action==='payment-details')openPaymentResult(false);
+    else if(action==='checkout-policy')openCheckoutPolicy(button.dataset.policy,button.dataset.plan,button.dataset.date);
+    else if(action==='cancel-renewal')cancelSubscriptionRenewal();
     else if(action==='payment-start'){$('#checkout-dialog').close();routeTo('#/journals/new');}
     else if(action==='team-invite')openTeamInvite();
     else if(action==='team-members'){$('#checkout-dialog').close();$('#team-members-title')?.scrollIntoView({block:'nearest'});}
