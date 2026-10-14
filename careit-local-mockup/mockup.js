@@ -46,6 +46,62 @@ function mockupSubscriptionPeriod(sub, today) {
 function mockupStopRenewal(sub, cancelledAt) {
   return {...sub,autoRenew:false,cancelledAt};
 }
+function mockupReportWeek(value, offset=0) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value||'')) return null;
+  const date=new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0,10)!==value) return null;
+  date.setUTCDate(date.getUTCDate()-(date.getUTCDay()+2)%7+offset*7);
+  const from=date.toISOString().slice(0,10);
+  date.setUTCDate(date.getUTCDate()+6);
+  return {from,to:date.toISOString().slice(0,10)};
+}
+function mockupReportDays(range, rows) {
+  return range?.from&&range?.to?new Set(rows.filter(row=>row[0]>=range.from&&row[0]<=range.to).map(row=>row[0])).size:0;
+}
+function mockupReportSampleJournals(today) {
+  const examples=[
+    '블록 놀이에서 원하는 색을 골랐고, 연결이 어려울 때 그림을 가리켜 도움을 요청했어요.',
+    '그림책의 동물을 가리키며 소리를 따라 했고, 익숙한 장면에서 먼저 몸짓으로 표현했어요.',
+    '산책 중 멈춤 안내를 듣고 기다렸으며, 다시 출발할 때 손짓을 보고 함께 걸었어요.',
+    '정리 시간에 그림 안내를 보고 놀잇감을 바구니에 넣었고, 마지막 한 개는 도움을 받아 정리했어요.'
+  ];
+  return [4,2,0,3].flatMap((count,index)=>{
+    const week=mockupReportWeek(today,-index-1);
+    return Array.from({length:count},(_,dayIndex)=>{
+      const date=new Date(`${week.from}T00:00:00Z`);date.setUTCDate(date.getUTCDate()+dayIndex*2);
+      return {date:date.toISOString().slice(0,10),text:`[리포트 예시] ${examples[dayIndex]}`};
+    });
+  });
+}
+function mockupReportCalendarDates(year, month) {
+  const day=new Date(Date.UTC(year,month,1)),last=new Date(Date.UTC(year,month+1,0)),dates=[];
+  day.setUTCDate(day.getUTCDate()-day.getUTCDay());
+  last.setUTCDate(last.getUTCDate()+6-last.getUTCDay());
+  for(;day<=last;day.setUTCDate(day.getUTCDate()+1))dates.push(day.toISOString().slice(0,10));
+  return dates;
+}
+function mockupReportEligibility(range, today, days=null) {
+  if (!range?.from || !range?.to) return {allowed:false,reason:'empty'};
+  const week=mockupReportWeek(range.from);
+  if (!week || week.from!==range.from || week.to!==range.to) return {allowed:false,reason:'invalid'};
+  const next=new Date(`${range.to}T00:00:00Z`);
+  next.setUTCDate(next.getUTCDate()+1);
+  const opensOn=next.toISOString().slice(0,10);
+  // 유예기간은 종료일(목요일)에서 달력상 1개월 후까지 포함하며, 없는 날짜는 말일로 보정합니다.
+  const expiresOn=mockupBillingDate(range.to,1).replaceAll('.','-');
+  const reason=today<opensOn?'future':today>expiresOn?'expired':days!==null&&days<3?'insufficient':'';
+  return {allowed:!reason,reason,opensOn,expiresOn};
+}
+function mockupReportNotice(status, days) {
+  if(status.reason==='insufficient')return `${days?`일지를 ${days}일 기록했어요.`:'저장된 일지가 없어요.'}\n주간 일지가 3일 이상 필요해요.`;
+  if(status.reason==='expired')return '생성 기한이 지났어요.\n주간 종료 후 1개월까지만 가능해요.';
+  if(status.reason==='future'){
+    const [,month,day]=status.opensOn.split('-').map(Number);
+    return `아직 생성할 수 없는 주간이에요.\n${month}월 ${day}일부터 생성할 수 있어요.`;
+  }
+  if(status.allowed)return `일지 ${days}일이 있어 생성할 수 있어요.\n날짜를 눌러 주간을 선택해 주세요.`;
+  return '날짜에 마우스를 올리면\n생성 가능 여부를 알려드려요.';
+}
 (() => {
   'use strict';
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -78,7 +134,7 @@ function mockupStopRenewal(sub, cancelledAt) {
   // 연간은 이전에 저장된 결제 내역을 표시할 때만 사용합니다. 새 결제는 월간만 제공합니다.
   const checkoutCycles = {monthly:{name:'월간',months:1,unit:'월'},yearly:{name:'연간',months:12,unit:'년'}};
   const won = value => `${value.toLocaleString('ko-KR')}원`;
-  const checkoutToday = () => new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'});
+  const currentDate = () => new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'});
   const TODAY = '2026-09-23'; // 원본 화면의 기준일. 목업 날짜를 일관되게 유지합니다.
   const ageBands = ['만 3세 미만','만 3~5세','만 6~12세','만 13~17세','만 18세 이상'];
   state.recipients ||= [
@@ -114,7 +170,7 @@ function mockupStopRenewal(sub, cancelledAt) {
   ];
   let route = '/', params = new URLSearchParams(), recipient = 0, detailRecipient = 0, recordTab = 'journals';
   const recordRange = {from:'', to:''};
-  const reportRange = {from:'2026-09-11', to:'2026-09-17'};
+  const reportRange = mockupReportWeek(currentDate(),-1);
   let editingRecipient = null, editing = false, toastTimer, activePopupTrigger;
   const persist = () => store.save(JSON.stringify(state));
   if (ageBandsChanged) persist();
@@ -245,7 +301,12 @@ function mockupStopRenewal(sub, cancelledAt) {
   }
   function journalRows() {
     let original = recipient===0 ? originalJournalRows : recipient===1 ? [['2026-09-22','9월 22일 (화)','[합성 QA 2026-09-22 상태 안내] 서버 버퍼 저장 완료 안내 검증입니다. 실제 돌봄 기록이 아닙니다.']] : recipient===2 ? [['2026-09-14','9월 14일 (월)',$('#page-home').content.querySelectorAll('.latest-journal-copy')[2].textContent]] : [];
-    return [...state.savedJournals.filter(x => x.recipient===recipient).map(x => Object.assign([x.date,formatShortDate(x.date),x.text], {values:x.values})), ...original];
+    if(recipient===0){
+      const today=currentDate(),from=mockupReportWeek(today,-4).from,to=mockupReportWeek(today,-1).to;
+      original=[...mockupReportSampleJournals(today).map(x=>[x.date,formatShortDate(x.date),x.text]),...original.filter(row=>row[0]<from||row[0]>to)];
+    }
+    const saved=state.savedJournals.filter(x=>x.recipient===recipient);
+    return [...saved.map(x=>Object.assign([x.date,formatShortDate(x.date),x.text],{values:x.values})),...original.filter(row=>!saved.some(x=>x.date===row[0]))].sort((a,b)=>b[0].localeCompare(a[0]));
   }
   function renderRecords() {
     const list = $('[data-record-list]');
@@ -273,16 +334,17 @@ function mockupStopRenewal(sub, cancelledAt) {
     rows.forEach(el => el.hidden = !!((from&&el.dataset.date<from)||(to&&el.dataset.date>to)));
     const empty=$('[data-filter-empty]');if(empty)empty.hidden=rows.some(el=>!el.hidden);
   }
-  function reportDays() {
-    return reportRange.from&&reportRange.to?new Set(journalRows().filter(row=>row[0]>=reportRange.from&&row[0]<=reportRange.to).map(row=>row[0])).size:0;
+  function reportDays(range=reportRange) {
+    return mockupReportDays(range,journalRows());
   }
   function isSampleReportPeriod() { return reportRange.from==='2026-08-28'&&reportRange.to==='2026-09-03'; }
   function updateReportPeriod() {
     const {from,to}=reportRange,days=reportDays(),button=$('[data-date-range="report"]');
+    const eligibility=mockupReportEligibility(reportRange,currentDate(),days);
     button.querySelector('span').textContent=from?`${from.replaceAll('-','.')} ~ ${to.replaceAll('-','.')}`:'날짜 선택';
-    button.setAttribute('aria-description',from?`${formatDate(from)}부터 ${formatDate(to)}까지`:'시작 날짜와 종료 날짜를 차례로 선택하세요.');
-    $('.report-recipient-change button').disabled=days<3;
-    $('.report-generation-status').textContent=!from?'달력에서 리포트의 시작일과 종료일을 선택해 주세요.':days>=3?`선택한 기간의 저장 기록은 ${days}일이에요. 생성 기준 3일을 충족해 리포트를 생성할 수 있어요.`:`서로 다른 날짜의 저장 기록이 ${days}일이라 생성 기준 3일을 채우지 못했어요.`;
+    button.setAttribute('aria-description',from?`${formatDate(from)}부터 ${formatDate(to)}까지, 금요일부터 목요일까지 7일`:'날짜 하나를 선택하면 금요일부터 목요일까지 7일이 선택됩니다.');
+    $('.report-recipient-change button').disabled=!eligibility.allowed;
+    $('.report-generation-status').textContent=eligibility.reason==='empty'?'달력에서 리포트를 만들 주간을 선택해 주세요.':eligibility.reason==='invalid'?'금요일부터 목요일까지 7일을 선택해 주세요.':eligibility.reason==='future'?`${formatDate(eligibility.opensOn)}부터 생성할 수 있어요.`:eligibility.reason==='expired'?'주간 종료일부터 1개월이 지나 새 리포트를 생성할 수 없어요.':days>=3?`저장 기록 ${days}일 · ${formatDate(eligibility.expiresOn)}까지 리포트를 생성할 수 있어요.`:`서로 다른 날짜의 저장 기록이 ${days}일이라 생성 기준 3일을 채우지 못했어요.`;
     if(isSampleReportPeriod()&&!state.reportRemoved?.[recipient])showStoredReport();
     else $('.reports-layout').innerHTML='<section class="empty-state"><h2>선택한 기간의 리포트가 없어요</h2><p>다른 기간을 선택하거나 새 리포트를 생성해 주세요.</p></section>';
     requestAnimationFrame(scaleReports);
@@ -346,6 +408,9 @@ function mockupStopRenewal(sub, cancelledAt) {
       const below=vh-r.bottom-margin-6,above=r.top-margin-6;
       if(panel.classList.contains('datefield-panel')&&vw<768){
         panel.style.left=`${Math.max(margin,(vw-w)/2)}px`;panel.style.top=`${Math.max(margin,vh-h-16)}px`;
+      }else if(panel.classList.contains('mockup-report-weeks')&&h>Math.max(above,below)){
+        panel.style.left=`${Math.max(margin,Math.min(r.left,vw-w-margin))}px`;
+        panel.style.top=`${Math.max(margin,Math.min(r.bottom+6,vh-h-margin))}px`;
       }else{
         const useAbove=below<h&&above>below;
         panel.style.maxHeight=`${Math.min(maxHeight,Math.max(100,useAbove?above:below))}px`;
@@ -419,26 +484,54 @@ function mockupStopRenewal(sub, cancelledAt) {
     const value=button.dataset.value||'';
     let rangeFrom=activeRange.from,rangeTo=activeRange.to,selectingEnd=false;
     if(iepRange){rangeFrom=iep.validDate(rangeFrom)?rangeFrom:'';rangeTo=iep.validDate(rangeTo)?rangeTo:'';}
-    const max=iepRange?'2100-12-31':TODAY;
-    let initialDate=(isRange?rangeFrom:value)||TODAY;
+    const today=isReportRange?currentDate():TODAY;
+    const latestWeek=isReportRange?mockupReportWeek(today,-1):null;
+    let firstWeek=latestWeek;
+    if(isReportRange){
+      while(mockupReportEligibility(mockupReportWeek(firstWeek.from,-1),today).allowed)firstWeek=mockupReportWeek(firstWeek.from,-1);
+    }
+    const min=firstWeek?.from||'',max=iepRange?'2100-12-31':latestWeek?.to||TODAY;
+    let initialDate=(isRange?rangeFrom:value)||latestWeek?.from||TODAY;
+    if(isReportRange&&!mockupReportEligibility(mockupReportWeek(initialDate),today).allowed)initialDate=latestWeek.from;
     if(initialDate>max)initialDate=max;
     let [year,month]=initialDate.split('-').map(Number);month--;
-    const popup=document.createElement('div');popup.className='datefield-panel mockup-date-popup'+(isRange?' mockup-date-range':'');popup.setAttribute('role','dialog');popup.setAttribute('aria-label',isRange?'날짜 기간 선택':`${button.getAttribute('aria-label')||'날짜'} 선택`);
+    const popup=document.createElement('div');popup.className='datefield-panel mockup-date-popup'+(isRange?' mockup-date-range':'')+(isReportRange?' mockup-report-weeks':'');popup.setAttribute('role','dialog');popup.setAttribute('aria-label',isReportRange?'리포트 주간 선택':isRange?'날짜 기간 선택':`${button.getAttribute('aria-label')||'날짜'} 선택`);
     const dateKey=(y,m,d)=>`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const allowed=date=>date<=max;
+    const allowed=date=>{
+      if(!isReportRange)return date<=max;
+      const week=mockupReportWeek(date);
+      return mockupReportEligibility(week,currentDate(),reportDays(week)).allowed;
+    };
     const paintRange=(preview='')=>{
       if(!isRange)return;
-      const end=selectingEnd?(preview>=rangeFrom?preview:rangeFrom):rangeTo;
+      let from=rangeFrom,end=selectingEnd?(preview>=rangeFrom?preview:rangeFrom):rangeTo;
+      let unavailable=false;
+      if(isReportRange){
+        const week=mockupReportWeek(preview);
+        const days=reportDays(week),status=mockupReportEligibility(week,currentDate(),days);
+        unavailable=status.reason==='insufficient';
+        from=status.allowed||unavailable?week.from:'';end=status.allowed||unavailable?week.to:'';
+        $('[data-report-week-summary]',popup).textContent=week?`${formatShortDate(week.from)} ~ ${formatShortDate(week.to)}`:'금~목 7일 · 종료 후 1개월 이내';
+        const notice=$('[data-report-week-notice]',popup);
+        notice.textContent=mockupReportNotice(status,days);
+        notice.classList.toggle('is-available',status.allowed);
+      }
       $$('[data-date]',popup).forEach(day=>{
-        const date=day.dataset.date,inRange=!!rangeFrom&&date>=rangeFrom&&date<=(end||rangeFrom);
-        day.classList.toggle('is-in-range',inRange);
-        day.classList.toggle('is-range-start',date===rangeFrom);
-        day.classList.toggle('is-range-end',!!rangeFrom&&date===(end||rangeFrom));
-        day.setAttribute('aria-pressed',String(inRange));
+        const date=day.dataset.date,inRange=!!from&&date>=from&&date<=(end||from);
+        day.classList.toggle('is-in-range',inRange&&!unavailable);
+        day.classList.toggle('is-range-start',date===from&&!unavailable);
+        day.classList.toggle('is-range-end',!!from&&date===(end||from)&&!unavailable);
+        if(isReportRange){
+          day.classList.toggle('is-unavailable-week',inRange&&unavailable);
+          day.classList.toggle('is-unavailable-start',date===from&&unavailable);
+          day.classList.toggle('is-unavailable-end',!!from&&date===end&&unavailable);
+        }
+        day.setAttribute('aria-pressed',String(isReportRange?!day.disabled&&!!rangeFrom&&date>=rangeFrom&&date<=rangeTo:inRange));
       });
     };
     const pick=date=>{
       if(!allowed(date))return;
+      if(isReportRange){const week=mockupReportWeek(date);commitRange(week.from,week.to);return;}
       if(isRange){
         if(!selectingEnd||date<rangeFrom){rangeFrom=date;rangeTo='';selectingEnd=true;draw(date);return;}
         commitRange(rangeFrom,date);return;
@@ -448,10 +541,18 @@ function mockupStopRenewal(sub, cancelledAt) {
       if(route==='/journals/new'){captureDraft();$('[data-draft-status]').textContent='이 브라우저에 임시 저장했어요.';}
     };
     const draw=(focusDate)=>{
-      const days=new Date(year,month+1,0).getDate(),offset=new Date(year,month,1).getDay();
+      const days=new Date(year,month+1,0).getDate(),offset=isReportRange?0:new Date(year,month,1).getDay();
+      const dates=isReportRange?mockupReportCalendarDates(year,month):Array.from({length:days},(_,i)=>dateKey(year,month,i+1));
       const nextFirst=dateKey(new Date(year,month+1,1).getFullYear(),new Date(year,month+1,1).getMonth(),1);
-      const rangeHeader=isRange?`<p class="date-range-prompt" role="status">${selectingEnd?'종료 날짜를 선택해 주세요.':'시작 날짜를 선택해 주세요.'}</p><p class="date-range-summary">${rangeFrom?`${formatDate(rangeFrom)} → ${rangeTo?formatDate(rangeTo):'종료일 선택'}`:'시작일 → 종료일 순서로 선택해 주세요.'}</p>`:'';
-      popup.innerHTML=`${rangeHeader}<div class="datefield-head"><button type="button" aria-label="이전 달">${iconPrev}</button><strong aria-live="polite">${year}년 ${month+1}월</strong><button type="button" aria-label="다음 달" ${nextFirst>max?'disabled':''}>${iconNext}</button></div><div class="datefield-grid" role="group" aria-label="${year}년 ${month+1}월">${[...'일월화수목금토'].map(x=>`<span class="datefield-weekday" aria-hidden="true">${x}</span>`).join('')}${'<span aria-hidden="true"></span>'.repeat(offset)}${Array.from({length:days},(_,i)=>{const date=dateKey(year,month,i+1);return `<button type="button" class="datefield-day${date===value?' is-picked':''}${date===TODAY?' is-today':''}" data-date="${date}" aria-label="${formatDate(date)}" aria-pressed="${date===value}" ${date===TODAY?'aria-current="date"':''} ${allowed(date)?'':'disabled'} tabindex="-1">${i+1}</button>`;}).join('')}</div>${isRange?'<button type="button" class="button tertiary" data-clear-date>날짜 지우기</button>':'<button type="button" class="datefield-today">오늘로</button>'}`;
+      const rangeHeader=isReportRange?'<p class="date-range-prompt" role="status">리포트 주간을 선택해 주세요.</p><p class="date-range-summary" data-report-week-summary></p>':isRange?`<p class="date-range-prompt" role="status">${selectingEnd?'종료 날짜를 선택해 주세요.':'시작 날짜를 선택해 주세요.'}</p><p class="date-range-summary">${rangeFrom?`${formatDate(rangeFrom)} → ${rangeTo?formatDate(rangeTo):'종료일 선택'}`:'시작일 → 종료일 순서로 선택해 주세요.'}</p>`:'';
+      popup.innerHTML=`${rangeHeader}<div class="datefield-head"><button type="button" aria-label="이전 달" ${min&&dateKey(year,month,1)<=min?'disabled':''}>${iconPrev}</button><strong aria-live="polite">${year}년 ${month+1}월</strong><button type="button" aria-label="다음 달" ${nextFirst>max?'disabled':''}>${iconNext}</button></div><div class="datefield-grid" role="group" aria-label="${year}년 ${month+1}월">${[...'일월화수목금토'].map(x=>`<span class="datefield-weekday" aria-hidden="true">${x}</span>`).join('')}${'<span aria-hidden="true"></span>'.repeat(offset)}${dates.map(date=>{
+        const [,dateMonth,dateDay]=date.split('-').map(Number),adjacent=dateMonth!==month+1;
+        const week=isReportRange?mockupReportWeek(date):null;
+        const count=isReportRange?reportDays(week):0;
+        const withinPeriod=isReportRange&&mockupReportEligibility(week,currentDate()).allowed;
+        const reason=isReportRange?mockupReportNotice(mockupReportEligibility(week,currentDate(),count),count).replace('\n',' '):'';
+        return `<button type="button" class="datefield-day${date===value?' is-picked':''}${date===today?' is-today':''}${adjacent?' is-adjacent-month':''}${isReportRange&&dateDay===1&&date!==dates[0]?' is-month-boundary':''}${withinPeriod?' is-report-period':''}" data-date="${date}" aria-label="${formatDate(date)}" ${reason?`aria-description="${reason}"`:''} aria-pressed="${date===value}" ${date===today?'aria-current="date"':''} ${allowed(date)?'':'disabled'} tabindex="-1">${dateDay}</button>`;
+      }).join('')}</div>${isReportRange?'<p class="report-week-notice" data-report-week-notice role="status" aria-live="polite" aria-atomic="true"></p>':isRange?'<button type="button" class="button tertiary" data-clear-date>날짜 지우기</button>':'<button type="button" class="datefield-today">오늘로</button>'}`;
       $('.datefield-head [aria-label="이전 달"]',popup).onclick=()=>{month--;if(month<0){month=11;year--;}draw();};
       $('.datefield-head [aria-label="다음 달"]',popup).onclick=()=>{month++;if(month>11){month=0;year++;}draw();};
       $$('[data-date]',popup).forEach(b=>b.onclick=()=>pick(b.dataset.date));
@@ -462,16 +563,28 @@ function mockupStopRenewal(sub, cancelledAt) {
       if(focus){focus.tabIndex=0;if(popup.isConnected)focus.focus();}
       popupReposition?.();
     };
-    draw();attachPopup(button,popup);$('[data-date][tabindex="0"]',popup)?.focus();
-    popup.addEventListener('pointerover',e=>{const day=e.target.closest('.datefield-day');if(selectingEnd&&day&&!day.disabled)paintRange(day.dataset.date);});
-    popup.addEventListener('pointerleave',()=>{if(selectingEnd)paintRange();});
+    draw();attachPopup(button,popup);($('[data-date][tabindex="0"]',popup)||$('button:not(:disabled)',popup))?.focus();
+    popup.addEventListener(isReportRange?'pointermove':'pointerover',e=>{const day=e.target.closest('.datefield-day');if(isReportRange){if(day)paintRange(day.dataset.date);}else if(selectingEnd&&day&&!day.disabled)paintRange(day.dataset.date);});
+    if(isReportRange)popup.addEventListener('pointerdown',e=>{const day=e.target.closest('.datefield-day');if(day)paintRange(day.dataset.date);});
+    popup.addEventListener('pointerleave',()=>{if(selectingEnd||isReportRange)paintRange();});
     popup.addEventListener('keydown',e=>{
       const current=e.target.dataset.date;
       if(current&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','PageUp','PageDown'].includes(e.key)){
         e.preventDefault();const [y,m,d]=current.split('-').map(Number);const next=new Date(y,m-1,d);
         if(e.key==='PageUp'||e.key==='PageDown'){const step=e.key==='PageUp'?-1:1;next.setDate(1);next.setMonth(next.getMonth()+step);next.setDate(Math.min(d,new Date(next.getFullYear(),next.getMonth()+1,0).getDate()));}
         else next.setDate(d+({ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7,Home:-next.getDay(),End:6-next.getDay()})[e.key]);
-        const key=dateKey(next.getFullYear(),next.getMonth(),next.getDate());if(!allowed(key))return;year=next.getFullYear();month=next.getMonth();draw(key);
+        let key=dateKey(next.getFullYear(),next.getMonth(),next.getDate());
+        if(isReportRange&&(e.key==='PageUp'||e.key==='PageDown'))key=key<min?min:key>max?max:key;
+        if(isReportRange){
+          const step=['ArrowLeft','ArrowUp','Home','PageUp'].includes(e.key)?-1:1;
+          while(key>=min&&key<=max&&!allowed(key)){
+            next.setTime(new Date(`${key}T00:00:00`).getTime());next.setDate(next.getDate()+step);
+            key=dateKey(next.getFullYear(),next.getMonth(),next.getDate());
+          }
+        }
+        if(!allowed(key))return;
+        if(!$(`[data-date="${key}"]`,popup)){const target=new Date(`${key}T00:00:00Z`);year=target.getUTCFullYear();month=target.getUTCMonth();}
+        draw(key);
       }
       if(e.key==='Tab'){const nodes=$$('button:not(:disabled)',popup).filter(b=>b.tabIndex>=0);const i=nodes.indexOf(document.activeElement);if((e.shiftKey&&i===0)||(!e.shiftKey&&i===nodes.length-1)){e.preventDefault();closePopups(true);}}
     });
@@ -609,7 +722,7 @@ function mockupStopRenewal(sub, cancelledAt) {
     if (selected === 'pro') selected = 'team';
     if (!Object.hasOwn(plans, selected)) selected = 'starter';
     const plan = plans[selected];
-    const today = checkoutToday(), amount=mockupCheckoutPrice(selected), nextBillingOn=mockupBillingDate(today,1);
+    const today = currentDate(), amount=mockupCheckoutPrice(selected), nextBillingOn=mockupBillingDate(today,1);
     const modal = editorDialog('checkout-dialog','checkout-dialog',`${plan.name} 요금제`,`
       <form id="checkout-form" class="checkout-body" novalidate>
         <section class="checkout-summary" aria-labelledby="checkout-amount-title">
@@ -637,7 +750,7 @@ function mockupStopRenewal(sub, cancelledAt) {
     form.addEventListener('submit',async event=>{
       event.preventDefault();
       if (submitting || state.subscription) return;
-      if (today!==checkoutToday()) { openPlanCheckout(selected); toast('결제일이 바뀌었어요. 결제 내용을 다시 확인해 주세요.'); return; }
+      if (today!==currentDate()) { openPlanCheckout(selected); toast('결제일이 바뀌었어요. 결제 내용을 다시 확인해 주세요.'); return; }
       const subscription=mockupCheckoutSubscription(selected,today,consent(),new Date().toISOString());
       if (!subscription) return;
       submitting = true;
@@ -653,7 +766,7 @@ function mockupStopRenewal(sub, cancelledAt) {
   }
   function subscriptionDetails() {
     const sub=state.subscription, cycle=checkoutCycles[sub.cycle];
-    const period=mockupSubscriptionPeriod(sub,checkoutToday());
+    const period=mockupSubscriptionPeriod(sub,currentDate());
     return `<dl class="subscription-details">
       <div><dt>결제 금액</dt><dd>${won(sub.amount)}<small>부가가치세 포함</small></dd></div>
       <div><dt>결제일</dt><dd>${mockupBillingDate(sub.paidOn)}</dd></div>
@@ -671,7 +784,7 @@ function mockupStopRenewal(sub, cancelledAt) {
   function cancelSubscriptionRenewal() {
     const sub=state.subscription;
     if (!sub || sub.autoRenew===false) return;
-    const period=mockupSubscriptionPeriod(sub,checkoutToday());
+    const period=mockupSubscriptionPeriod(sub,currentDate());
     dialog('자동갱신을 해지할까요?',`<p><strong>${sub.nextBillingOn}부터 결제되지 않아요.</strong></p><p>${period.end}까지 ${checkoutPlans[sub.plan].name} 기능을 이용할 수 있어요.${sub.plan==='team'?' 이후 결제자와 팀원 모두 무료 요금제로 전환돼요.':''}</p><p>이미 결제한 금액의 환불은 별도로 요청해 주세요.</p>`,'자동갱신 해지',async()=>{
       if (state.subscription!==sub || sub.autoRenew===false) return;
       state.subscription=mockupStopRenewal(sub,new Date().toISOString());
@@ -684,7 +797,7 @@ function mockupStopRenewal(sub, cancelledAt) {
     const sub=state.subscription;
     if (!sub) return;
     const plan=checkoutPlans[sub.plan], cycle=checkoutCycles[sub.cycle];
-    const period=mockupSubscriptionPeriod(sub,checkoutToday());
+    const period=mockupSubscriptionPeriod(sub,currentDate());
     const audience=$('.pricing-audience'), grid=$('.pricing-grid');
     const comparison=document.createElement('details');
     comparison.className='subscription-comparison';
@@ -719,7 +832,7 @@ function mockupStopRenewal(sub, cancelledAt) {
     const modal=editorDialog('checkout-dialog','checkout-dialog',completed?'결제가 완료됐어요':'결제 내역',`<div class="checkout-body">
       <div class="payment-result-heading">${completed?'<span class="payment-success-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4 10-10"/></svg></span>':''}<div><h3>${plan.name} · ${cycle.name}</h3><p>${!completed?'결제한 요금제 내역이에요.':sub.plan==='team'?'이제 함께 이용할 멤버를 초대해 보세요.':'이제 플러스 기능을 이용할 수 있어요.'}</p></div></div>
       ${subscriptionDetails()}
-      <div class="payment-result-actions"><button type="button" class="button secondary" data-action="close-modal" data-modal="checkout-dialog">요금제 보기</button><button type="button" class="button primary" data-action="${sub.plan==='team'&&!mockupSubscriptionPeriod(sub,checkoutToday()).ended?(completed?'team-invite':'team-members'):'payment-start'}">${sub.plan==='team'&&!mockupSubscriptionPeriod(sub,checkoutToday()).ended?(completed?'멤버 초대하기':'팀 멤버 보기'):'일지 작성하기'}</button></div>
+      <div class="payment-result-actions"><button type="button" class="button secondary" data-action="close-modal" data-modal="checkout-dialog">요금제 보기</button><button type="button" class="button primary" data-action="${sub.plan==='team'&&!mockupSubscriptionPeriod(sub,currentDate()).ended?(completed?'team-invite':'team-members'):'payment-start'}">${sub.plan==='team'&&!mockupSubscriptionPeriod(sub,currentDate()).ended?(completed?'멤버 초대하기':'팀 멤버 보기'):'일지 작성하기'}</button></div>
       <p class="checkout-preview-note">목업 예시로 실제 결제는 진행되지 않았어요.</p>
       <button type="button" class="button tertiary payment-back" data-action="payment-back">결제 전으로 돌아가기</button>
     </div>`);
@@ -729,7 +842,7 @@ function mockupStopRenewal(sub, cancelledAt) {
   }
   function openTeamInvite() {
     const sub=state.subscription;
-    if (sub?.plan!=='team' || mockupSubscriptionPeriod(sub,checkoutToday()).ended) return;
+    if (sub?.plan!=='team' || mockupSubscriptionPeriod(sub,currentDate()).ended) return;
     $('#checkout-dialog')?.close();
     if (sub.invites.length>=2) { toast('초대할 수 있는 자리가 없어요.'); return; }
     const modal=editorDialog('team-invite-dialog','checkout-dialog','팀 멤버 초대',`<form id="team-invite-form" class="checkout-body" novalidate>
@@ -881,8 +994,9 @@ function mockupStopRenewal(sub, cancelledAt) {
     else if(action==='restore-trash'){const i=Number(button.dataset.index);dialog('기록을 복원할까요?','<p>복원한 기록은 기록 목록에서 다시 볼 수 있어요.</p>','복원',async()=>{const item=state.trash[i];if(item.type==='report')state.reportRemoved[item.recipient]=false;state.trash.splice(i,1);if(!await persist())return;renderRecords();});}
     else if(action==='delete-trash'){const i=Number(button.dataset.index);dialog('기록을 완전히 삭제할까요?','<p>완전히 삭제한 기록은 복원할 수 없어요.</p>','완전삭제',async()=>{state.trash.splice(i,1);if(!await persist())return;renderRecords();},true);}
     else if(action==='generate-report'){
-      if(reportDays()<3)return true;
+      if(!mockupReportEligibility(reportRange,currentDate(),reportDays()).allowed){updateReportPeriod();return true;}
       dialog('리포트를 생성할까요?',`<p>${escapeHTML(state.recipients[recipient].name)} · ${formatDate(reportRange.from)} ~ ${formatDate(reportRange.to)} · 기록 ${reportDays()}일 / 기준 3일.</p><p>관찰 기준: ${escapeHTML(currentScoring().title)}</p><p class="mockup-preview-note">이 목업에서는 생성 흐름만 확인할 수 있어요. 실제 AI 생성은 연결되지 않았어요.</p>`,'생성',async()=>{
+        if(!mockupReportEligibility(reportRange,currentDate(),reportDays()).allowed){updateReportPeriod();toast('생성 가능한 주간과 기록 일수를 다시 확인해 주세요.');return;}
         if(isSampleReportPeriod()){
           state.reportRemoved||={};state.reportRemoved[recipient]=false;state.trash=state.trash.filter(x=>x.type!=='report'||x.recipient!==recipient);if(!await persist())return;render();
           toast('저장된 리포트 예시를 표시했어요.');

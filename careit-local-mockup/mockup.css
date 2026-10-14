@@ -297,6 +297,22 @@ body.mockup-editing [contenteditable=true]:focus { outline:2px solid #05a66b; ba
 .mockup-date-range .datefield-day.is-range-end { border-radius:0 var(--radius-control) var(--radius-control) 0; }
 .mockup-date-range .datefield-day.is-range-start.is-range-end { border-radius:var(--radius-control); }
 .mockup-date-range .datefield-day:hover { transform:none; }
+.mockup-report-weeks .datefield-day { padding-inline:0; white-space:nowrap; }
+.mockup-report-weeks .datefield-day.is-month-boundary { position:relative; }
+.mockup-report-weeks .datefield-day.is-month-boundary::before { content:""; position:absolute; left:0; top:25%; height:50%; border-left:1px solid var(--line); pointer-events:none; }
+.mockup-report-weeks .datefield-day:not(:disabled) { color:var(--text); }
+.mockup-report-weeks .datefield-day:disabled { color:var(--muted); opacity:.55; background:transparent; }
+.mockup-report-weeks .datefield-day.is-report-period { color:var(--text); opacity:1; }
+.mockup-report-weeks .datefield-day.is-in-range { background:var(--mint-soft); color:var(--text); }
+.mockup-report-weeks .datefield-day.is-range-start,
+.mockup-report-weeks .datefield-day.is-range-end { background:var(--primary-action); color:#fff; }
+.mockup-report-weeks .datefield-day.is-unavailable-week { background:var(--neutral); color:var(--text); border-radius:0; opacity:1; }
+.mockup-report-weeks .datefield-day.is-unavailable-start,
+.mockup-report-weeks .datefield-day.is-unavailable-end { background:var(--muted); color:#fff; }
+.mockup-report-weeks .datefield-day.is-unavailable-start { border-radius:var(--radius-control) 0 0 var(--radius-control); }
+.mockup-report-weeks .datefield-day.is-unavailable-end { border-radius:0 var(--radius-control) var(--radius-control) 0; }
+.report-week-notice { box-sizing:border-box; min-height:56px; margin:0; padding:8px 12px; border-radius:var(--radius-control); background:var(--neutral); color:var(--muted); font-size:14px; line-height:20px; white-space:pre-line; }
+.report-week-notice.is-available { background:var(--mint-soft); color:var(--primary-dark); }
 .dropdown-trigger>span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .report-recipient-info .dropdown { min-width:180px; }
 body:has(dialog[open]) { overflow:hidden; }
