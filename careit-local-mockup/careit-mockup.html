@@ -3732,7 +3732,8 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       button.disabled=true;
       button.setAttribute('aria-description','현재 선택한 관리대상에는 리포트를 생성할 수 있는 기간이 없어요.');
       $('.report-recipient-change button').disabled=true;
-      if(chosen)showStoredReport(chosen);else $('.stored-reports')?.remove();
+      if(chosen)showStoredReport(chosen);
+      else $('.reports-layout').innerHTML='<section class="empty-state"><h2>선택할 수 있는 리포트 기간이 없어요</h2><p>주간 일지가 3일 이상이면 종료 후 한 달 이내에 생성할 수 있어요.</p></section>';
       return;
     }
     $('.report-recipient-change').hidden=!!chosen;
