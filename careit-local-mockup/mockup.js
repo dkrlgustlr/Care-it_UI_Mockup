@@ -198,6 +198,24 @@ function mockupRecentJournalHash(text) {
 function mockupProfileInitial(name) {
   return (Array.from(String(name||'').trim())[0]||'?').toLocaleUpperCase('ko-KR');
 }
+async function mockupPasswordHash(password, salt) {
+  const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);
+  const bits=await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:new TextEncoder().encode(salt),iterations:100000},key,256);
+  return Array.from(new Uint8Array(bits),byte=>byte.toString(16).padStart(2,'0')).join('');
+}
+const MOCKUP_PROFILE_AVATARS = [
+  'assets/profile-avatars/avatar-01.png', 'assets/profile-avatars/avatar-02.png',
+  'assets/profile-avatars/avatar-03.png', 'assets/profile-avatars/avatar-04.png',
+  'assets/profile-avatars/avatar-05.png', 'assets/profile-avatars/avatar-06.png',
+  'assets/profile-avatars/avatar-07.png', 'assets/profile-avatars/avatar-08.png',
+  'assets/profile-avatars/avatar-09.png', 'assets/profile-avatars/avatar-10.png',
+  'assets/profile-avatars/avatar-11.png', 'assets/profile-avatars/avatar-12.png'
+];
+function mockupAssignProfileAvatar(profile, random = Math.random) {
+  if (Number.isInteger(profile.avatarIndex) && profile.avatarIndex >= 0 && profile.avatarIndex < MOCKUP_PROFILE_AVATARS.length) return false;
+  profile.avatarIndex = Math.floor(random() * MOCKUP_PROFILE_AVATARS.length);
+  return true;
+}
 function mockupHomeJournalStatus(state, index, today, checks) {
   const done=(state.savedJournals||[]).some(row=>row.recipient===index&&row.date===today&&!(state.deletedJournalKeys||[]).includes(JSON.stringify([index,row.date,row.text])));
   const draft=Object.entries(state.drafts?.[index]||{}).some(([id,value])=>{
@@ -245,6 +263,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     {name:'일지 템플릿 5',quickChecks:12}
   ];
   state.profile ||= {name:'합성 QA c9b8b579',email:'qa1@careit.kr'};
+  const profileAvatarAssigned = mockupAssignProfileAvatar(state.profile);
   state.marketingConsent ||= false;
   state.aiConsent ??= true;
   if ((!state.subscription && !state.planDemoFree) || (state.subscription && !['starter','team'].includes(state.subscription.plan))) state.subscription={plan:'team',cycle:'monthly',amount:39900,paidOn:'2026-10-29',nextBillingOn:'2026.11.29',autoRenew:true,invites:[],source:'live'};
@@ -369,7 +388,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   const reportRange = mockupReportWeek(currentDate(),-1);
   let editingRecipient = null, recipientFormSnapshot='', recipientFormReplaceConfirmed=false, editing = false, toastTimer, activePopupTrigger, footerBusinessOpen = false;
   const persist = () => store.save(JSON.stringify(state));
-  if (ageBandsChanged || addedHomeSample) persist();
+  if (ageBandsChanged || addedHomeSample || profileAvatarAssigned) persist();
   function toast(message,allowBlocked=false) { if(store.blocked&&!allowBlocked)return;clearTimeout(toastTimer); const el = $('#mockup-toast'); el.textContent = message; el.hidden = false; toastTimer = setTimeout(() => el.hidden = true, 3200); }
   function showStorageBlock(reason) {
     closePopups();clearTimeout(toastTimer);$('#mockup-toast').hidden=true;
@@ -421,11 +440,35 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     $('#mockup-edit-mode').checked = editing; registerEdits();
   }
   function routeTo(hash) { if (location.hash === hash) render(); else location.hash = hash; }
+  function syncProfileAvatar(avatar) {
+    if (!avatar) return;
+    const img=document.createElement('img');
+    img.alt=''; img.src=MOCKUP_PROFILE_AVATARS[state.profile.avatarIndex];
+    img.addEventListener('error',()=>{avatar.textContent=mockupProfileInitial(state.profile.name);},{once:true});
+    avatar.replaceChildren(img);
+  }
   function syncSidebarProfile() {
     const link=$('.sidebar .account-summary'),name=state.profile.name||'';
     $('strong',link).textContent=name;
-    $('.avatar',link).textContent=mockupProfileInitial(name);
+    syncProfileAvatar($('.avatar',link));
     link.setAttribute('aria-label',`계정 설정, ${name}`);
+  }
+  function restoreAccountName(row) {
+    if (!row?.isConnected) return;
+    row.classList.remove('is-editing');
+    $('.account-value',row).innerHTML=`<span data-account-name>${escapeHTML(state.profile.name)}</span> <button class="button tertiary" type="button" data-action="edit-account-name">수정</button>`;
+  }
+  async function saveAccountName(input) {
+    if (input.dataset.cancelled || input.dataset.saving) return;
+    input.dataset.saving='true';
+    const row=input.closest('.account-profile-row'),name=input.value.trim(),previous=state.profile.name;
+    if (!name) { restoreAccountName(row); toast('이름을 입력해 주세요.'); return; }
+    if (name!==previous) {
+      state.profile.name=name;
+      if (!await persist()) { state.profile.name=previous; restoreAccountName(row); return; }
+      syncSidebarProfile();
+    }
+    restoreAccountName(row);
   }
   function syncSidebarTheme() {
     const dark=state.sidebarTheme==='dark',button=$('.sidebar-tools [data-action="theme"]');
@@ -450,7 +493,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       else {const chosen=mockupJournalRecipient(state,requested);if(chosen<0){routeTo('#/recipients');toast('일지를 작성하려면 활성 관리대상이 필요해요.');return;}if(chosen!==requested||!params.has('recipient')){params.set('recipient',String(chosen));history.replaceState(null,'','#'+route+'?'+params);}}
     }
     if(route==='/records'&&!params.has('recipient'))params.set('recipient','all');
-    const pageTitles={'/':'홈','/guide':'케어릿 이용 방법','/journals/new':'일지 작성','/reports':'리포트','/records':'기록','/recipients':'대상·템플릿','/plans':'요금제','/settings':'설정','/settings/configuration':'일지 편집','/recipients/scoring':'리포트 템플릿 편집','/notifications':'알림','/notices':'공지사항','/coupons':'쿠폰함','/invite':'친구 초대'};document.title=pageTitles[route]?`${pageTitles[route]} · 케어릿`:'케어릿';
+    const pageTitles={'/':'홈','/guide':'케어릿 이용 방법','/journals/new':'일지 작성','/reports':'리포트','/records':'기록','/recipients':'대상·템플릿','/plans':'요금제','/settings':'설정','/settings/licenses':'오픈소스 라이선스','/privacy':'개인정보처리방침','/terms':'이용약관','/settings/configuration':'일지 편집','/recipients/scoring':'리포트 템플릿 편집','/notifications':'알림','/notices':'공지사항','/coupons':'쿠폰함','/invite':'친구 초대'};document.title=pageTitles[route]?`${pageTitles[route]} · 케어릿`:'케어릿';
     const allRecords=route==='/records'&&params.get('recipient')==='all';
     recipient = allRecords?0:Math.max(0, Math.min(state.recipients.length - 1, Number(params.get('recipient') || 0)));
     const template = $$('template[data-path]').find(x => x.dataset.path === route);
@@ -1254,8 +1297,6 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(quickClear){const field=quickClear.closest('.quick-check-field')||$('.quick-check-field',quickClear.closest('.configuration-card,.quick-check-type-card'));if(!field)return;const time=$('.timefield',field);if(time){$$('input',time).forEach(input=>{input.value='';input.removeAttribute('aria-invalid');});updateTimeField(time);$('.timefield-error',time).hidden=true;$('input[type="hidden"]',time).dispatchEvent(new Event('change',{bubbles:true}));return;}$$('input',field).forEach(input=>{if(input.type==='range')input.value=input.min;else if(input.type==='radio'||input.type==='checkbox')input.checked=false;else input.value='';input.removeAttribute('aria-invalid');input.dispatchEvent(new Event('change',{bubbles:true}));});const durationError=$('.quick-check-duration-error',field);if(durationError)durationError.hidden=true;$('.quick-check-slider',field)?.classList.remove('is-selected');$$('.quick-check-slider-ticks button',field).forEach(b=>b.setAttribute('aria-pressed','false'));return;}
     const tick=e.target.closest('.quick-check-slider-ticks button');
     if(tick){const slider=tick.closest('.quick-check-slider'),input=$('input[type="range"]',slider),selected=$('input[type="hidden"]',slider);slider.classList.add('is-selected');selected.value='true';input.value=tick.textContent.trim();$$('.quick-check-slider-ticks button',slider).forEach(b=>b.setAttribute('aria-pressed',String(b===tick)));input.dispatchEvent(new Event('change',{bubbles:true}));return;}
-    const policy=e.target.closest('a[href="#/privacy"],a[href="#/terms"]');
-    if(policy){e.preventDefault();dialog(policy.textContent,'<p>법적 문서 본문은 이번 UI 목업에 포함하지 않았습니다. 실제 서비스의 최신 문서를 확인해 주세요.</p>');return;}
     const navigation=e.target.closest('a[href^="#/"]');
     if(navigation&&configurationDirty()){e.preventDefault();const href=navigation.getAttribute('href');confirmConfigurationNavigation(()=>routeTo(href));return;}
     if(navigation&&scorePageDirty()){e.preventDefault();const href=navigation.getAttribute('href');confirmScoreNavigation(()=>routeTo(href));return;}
@@ -1296,8 +1337,8 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     else if(action==='edit-recipient-card'){openRecipientForm(Number(button.dataset.index));}
     else if(action==='journal-template-edit'){routeTo(`#/settings/configuration?recipient=${recipient}&template=${Number(button.dataset.index)+1}`);}
     else if(action==='report-template-edit'){openScoring(true,Number(button.dataset.index));}
-    else if(action==='edit-account-name'){const row=button.closest('.account-profile-row'),value=$('.account-value',row);row.classList.add('is-editing');value.innerHTML=`<form class="account-name-form" id="account-name-form"><div class="field"><span class="field-heading"><label for="account-name">이름 수정</label><small class="field-limit" id="account-name-limit">${state.profile.name.length}/100자</small></span><input id="account-name" maxlength="100" autocomplete="name" aria-invalid="false" value="${escapeHTML(state.profile.name)}"></div><div class="dialog-actions"><button class="button secondary" type="button" data-action="cancel-account-name">취소</button><button class="button primary">저장</button></div></form>`;$('#account-name').focus();}
-    else if(action==='cancel-account-name'){const row=button.closest('.account-profile-row');row.classList.remove('is-editing');$('.account-value',row).innerHTML=`<span data-account-name>${escapeHTML(state.profile.name)}</span> <button class="button tertiary" type="button" data-action="edit-account-name">수정</button>`;}
+    else if(action==='edit-account-name'){const row=button.closest('.account-profile-row'),value=$('.account-value',row);row.classList.add('is-editing');value.innerHTML=`<input id="account-name" aria-label="이름" maxlength="100" autocomplete="name" value="${escapeHTML(state.profile.name)}"><button class="button secondary" type="button" data-action="cancel-account-name">취소</button>`;const input=$('#account-name',row);input.focus();input.setSelectionRange(input.value.length,input.value.length);}
+    else if(action==='cancel-account-name'){const row=button.closest('.account-profile-row'),input=$('#account-name',row);if(input)input.dataset.cancelled='true';restoreAccountName(row);}
     else if(action==='copy-account-invite'){
       const input=$('#account-invite-url');let copied=false;
       try {if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(input.value);copied=true;}}catch{}
@@ -1320,8 +1361,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(e.target.id==='quick-edit-form'){saveQuick();return;}
     if(e.target.id==='score-edit-form'){saveScoring();return;}
     if(e.target.id==='configuration-form'){saveConfiguration();return;}
-    if(e.target.id==='account-name-form'){const input=$('#account-name'),name=input.value.trim();if(!name){input.setAttribute('aria-invalid','true');input.focus();return;}state.profile.name=name;if(await persist()){const row=input.closest('.account-profile-row');row.classList.remove('is-editing');$('.account-value',row).innerHTML=`<span data-account-name>${escapeHTML(name)}</span> <button class="button tertiary" type="button" data-action="edit-account-name">수정</button>`;prepareSettings();}return;}
-    if(e.target.id==='mock-password-form'){const inputs=$$('input',e.target),message=$('[data-password-message]',e.target);message.hidden=false;message.textContent=!inputs[0].value?'현재 비밀번호를 입력해 주세요.':!/^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/.test(inputs[1].value)?'8자 이상, 영문·숫자·특수문자를 포함해 주세요':inputs[1].value!==inputs[2].value?'새 비밀번호가 일치하지 않아요.':'목업에서는 비밀번호가 변경되지 않아요.';return;}
+    if(e.target.id==='mock-password-form'){await changeMockPassword(e.target);return;}
     if(e.target.id==='configuration-template-name'){const index=Math.max(0,Number(params.get('template')||1)-1),name=$('#template-name').value.trim();if(!name)return;state.journalTemplates[index].name=name;if(await persist()){ $('button[type=submit]',e.target).disabled=true;$('[data-options="configuration-templates"] span').textContent=name;toast('템플릿 이름을 저장했어요.');}return;}
     if(e.target.id!=='recipient-form')return;
     if(editingRecipient===null&&!recipientHasCapacity()){showRecipientLimit();return;}
@@ -1338,13 +1378,17 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(!await persist()){if(previous){state.recipients[index]=previous.recipient;for(const [key,value] of [['quickChecks',previous.quick],['configuration',previous.configuration],['scoring',previous.scoring],['reportTemplates',previous.report]]){if(value===undefined)delete state[key][index];else state[key][index]=value;}}else{state.recipients.pop();delete state.reportTemplates[index];}return;}$('.recipient-form-dialog').close();renderRecipients();toast('관리대상을 저장했어요.');
   });
   const timeInputValues=new WeakMap();
+  document.addEventListener('focusout',e=>{if(e.target.id==='account-name'){if(e.relatedTarget?.matches('[data-action="cancel-account-name"]'))return;saveAccountName(e.target);}else if(e.target.matches('[data-action="cancel-account-name"]')){const row=e.target.closest('.account-profile-row');if(row&&!row.contains(e.relatedTarget)){const input=$('#account-name',row);if(input)saveAccountName(input);}}});
+  document.addEventListener('keydown',e=>{if(e.target.id!=='account-name'||e.isComposing)return;if(e.key==='Enter'){e.preventDefault();e.target.blur();}else if(e.key==='Escape'){e.preventDefault();e.target.dataset.cancelled='true';restoreAccountName(e.target.closest('.account-profile-row'));}});
   document.addEventListener('keydown',e=>{if(e.key==='Tab')document.documentElement.dataset.inputModality='keyboard';},true);
   document.addEventListener('pointerdown',()=>{document.documentElement.dataset.inputModality='pointer';},true);
+  document.addEventListener('pointerdown',e=>{if(e.target.closest('[data-action="cancel-account-name"]'))e.preventDefault();},true);
   const allowedTimeInput=input=>input.value===''?!input.validity.badInput:/^\d{1,2}$/.test(input.value)&&Number(input.value)<=Number(input.max);
   document.addEventListener('focusin',e=>{if(e.target.matches('.timefield input[type="number"]'))timeInputValues.set(e.target,allowedTimeInput(e.target)?e.target.value:'');});
   document.addEventListener('beforeinput',e=>{if(e.target.matches('.timefield input[type="number"]')&&e.inputType==='insertText'&&e.data&&!/^\d+$/.test(e.data))e.preventDefault();});
   document.addEventListener('input',async e=>{
     const el=e.target;
+    if(el.closest('#mock-password-form')){el.removeAttribute('aria-invalid');const message=$('[data-password-message]',el.form);message.hidden=true;message.textContent='';}
     if(el.matches('.timefield input[type="number"]')){if(!allowedTimeInput(el))el.value=timeInputValues.get(el)??'';else timeInputValues.set(el,el.value);syncTimeInput(el.closest('.timefield'));}
     if(el.matches('.quick-check-duration input[type="number"]')){el.removeAttribute('aria-invalid');const duration=el.closest('.quick-check-duration');if($$('input',duration).every(input=>input.checkValidity()))$('.quick-check-duration-error',duration).hidden=true;}
     if(el.id==='quick-min'||el.id==='quick-max'){const error=$('#quick-scale-error');if(error)error.hidden=true;$('#quick-min')?.removeAttribute('aria-invalid');$('#quick-max')?.removeAttribute('aria-invalid');}
@@ -1819,7 +1863,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     syncSidebarProfile();
     const plan=$('[data-account-plan]'),activePlan=mockupActivePlan(state,currentDate());if(plan)plan.textContent=activePlan?checkoutPlans[activePlan].name:'무료';
     const marketing=$('[data-action="marketing-consent"]');
-    if(marketing){marketing.textContent=state.marketingConsent?'철회하기':'동의하기';marketing.setAttribute('aria-label',`마케팅 정보 수신 ${marketing.textContent}`);$('[data-marketing-status]').textContent=state.marketingConsent?'수신 동의함':'수신 동의하지 않음';}
+    if(marketing){marketing.textContent=state.marketingConsent?'철회하기':'동의하기';marketing.dataset.consentState=state.marketingConsent?'agreed':'not-agreed';marketing.setAttribute('aria-label',`마케팅 정보 수신 ${marketing.textContent}`);$('[data-marketing-status]').textContent=state.marketingConsent?'수신 동의함':'수신 동의하지 않음';}
     $$('.session-list li[data-session-id]').forEach(item=>{if((state.mockRemovedSessionIds||[]).includes(item.dataset.sessionId))item.remove();});
     const sessionCount=$('[data-session-count]');if(sessionCount)sessionCount.textContent=`${$$('.session-list li').length}개`;
     const logoutOthers=$('.session-details > [data-action="account-preview"]');if(logoutOthers)logoutOthers.disabled=!$$('.session-list li:not(:has(.session-badge))').length;
@@ -1827,15 +1871,40 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(list)list.innerHTML=state.recipients.map((r,i)=>!r.active&&!r.deleted?`<li><strong>${escapeHTML(r.name)}</strong><div class="inactive-recipient-actions"><button type="button" class="button primary" data-action="reactivate" data-index="${i}">활성화</button><button type="button" class="button danger-soft" data-action="account-preview" data-index="${i}">완전삭제</button></div></li>`:'').join('')||'<li>비활성화된 관리대상이 없어요.</li>';
     const consent=$('[data-action="ai-consent"]');
     if(consent){
-      consent.textContent=state.aiConsent?'철회하기':'동의하기';consent.className=state.aiConsent?'button danger':'button tertiary';consent.setAttribute('aria-label',`AI 기능 ${consent.textContent}`);
+      consent.textContent=state.aiConsent?'철회하기':'동의하기';consent.dataset.consentState=state.aiConsent?'agreed':'not-agreed';consent.className=state.aiConsent?'button danger':'button tertiary';consent.setAttribute('aria-label',`AI 기능 ${consent.textContent}`);
       $('[data-ai-consent-status]').textContent=state.aiConsent?'동의함':'동의하지 않음';
       const details=$('[data-ai-consent-details]');
       details.innerHTML=state.aiConsent?'<div><dt>동의 상태</dt><dd>동의함</dd></div><div><dt>동의한 시각</dt><dd>11월 1일 오후 2:18</dd></div><div><dt>안내 문구 버전</dt><dd>2026-10-13-ai-consent-3</dd></div>':'<div><dt>동의 상태</dt><dd>동의하지 않음</dd></div>';
     }
   }
-  function openPasswordDialog(){let el=$('#mock-password-dialog');if(!el){el=document.createElement('dialog');el.id='mock-password-dialog';document.body.append(el);}el.className='confirm-dialog account-password-dialog';el.setAttribute('aria-labelledby','change-password-title');el.setAttribute('aria-describedby','change-password-notice');el.innerHTML=`<h2 id="change-password-title">비밀번호 변경</h2><p id="change-password-notice">바꾸면 다른 기기에서는 모두 로그아웃돼요. 이 기기는 그대로예요.</p><form id="mock-password-form" novalidate>${['현재 비밀번호','새 비밀번호','새 비밀번호 확인'].map((label,i)=>`<div class="field"><label for="change-password-${i}">${label}</label><div class="password-field"><input id="change-password-${i}" data-label="${label}" autocomplete="${i?'new-password':'current-password'}" type="password"><button type="button" data-action="password-toggle" aria-controls="change-password-${i}" aria-label="${label} 보기">보기</button></div></div>`).join('')}<p class="field-help">8자 이상, 영문·숫자·특수문자를 포함해 주세요</p><p class="field-help" data-password-message hidden></p><div class="dialog-actions"><button class="button secondary" type="button" data-action="close-modal" data-modal="mock-password-dialog">취소</button><button class="button primary">비밀번호 바꾸기</button></div></form>`;el.showModal();}
+  function openPasswordDialog(){let el=$('#mock-password-dialog');if(!el){el=document.createElement('dialog');el.id='mock-password-dialog';el.addEventListener('cancel',event=>{if($('#mock-password-form',el)?.dataset.saving)event.preventDefault();});document.body.append(el);}el.className='confirm-dialog account-password-dialog';el.setAttribute('aria-labelledby','change-password-title');el.setAttribute('aria-describedby','change-password-notice');el.innerHTML=`<h2 id="change-password-title">비밀번호 변경</h2><p id="change-password-notice">바꾸면 다른 기기에서는 모두 로그아웃돼요. 이 기기는 그대로예요.</p><form id="mock-password-form" novalidate>${['현재 비밀번호','새 비밀번호','새 비밀번호 확인'].map((label,i)=>`<div class="field"><label for="change-password-${i}">${label}</label><div class="password-field"><input id="change-password-${i}" data-label="${label}" autocomplete="${i?'new-password':'current-password'}" type="password" aria-describedby="password-guidance password-error"><button type="button" data-action="password-toggle" aria-controls="change-password-${i}" aria-label="${label} 보기">보기</button></div></div>`).join('')}<p class="field-help" id="password-guidance">8자 이상, 영문·숫자·특수문자를 포함해 주세요</p><p class="field-help password-error" id="password-error" role="alert" data-password-message hidden></p><div class="dialog-actions"><button class="button secondary" type="button" data-action="close-modal" data-modal="mock-password-dialog">취소</button><button class="button primary">비밀번호 바꾸기</button></div></form>`;el.showModal();}
+  async function changeMockPassword(form){
+    if(form.dataset.saving)return;
+    const inputs=$$('input',form),[current,next,confirmation]=inputs.map(input=>input.value),message=$('[data-password-message]',form),submit=$('button.primary',form),cancel=$('[data-action="close-modal"]',form);
+    const fail=(index,text)=>{inputs.forEach(input=>input.removeAttribute('aria-invalid'));if(index!==null){inputs[index].setAttribute('aria-invalid','true');inputs[index].focus();}message.textContent=text;message.hidden=false;};
+    if(!current)return fail(0,'현재 비밀번호를 입력해 주세요.');
+    if(!/^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d\s]).{8,}$/.test(next))return fail(1,'새 비밀번호는 8자 이상, 영문·숫자·특수문자를 포함해 주세요.');
+    if(!confirmation)return fail(2,'새 비밀번호를 한 번 더 입력해 주세요.');
+    if(next!==confirmation)return fail(2,'새 비밀번호가 일치하지 않아요.');
+    if(next===current)return fail(1,'현재 비밀번호와 다른 비밀번호를 입력해 주세요.');
+    if(!globalThis.crypto?.subtle)return fail(null,'이 브라우저에서는 비밀번호 변경을 사용할 수 없어요.');
+    form.dataset.saving='true';submit.disabled=true;cancel.disabled=true;
+    try{
+      const valid=state.mockPassword ? await mockupPasswordHash(current,state.mockPassword.salt)===state.mockPassword.hash : current==='Careit123!';
+      if(!valid){fail(0,'현재 비밀번호가 일치하지 않아요.');return;}
+      const salt=Array.from(crypto.getRandomValues(new Uint8Array(16)),byte=>byte.toString(16).padStart(2,'0')).join('');
+      const previousPassword=state.mockPassword,previousSessions=state.mockRemovedSessionIds;
+      state.mockPassword={salt,hash:await mockupPasswordHash(next,salt)};
+      const otherSessions=$$('.session-list li[data-session-id]').filter(item=>!$('.session-badge',item)).map(item=>item.dataset.sessionId);
+      state.mockRemovedSessionIds=[...new Set([...(previousSessions||[]),...otherSessions])];
+      if(!await persist()){state.mockPassword=previousPassword;state.mockRemovedSessionIds=previousSessions;return;}
+      form.reset();$('#mock-password-dialog').close();prepareSettings();toast('비밀번호를 변경했어요.');
+    }catch{fail(null,'비밀번호를 변경하지 못했어요. 다시 시도해 주세요.');}
+    finally{delete form.dataset.saving;submit.disabled=false;cancel.disabled=false;}
+  }
   function openConsent(){
-    const modal=editorDialog('consent-dialog','confirm-dialog consent-dialog','AI 기능을 쓰기 전에 알려드려요',`<p>일지 내용을 AI 서비스로 보내 문장을 다듬고, 한 주의 기록을 채점·요약한 리포트를 만들어요. 동의하지 않아도 일지를 직접 쓰고 저장할 수 있어요.</p><fieldset class="consent-items"><legend>내용을 확인하고 선택해 주세요</legend><div class="consent-item"><input type="checkbox" id="consent-data"><div><label for="consent-data">AI 처리를 위한 일지 내용 전송에 동의해요</label><p>작성한 메모와 기록 내용이 구글의 AI 서비스로 전송되어 처리돼요.</p></div></div><div class="consent-item"><input type="checkbox" id="consent-check"><div><label for="consent-check">AI 결과를 확인한 뒤 사용해요</label><p>AI 결과는 틀릴 수 있어요. 저장하기 전에 내용을 확인해 주세요.</p></div></div></fieldset><div class="dialog-actions"><button type="button" class="button secondary" data-action="close-modal" data-modal="consent-dialog">직접 쓸게요</button><button type="button" class="button primary" data-action="accept-consent" disabled>동의하고 켜기</button></div>`);
+    const terms=$('#page-settings').content.querySelectorAll('.settings-consent-terms')[1].outerHTML;
+    const modal=editorDialog('consent-dialog','confirm-dialog consent-dialog','AI 기능을 쓰기 전에 알려드려요',`<p>일지 내용을 AI 서비스로 보내 문장을 다듬고, 한 주의 기록을 채점·요약한 리포트를 만들어요. 동의하지 않아도 일지를 직접 쓰고 저장할 수 있어요.</p><details class="consent-terms-toggle"><summary>동의 내용 전체 보기</summary>${terms}</details><fieldset class="consent-items"><legend>내용을 확인하고 선택해 주세요</legend><div class="consent-item"><input type="checkbox" id="consent-data"><div><label for="consent-data">AI 기능을 위한 민감정보(건강정보) 수집·이용에 동의해요</label><p>요청한 AI 기능에 일지와 퀵체크 내용이 사용돼요.</p></div></div><div class="consent-item"><input type="checkbox" id="consent-check"><div><label for="consent-check">AI 기능을 위한 개인정보 국외 이전에 동의해요</label><p>요청 시 관련 정보가 미국의 Google LLC로 전송돼요.</p></div></div></fieldset><p>AI 결과는 틀릴 수 있어요. 저장하기 전에 내용을 확인해 주세요.</p><div class="dialog-actions"><button type="button" class="button secondary" data-action="close-modal" data-modal="consent-dialog">직접 쓸게요</button><button type="button" class="button primary" data-action="accept-consent" disabled>동의하고 켜기</button></div>`);
     modal.addEventListener('change',()=>{$('[data-action="accept-consent"]',modal).disabled=!$$('.consent-items input',modal).every(x=>x.checked);});
   }
   function accountDialog(button){

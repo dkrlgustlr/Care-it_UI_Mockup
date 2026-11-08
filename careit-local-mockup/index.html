@@ -36,7 +36,7 @@
       </aside>
       <button class="nav-handle" aria-label="메뉴 접기" title="메뉴 접기" aria-controls="app-sidebar" aria-expanded="true" data-action="sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m11 17-5-5 5-5m7 10-5-5 5-5"/></svg></button>
       <main id="main-content" tabindex="-1"><div class="app-content"><div id="screen"></div>
-        <footer class="site-footer"><div class="site-footer-row"><a href="#/privacy">개인정보 처리방침</a><a href="#/terms">이용약관</a><a href="https://app.careit.kr/billing-guide" data-billing-guide hidden>결제·환불 안내</a><span>케어릿은 의료 서비스가 아니에요</span></div><address id="site-footer-business" class="site-footer-business" hidden><span>케어릿 · 공동대표 김현식 · 김도윤 · 사업자등록번호 447-29-02187 · 통신판매업 신고 2026-수원영통-1232(경기도 수원시 영통구) · <a href="https://www.ftc.go.kr/bizCommPop.do?wrkr_no=4472902187" target="_blank" rel="noreferrer">사업자정보 확인</a></span><span>경기도 수원시 영통구 광교마을로 156, 4007동 1404호(하동, 광교 더 포레스트) · <a href="tel:01056509628">010-5650-9628</a> · <a href="mailto:support@careit.kr" aria-label="문의 이메일 support@careit.kr">support@careit.kr</a></span></address></footer>
+        <footer class="site-footer"><div class="site-footer-row"><a href="#/privacy">개인정보 처리방침</a><a href="#/terms">이용약관</a><a href="#/settings/licenses">오픈소스 라이선스</a><a href="https://app.careit.kr/billing-guide" data-billing-guide hidden>결제·환불 안내</a><span>케어릿은 의료 서비스가 아니에요</span></div><address id="site-footer-business" class="site-footer-business" hidden><span>케어릿 · 공동대표 김현식 · 김도윤 · 사업자등록번호 447-29-02187 · 통신판매업 신고 2026-수원영통-1232(경기도 수원시 영통구) · <a href="https://www.ftc.go.kr/bizCommPop.do?wrkr_no=4472902187" target="_blank" rel="noreferrer">사업자정보 확인</a></span><span>경기도 수원시 영통구 광교마을로 156, 4007동 1404호(하동, 광교 더 포레스트) · <a href="tel:01056509628">010-5650-9628</a> · <a href="mailto:support@careit.kr" aria-label="문의 이메일 support@careit.kr">support@careit.kr</a></span></address></footer>
       </div></main>
     </div>
   </div>
@@ -220,12 +220,73 @@
         <li data-session-id="mac-1102"><div class="session-info"><div><strong>Chrome · macOS</strong></div><span>로그인 <time>11월 2일 오후 10:56</time></span></div><button class="button secondary" type="button" aria-label="Chrome · macOS 세션 로그아웃" data-action="account-preview">로그아웃</button></li>
         <li data-session-id="windows-1101"><div class="session-info"><div><strong>Chrome · Windows</strong></div><span>로그인 <time>11월 1일 오후 1:56</time></span></div><button class="button secondary" type="button" aria-label="Chrome · Windows 세션 로그아웃" data-action="account-preview">로그아웃</button></li>
       </ul><button class="button secondary" type="button" data-action="account-preview">다른 기기 모두 로그아웃</button></details></section>
-      <section class="settings-card settings-consents" aria-labelledby="consent-title"><h2 id="consent-title">동의 관리</h2><div class="consent-row"><div class="consent-row-heading"><div><h3>마케팅 정보 수신</h3><span class="settings-consent-status" data-marketing-status aria-live="polite">수신 동의하지 않음</span></div><button class="button tertiary" type="button" data-action="marketing-consent" aria-label="마케팅 정보 수신 동의하기">동의하기</button></div><details class="settings-consent-details"><summary>자세히 보기</summary><p>서비스, 요금제, 기능 업데이트, 혜택 및 이벤트 관련 광고성 정보 전송</p><p>동의를 거부할 권리가 있으며, 동의하지 않아도 서비스 이용에 제한이 없습니다</p></details></div><div class="consent-row"><div class="consent-row-heading"><div><h3>AI 기능 동의</h3><span class="settings-consent-status" data-ai-consent-status aria-live="polite">동의함</span></div><button class="button danger" type="button" data-action="ai-consent" aria-label="AI 기능 철회하기">철회하기</button></div><details class="settings-consent-details"><summary>자세히 보기</summary><p>메모를 일지 문장으로 다듬고, 한 주의 기록을 채점·요약한 리포트를 만들어요. 일지 다듬기와 리포트 생성에는 일지 내용이 구글의 AI 서비스로 전송돼요. 이 기능들은 함께 켜지고 함께 꺼져요. 동의하지 않아도 일지를 직접 쓰고 저장할 수 있어요.</p><dl data-ai-consent-details><div><dt>동의 상태</dt><dd>동의함</dd></div><div><dt>동의한 시각</dt><dd>11월 1일 오후 2:18</dd></div><div><dt>안내 문구 버전</dt><dd>2026-10-13-ai-consent-3</dd></div></dl></details></div></section>
+      <section class="settings-card settings-consents" aria-labelledby="consent-title">
+        <h2 id="consent-title">동의 관리</h2>
+        <div class="consent-row">
+          <div class="consent-row-heading"><div><h3>마케팅 정보 수신</h3><span class="settings-consent-status" data-marketing-status aria-live="polite">수신 동의하지 않음</span></div><button class="button tertiary" type="button" data-action="marketing-consent" aria-label="마케팅 정보 수신 동의하기">동의하기</button></div>
+          <details class="settings-consent-details"><summary>자세히 보기</summary>
+            <div class="settings-consent-terms">
+              <h4>회원가입용 이메일 마케팅 정보 수신 동의</h4>
+              <dl class="settings-terms-list"><div><dt>수집·이용 항목</dt><dd>이메일 주소</dd></div><div><dt>이용 목적</dt><dd>서비스, 요금제, 기능 업데이트, 혜택 및 이벤트 관련 광고성 정보 전송</dd></div><div><dt>보유·이용 기간</dt><dd>마케팅 정보 수신 동의 철회 또는 회원 탈퇴 시까지</dd></div></dl>
+              <p>동의를 거부할 권리가 있으며, 동의하지 않아도 서비스 이용에 제한이 없습니다.</p>
+              <p>수신 동의는 언제든 이메일 하단의 수신거부 링크 또는 서비스 설정에서 철회할 수 있습니다.</p>
+              <p>이메일로 서비스·요금제·혜택·이벤트 등 광고성 정보를 받겠습니다. (선택)</p>
+            </div>
+          </details>
+        </div>
+        <div class="consent-row">
+          <div class="consent-row-heading"><div><h3>AI 기능 동의</h3><span class="settings-consent-status" data-ai-consent-status aria-live="polite">동의함</span></div><button class="button danger" type="button" data-action="ai-consent" aria-label="AI 기능 철회하기">철회하기</button></div>
+          <details class="settings-consent-details"><summary>자세히 보기</summary>
+            <div class="settings-consent-terms">
+              <h4>AI 기능 이용 동의</h4>
+              <p>이 동의는 회원이 AI로 다듬기 또는 주간 리포트 생성을 직접 요청할 때에만 적용됩니다. AI 기능은 돌봄 기록을 보조적으로 정리·요약하는 기능이며, 의료적 진단이나 치료를 위한 기능이 아닙니다. 아래 두 동의 항목은 각각 분리하여 받습니다.</p>
+              <h5>1. AI 기능을 위한 민감정보 건강정보 수집 이용 동의</h5>
+              <p>동의를 거부할 권리가 있습니다. 동의하지 않아도 직접 일지를 작성·저장하고 퀵체크를 기록할 수 있으나, AI로 다듬기와 AI 기반 주간 리포트 생성 기능은 이용할 수 없습니다.</p>
+              <p>회원이 본인이 아닌 관리대상의 기록을 AI 기능에 사용하려는 경우에는, 해당 정보의 AI 처리에 관한 정당한 권한 또는 필요한 동의를 갖추어야 합니다. 관리대상이 만 14세 미만인 경우에는 법정대리인의 동의가 필요합니다.</p>
+              <p>AI 기능을 위한 민감정보(건강정보) 수집·이용에 동의합니다. (AI 기능 이용 시 필수)</p>
+              <h5>2. AI 기능을 위한 개인정보 국외 이전 동의</h5>
+              <p>AI 기능을 위한 개인정보 국외 이전에 동의합니다. (AI 기능 이용 시 필수)</p>
+              <dl class="settings-terms-list">
+                <div><dt>처리 목적</dt><dd>회원이 요청한 AI 문장 다듬기, 주간 리포트의 문항별 채점 및 기록 변화 요약 생성</dd></div>
+                <div><dt>처리 항목</dt><dd>AI로 다듬기에는 회원이 선택한 일지 본문을 사용합니다. 주간 리포트에는 해당 주에 저장된 일지 본문과 퀵체크의 항목명·선택지명·숫자·시간·자유 입력 내용을 사용합니다. 기록 변화 요약에는 해당 주와 바로 이전 주에 저장된 일지 본문을 사용하며, 퀵체크 값은 기록 변화 요약에 사용하지 않습니다.</dd></div>
+                <div><dt>처리 시점</dt><dd>회원이 AI로 다듬기 또는 주간 리포트 생성 버튼을 누른 때</dd></div>
+                <div><dt>회사 보유</dt><dd>회사는 AI로 다듬기 요청의 전송 입력 사본, AI가 반환한 결과 및 회원이 저장한 결과를 해당 일지의 AI 다듬기 기록으로 보관합니다. 주간 리포트의 AI 요약·근거 인용은 리포트에 보관합니다. 호출 기록에는 모델명, 토큰 수, 결과 상태, 대상 주·관리대상 정보만 보관하며 일지 본문과 인용문은 저장하지 않습니다. 관련 일지 또는 리포트의 보유·파기 기준은 개인정보처리방침에 따릅니다.</dd></div>
+                <div><dt>이전받는 자</dt><dd>Google LLC</dd></div>
+                <div><dt>연락처</dt><dd>googlekrsupport@google.com 및 케어릿 고객지원 support@careit.kr</dd></div>
+                <div><dt>이전 국가</dt><dd>미국</dd></div>
+                <div><dt>이전 시기와 방법</dt><dd>회원이 AI로 다듬기 또는 주간 리포트 생성을 요청한 때, 암호화된 통신을 통해 전송</dd></div>
+                <div><dt>이전 항목</dt><dd>위 1항의 AI 기능 처리 항목과 같은 범위의 일지·퀵체크 관련 정보 및 AI가 생성한 결과</dd></div>
+                <div><dt>이전 목적</dt><dd>AI 문장 다듬기, 주간 리포트의 문항별 채점 및 기록 변화 요약 생성</dd></div>
+                <div><dt>보유·이용 기간</dt><dd>Google Gemini API의 적용 약관과 운영정책에 따라, 전송된 프롬프트·맥락 정보·출력은 서비스 안전성, 오남용 확인 및 법적·규제상 의무 이행을 위해 최대 55일간 보관될 수 있습니다. 케어릿이 보관하는 AI 입력 사본·결과와 리포트는 위 회사 보유 기준과 개인정보처리방침에 따릅니다.</dd></div>
+                <div><dt>거부·철회 방법과 영향</dt><dd>동의하지 않으면 AI로 다듬기와 AI 기반 주간 리포트 생성 기능을 이용할 수 없습니다. 이미 동의한 이용자는 support@careit.kr로 철회를 요청할 수 있으며, 철회 후에는 새로운 국외 이전이 중단됩니다. 이미 전송된 정보는 Google의 보유 기간이 끝나기 전에는 즉시 회수 또는 삭제되지 않을 수 있습니다.</dd></div>
+              </dl>
+            </div>
+            <dl data-ai-consent-details><div><dt>동의 상태</dt><dd>동의함</dd></div><div><dt>동의한 시각</dt><dd>11월 1일 오후 2:18</dd></div><div><dt>안내 문구 버전</dt><dd>2026-10-13-ai-consent-3</dd></div></dl>
+          </details>
+        </div>
+      </section>
       <section class="settings-card settings-links" aria-label="안내 및 혜택"><a href="#/notices"><span><strong>공지사항</strong><small>케어릿 소식과 안내를 확인할 수 있어요</small></span></a><a href="#/coupons"><span><strong>쿠폰함</strong><small>받은 쿠폰을 확인하고 사용할 수 있어요</small></span></a></section>
       <section class="settings-card inactive-recipients-card" aria-labelledby="inactive-title" hidden><h2 id="inactive-title" tabindex="-1">비활성화된 관리대상 삭제</h2><p>비활성화된 관리대상만 완전삭제할 수 있어요. 활성 관리대상은 먼저 관리대상 화면에서 비활성화해 주세요.</p><ul class="inactive-recipient-list"><li><strong>이지훈</strong><div class="inactive-recipient-actions"><button class="button primary" type="button" data-action="reactivate">활성화</button><button class="button danger-soft" type="button" data-action="account-preview">완전삭제</button></div></li></ul></section>
       <section class="settings-card" aria-labelledby="account-deletion-title"><h2 id="account-deletion-title">계정 탈퇴</h2><p>탈퇴를 신청하면 모든 기기의 로그인이 즉시 해제돼요. 일지와 리포트는 30일간 휴지통에 보관된 뒤 관리대상과 계정과 함께 완전히 삭제돼요.</p><button class="button danger-soft" type="button" data-action="account-preview">계정 탈퇴</button></section>
     </div></section>
   </template>
+
+  <template id="page-licenses" data-path="/settings/licenses">
+    <section class="page licenses-page">
+      <a class="back-link" href="#/settings">‹ 설정</a>
+      <header class="page-header"><div><h1>오픈소스 라이선스</h1><p>사용한 오픈소스와 라이선스 전문을 확인할 수 있어요.</p></div></header>
+      <div class="licenses-list">
+        <article class="license-item"><h2>Material Symbols</h2><p>아이콘 · Apache License 2.0 · Google LLC</p><a href="https://github.com/google/material-design-icons" target="_blank" rel="noopener noreferrer">프로젝트 보기</a><details><summary>라이선스 전문 보기</summary><pre data-license-text="material"><a href="assets/MATERIAL-SYMBOLS-LICENSE.txt">라이선스 전문 파일 보기</a></pre></details></article>
+        <article class="license-item"><h2>Pretendard</h2><p>글꼴 · SIL Open Font License 1.1 · Kil Hyung-jin 외</p><a href="https://github.com/orioncactus/pretendard" target="_blank" rel="noopener noreferrer">프로젝트 보기</a><details><summary>라이선스 전문 보기</summary><pre data-license-text="pretendard"><a href="assets/Pretendard-OFL.txt">라이선스 전문 파일 보기</a></pre></details></article>
+        <article class="license-item"><h2>Wanted Sans</h2><p>글꼴 · SIL Open Font License 1.1 · Wanted Sans Project Authors</p><a href="https://github.com/wanteddev/wanted-sans" target="_blank" rel="noopener noreferrer">프로젝트 보기</a><details><summary>라이선스 전문 보기</summary><pre data-license-text="wanted"><a href="assets/WantedSans-OFL.txt">라이선스 전문 파일 보기</a></pre></details></article>
+        <article class="license-item"><h2>Lucide Icons</h2><p>아이콘 · ISC License 및 일부 Feather 아이콘 MIT License</p><a href="https://lucide.dev/license" target="_blank" rel="noopener noreferrer">프로젝트 보기</a><details><summary>라이선스 전문 보기</summary><pre data-license-text="lucide"><a href="assets/LUCIDE-LICENSE.txt">라이선스 전문 파일 보기</a></pre></details></article>
+      </div>
+      <p class="licenses-live-link">운영 서비스의 웹 라이브러리와 패키지는 <a href="https://app.careit.kr/licenses" target="_blank" rel="noopener noreferrer">케어릿 라이선스 화면</a>에서 확인할 수 있어요.</p>
+    </section>
+  </template>
+
+  <template id="page-privacy" data-path="/privacy"><section class="page policy-page"><a class="policy-back" href="#/settings">‹ 설정</a><article class="policy-article" data-policy-content="privacy"><a href="https://app.careit.kr/privacy">개인정보처리방침 전문 보기</a></article><p class="policy-source">출처: <a href="https://app.careit.kr/privacy" target="_blank" rel="noopener noreferrer">케어릿 개인정보처리방침</a></p></section></template>
+  <template id="page-terms" data-path="/terms"><section class="page policy-page"><a class="policy-back" href="#/settings">‹ 설정</a><article class="policy-article" data-policy-content="terms"><a href="https://app.careit.kr/terms">이용약관 전문 보기</a></article><p class="policy-source">출처: <a href="https://app.careit.kr/terms" target="_blank" rel="noopener noreferrer">케어릿 이용약관</a></p></section></template>
 
   <template id="page-invite" data-path="/invite"><section class="page"><header class="page-header"><div><h1>친구 초대</h1></div></header><section class="settings-card"><h2>케어릿에 초대받았어요</h2><p>목업의 초대 링크 예시예요. 실제 가입이나 쿠폰 지급은 진행되지 않아요.</p><a class="button secondary" href="#/settings">설정으로 돌아가기</a></section></section></template>
 
