@@ -14,6 +14,7 @@
 .timefield-error { margin:8px 0 0; }
 .timefield-error[hidden] { display:none; }
 .timefield-part:has(input[aria-invalid=true]) { outline:2px solid var(--danger); }
+.timefield-part input[type=number]:focus,.timefield-part input[type=number][aria-invalid=true] { outline:none; background:transparent; }
 .quick-check-duration-part { box-sizing:border-box; align-items:baseline; gap:8px; padding:4px 14px; }
 .quick-check-duration-part input[type=number] { flex:1; width:0; padding:0; text-align:right; }
 .quick-check-duration-part span { position:static; flex:none; }
