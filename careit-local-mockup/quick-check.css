@@ -14,7 +14,7 @@
 .timefield-error { margin:8px 0 0; }
 .timefield-error[hidden] { display:none; }
 .timefield-part:has(input[aria-invalid=true]) { outline:2px solid var(--danger); }
-.timefield-part input[type=number]:focus,.timefield-part input[type=number][aria-invalid=true] { outline:none; background:transparent; }
+:root[data-input-modality] .timefield-part input[type=number]:focus,.timefield-part input[type=number][aria-invalid=true] { outline:none; background:transparent; }
 .quick-check-duration-part { box-sizing:border-box; align-items:baseline; gap:8px; padding:4px 14px; }
 .quick-check-duration-part input[type=number] { flex:1; width:0; padding:0; text-align:right; }
 .quick-check-duration-part span { position:static; flex:none; }
@@ -22,12 +22,13 @@
 .quick-check-number-control input[type=number] { flex:1; min-width:0; width:0; height:44px; padding:0; border:0; background:transparent; color:var(--text); font:600 16px/1.4 var(--font-sans); text-align:right; appearance:textfield; }
 .quick-check-number-control input[type=number]::-webkit-inner-spin-button,.quick-check-number-control input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
 .quick-check-number-control .quick-check-unit { flex:none; max-width:40%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); font:600 16px/1.4 var(--font-sans); }
-.quick-check-number-control:focus-within { outline:2px solid var(--primary); outline-offset:2px; }
+:root[data-input-modality=keyboard] .quick-check-number-control:focus-within:not(:has(input[aria-invalid=true])) { outline:2px solid var(--primary); outline-offset:2px; }
+:root[data-input-modality] .quick-check-number-control input:focus { outline:none; }
 .quick-check-slider .quick-check-scale-value { display:none; }
 .quick-check-slider-ticks { grid-template-columns:repeat(auto-fit,minmax(44px,1fr)); gap:8px; height:auto; }
 .quick-check-slider-ticks button { min-width:0; min-height:52px; border-radius:8px; background:var(--neutral-soft); color:var(--text); font:600 16px/1.4 var(--font-sans); }
 .quick-check-slider-ticks button[aria-pressed=true], .quick-check-slider-ticks button:has(~ button[aria-pressed=true]) { background:var(--mint-selected); color:var(--primary-dark); font-weight:600; }
-.quick-check-slider-ticks button:focus-visible,.timefield-period:focus-visible,.timefield-part:focus-within,.quick-check-clear:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+.quick-check-slider-ticks button:focus-visible,.timefield-period:focus-visible,:root[data-input-modality=keyboard] .timefield-part:focus-within:not(:has(input[aria-invalid=true])),.quick-check-clear:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
 
 /* 비교용 URL에서만 척도 시안을 보여줍니다. */
 html[data-scale-preview="number"] .quick-check-slider-ticks { grid-template-columns:repeat(var(--tick-count),minmax(0,1fr)); gap:8px; }
@@ -60,17 +61,21 @@ html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="t
 /* 작성 상태와 관련 동작을 하나의 플로팅 영역에 모읍니다. */
 .journal-page > .page-header { align-items:center; gap:20px; }
 .journal-page > .page-header > div:first-child { flex:none; }
-.ai-review-fields { max-height:min(50vh,480px); overflow-y:auto; padding:0 4px; text-align:left; }
-.ai-review-fields label { color:var(--text); font:600 14px/1.4 var(--font-sans); }
-.ai-review-fields textarea { box-sizing:border-box; width:100%; min-height:88px; padding:12px 14px; border:0; border-radius:8px; background:var(--neutral-soft); color:var(--text); font:500 14px/1.6 var(--font-sans); resize:vertical; }
-.ai-review-fields textarea:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
-.journal-page > .journal-actions { position:static; display:flex; justify-content:space-between; align-items:center; gap:16px; border:1px solid var(--line); }
-.journal-page > .journal-actions > div:first-child { display:grid; gap:3px; min-width:0; }
-.journal-page > .journal-actions > div:last-child { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
+.journal-memo-fields .field-heading:has(.journal-ai-controls) { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.journal-memo-fields .field-heading:has(.journal-ai-controls) .field-limit { margin-left:auto; white-space:nowrap; }
+.journal-ai-controls { display:flex; flex:none; gap:4px; padding:4px; border-radius:8px; background:var(--neutral-soft); }
+.journal-ai-controls button { min-height:36px; padding:0 12px; border:0; border-radius:6px; background:transparent; color:var(--muted); font:600 14px/1.4 var(--font-sans); cursor:pointer; }
+.journal-ai-controls button[aria-pressed=true] { background:var(--surface); color:var(--primary-dark); }
+.journal-ai-controls button:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+.journal-ai-original { box-sizing:border-box; min-height:96px; padding:16px; border-radius:8px; background:var(--neutral-soft); color:var(--text); font:500 16px/1.6 var(--font-sans); white-space:pre-wrap; overflow-wrap:anywhere; }
+.journal-page > .journal-actions { position:static; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:16px; border:1px solid var(--line); }
+.journal-page > .journal-actions > div:first-child { display:grid; flex:1 1 200px; gap:3px; min-width:0; }
+.journal-page > .journal-actions > div:last-child { display:flex; flex:0 0 auto; flex-wrap:wrap; max-width:100%; align-items:center; justify-content:flex-end; }
 .journal-page > .journal-actions strong { color:var(--text); font:700 14px/1.4 var(--font-sans); }
 .journal-page > .journal-actions span { font:500 13px/1.45 var(--font-sans); }
 @media (max-width:767px) {
   .journal-page > .page-header { flex-direction:column; align-items:stretch; gap:14px; }
   .journal-page > .journal-actions { flex-direction:column; align-items:stretch; gap:12px; }
+  .journal-page > .journal-actions > div:first-child { flex:none; }
   .journal-page > .journal-actions > div:last-child { justify-content:flex-end; }
 }

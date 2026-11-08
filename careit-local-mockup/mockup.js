@@ -494,7 +494,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     registerEdits(); window.scrollTo(0,0); requestAnimationFrame(scaleReports);
     if (route === '/plans' && !mockupActivePlan(state,currentDate()) && ['starter','team','pro'].includes(params.get('plan'))) openPlanCheckout(params.get('plan'));
   }
-  let journalSavedSnapshot=null,journalSavedRecord=null,journalSaving=false;
+  let journalSavedSnapshot=null,journalSavedRecord=null,journalSaving=false,journalAiComparison=null;
   function setDraftStatus(message){$$('[data-draft-status]').forEach(status=>status.textContent=message);}
   function journalSnapshot(){return JSON.stringify({date:$('[data-action="date"]')?.dataset.value,values:Object.fromEntries($$('input[id],textarea[id]',$('#screen')).filter(el=>!el.id.startsWith('journal-field-label-')).map(el=>[el.id,(el.type==='radio'||el.type==='checkbox')?el.checked:el.value]))});}
   function journalHasContent(){return $$('input[id],textarea[id]',$('#screen')).some(el=>!el.id.startsWith('journal-field-label-')&&el.type!=='range'&&((el.type==='radio'||el.type==='checkbox')?el.checked:el.value.trim()!==''));}
@@ -510,6 +510,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     else if(journalSavedSnapshot!==null&&changed&&$('[data-draft-status]')?.textContent==='변경하면 다시 저장할 수 있어요.')setDraftStatus('변경 내용은 이 브라우저에 자동 보관돼요.');
   }
   function prepareJournal() {
+    journalAiComparison=null;
     journalSavedSnapshot=null;journalSavedRecord=null;journalSaving=false;
     const editIndex=params.get('entry'),savedRow=editIndex===null?null:journalRows()[Number(editIndex)],savedSchema=savedRow?.schema||state.journalSchemaSnapshots[journalSchemaKey(recipient,savedRow)];
     $('[data-quick-checks]').innerHTML = (savedSchema?.quickChecks||getQuickChecks()).map((q,i)=>q.active?quickPreview(q,i,false):'').join('');
@@ -528,7 +529,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
         $('.page-header h1').textContent = '저장한 일지 수정';
         $('[data-options="recipients"]').disabled=true;$('[data-action="date"]').disabled=true;
         setDraftStatus('수정한 내용은 일지 저장을 눌러 반영해 주세요');
-        const controls=$('.journal-actions>div:last-child'),ai=$('[data-action="ai-preview"]');controls.insertAdjacentHTML('afterbegin','<button class="button danger" type="button" data-action="delete-journal">일지 삭제</button>');if(row[0]!==currentDate()){ai.disabled=true;ai.insertAdjacentHTML('beforebegin','<span id="ai-polish-date-notice" role="status">AI 문장 정리는 오늘 일지에만 쓸 수 있어요</span>');ai.setAttribute('aria-describedby','ai-polish-date-notice');}
+        const controls=$('.journal-actions>div:last-child'),ai=$('[data-action="ai-preview"]');controls.insertAdjacentHTML('afterbegin','<button class="button danger" type="button" data-action="delete-journal">일지 삭제</button>');if(row[0]!==currentDate())ai.disabled=true;
         $('[data-action="date"] span').textContent = formatDate(row[0]);
         $('[data-action="date"]').dataset.value = row[0];
       }
@@ -549,6 +550,23 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const counter = el.id ? document.getElementById(el.id + '-limit') : null;
     if (counter && el.maxLength > 0) counter.textContent = `${el.value.length.toLocaleString('ko-KR')}/${el.maxLength.toLocaleString('ko-KR')}자`;
     if(el.matches('textarea')&&el.closest('.journal-memo-card')){el.style.height='96px';el.style.height=`${Math.min(320,Math.max(96,el.scrollHeight))}px`;}
+  }
+  function setJournalAiView(fieldId,view) {
+    const item=journalAiComparison?.fields.find(entry=>entry.field.id===fieldId);if(!item)return;
+    const {field,original}=item,container=field.parentElement,preview=container.querySelector('.journal-ai-original');
+    field.hidden=view==='original';preview.hidden=view!=='original';preview.textContent=original;
+    const counter=document.getElementById(`${field.id}-limit`);
+    if(view==='original'&&counter&&field.maxLength>0)counter.textContent=`${original.length.toLocaleString('ko-KR')}/${field.maxLength.toLocaleString('ko-KR')}자`;
+    else if(view==='result')updateCounter(field);
+    $$('[data-ai-view]',container).forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.aiView===view)));
+  }
+  function startJournalAiComparison(fields) {
+    journalAiComparison={fields:fields.map(field=>({field,original:field.value}))};
+    journalAiComparison.fields.forEach(({field})=>{
+      const label=field.parentElement.querySelector(`label[for="${field.id}"]`)?.textContent||'일지 기록';
+      field.parentElement.querySelector('.field-heading').insertAdjacentHTML('beforeend',`<div class="journal-ai-controls" role="group" aria-label="${escapeHTML(label)} 문장 비교"><button type="button" data-action="journal-ai-view" data-ai-view="original" aria-pressed="false">원문 보기</button><button type="button" data-action="journal-ai-view" data-ai-view="result" aria-pressed="true">정리본 보기</button></div>`);
+      field.insertAdjacentHTML('afterend','<div class="journal-ai-original" hidden></div>');
+    });
   }
   function captureDraft(save=true) {
     const values = {}; $$('input[id],textarea[id]', $('#screen')).forEach(el => values[el.id] = (el.type==='radio'||el.type==='checkbox') ? el.checked : el.value);
@@ -1315,6 +1333,8 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(!await persist()){if(previous){state.recipients[index]=previous.recipient;for(const [key,value] of [['quickChecks',previous.quick],['configuration',previous.configuration],['scoring',previous.scoring],['reportTemplates',previous.report]]){if(value===undefined)delete state[key][index];else state[key][index]=value;}}else{state.recipients.pop();delete state.reportTemplates[index];}return;}$('.recipient-form-dialog').close();renderRecipients();toast('관리대상을 저장했어요.');
   });
   const timeInputValues=new WeakMap();
+  document.addEventListener('keydown',e=>{if(e.key==='Tab')document.documentElement.dataset.inputModality='keyboard';},true);
+  document.addEventListener('pointerdown',()=>{document.documentElement.dataset.inputModality='pointer';},true);
   const allowedTimeInput=input=>input.value===''?!input.validity.badInput:/^\d{1,2}$/.test(input.value)&&Number(input.value)<=Number(input.max);
   document.addEventListener('focusin',e=>{if(e.target.matches('.timefield input[type="number"]'))timeInputValues.set(e.target,allowedTimeInput(e.target)?e.target.value:'');});
   document.addEventListener('beforeinput',e=>{if(e.target.matches('.timefield input[type="number"]')&&e.inputType==='insertText'&&e.data&&!/^\d+$/.test(e.data))e.preventDefault();});
@@ -1862,13 +1882,14 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     else if(action==='accept-consent'){state.aiConsent=true;persist().then(saved=>{if(!saved)return;$('#consent-dialog').close();if(route==='/settings')prepareSettings();toast('AI 기능을 켰어요.');});}
     else if(action==='ai-preview'){
       if(!state.aiConsent){openConsent();return;}
+      if(journalAiComparison){toast('정리된 문장을 확인해 주세요.');$('.journal-memo-card')?.scrollIntoView({behavior:'smooth',block:'start'});return;}
       const fields=$$('.journal-memo-fields textarea').filter(field=>field.value.trim());
       if(!fields.length){toast('정리할 일지 기록을 입력해 주세요.');$('#journal-raw').focus();return;}
       dialog('AI 문장 정리를 사용할까요?','<p>AI 문장 정리는 관리대상별 하루에 한 번 사용할 수 있어요.</p>','문장 정리',()=>{
-        const previews=fields.map((field,i)=>{const label=$(`label[for="${field.id}"]`)?.textContent||'일지 기록';return `<label for="ai-result-${i}">${escapeHTML(label)}<textarea id="ai-result-${i}" rows="3" maxlength="${field.maxLength}">${escapeHTML(field.value)}</textarea></label>`;}).join('');
-        dialog('정리한 문장 확인',`<p>입력한 일지 기록을 확인하고 적용해요.</p><div class="mockup-dialog-fields ai-review-fields">${previews}</div>`,'적용',()=>{fields.forEach((field,i)=>{field.value=$(`#ai-result-${i}`).value;updateCounter(field);});captureDraft();updateJournalSaveState();});
+        startJournalAiComparison(fields);$('.journal-memo-card')?.scrollIntoView({behavior:'smooth',block:'start'});
       });
     }
+    else if(action==='journal-ai-view')setJournalAiView(button.closest('.field').querySelector('textarea').id,button.dataset.aiView);
     else if(action==='account-preview')accountDialog(button);
     else if(action==='reactivate'){const i=Number(button.dataset.index);if(!recipientHasCapacity()){showRecipientLimit();return;}dialog('관리대상을 활성화할까요?',`<p>「${escapeHTML(state.recipients[i].name)}」을 홈과 기록 작성 목록에서 다시 볼 수 있어요.</p>`,'활성화',async()=>{if(!recipientHasCapacity()){showRecipientLimit();return;}const r=state.recipients[i],previous=copy(r);r.active=true;delete r.pausedByPlanLimit;if(!await persist()){Object.assign(r,previous);return;}prepareSettings();});}
     else if(action==='toggle-recipient'){const r=state.recipients[detailRecipient];if(!r.active&&!recipientHasCapacity()){showRecipientLimit();return;}dialog(r.active?'관리대상을 비활성화할까요?':'관리대상을 활성화할까요?',`<p>${r.active?'홈과 기록 작성 목록에서 제외돼요. 기존 일지와 리포트는 보관돼요.':'홈과 기록 작성 목록에 다시 표시돼요.'}</p>`,r.active?'비활성화':'활성화',async()=>{if(!r.active&&!recipientHasCapacity()){showRecipientLimit();return;}const previous=copy(r);r.active=!r.active;delete r.pausedByPlanLimit;if(!await persist()){Object.assign(r,previous);return;}$('#recipient-dialog').close();renderRecipients();});}
