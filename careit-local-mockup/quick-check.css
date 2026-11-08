@@ -53,6 +53,7 @@ html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="t
 .quick-check-scale-labels { display:flex; justify-content:space-between; gap:16px; margin-top:8px; color:var(--muted); font:500 13px/1.4 var(--font-sans); }
 .quick-check-scale-labels span { min-width:0; overflow-wrap:anywhere; }
 .quick-check-scale-labels span:last-child { text-align:right; }
+.quick-check-scale-invalid { margin:0; color:var(--danger); font:600 14px/1.5 var(--font-sans); }
 .journal-memo-card textarea { height:96px; min-height:96px; max-height:320px; overflow-y:auto; resize:none; }
 .journal-memo-card > .field { margin-bottom:32px; }
 .journal-page { padding-bottom:0; }

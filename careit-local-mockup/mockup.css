@@ -974,6 +974,7 @@ dialog#quick-type-picker .quick-check-type-footer { padding:var(--space-4) var(-
  dialog#quick-type-picker .quick-check-type-footer { padding:var(--space-3) var(--space-4); padding-bottom:max(var(--space-3),env(safe-area-inset-bottom)); }
 }
 dialog#quick-type-picker .quick-check-type-card>header { flex-wrap:wrap; }
+dialog#quick-type-picker .quick-check-type-card>header label { font:700 16px/1.4 var(--font-sans); }
 dialog#quick-type-picker .quick-check-type-description { order:3; flex:1 0 100%; white-space:normal; overflow:visible; }
 dialog#quick-type-picker .quick-check-type-current { margin-left:0; padding:0; background:transparent; color:var(--primary-dark); font-weight:600; }
 dialog#quick-type-picker .quick-check-type-card>header .quick-check-clear-slot { margin-left:auto; }
@@ -988,6 +989,7 @@ dialog#quick-type-picker .quick-check-type-card>header .quick-check-clear-slot {
 /* 퀵체크의 입력 행 사이를 일정하게 구분합니다. */
 #quick-edit-form .quick-check-editor-controls>.quick-check-form-grid { row-gap:var(--space-5); }
 #quick-edit-form .quick-check-editor-controls>.quick-check-form-grid+.quick-check-form-grid { margin-top:var(--space-5); }
+#quick-edit-form .quick-scale-error { grid-column:1/-1; margin:0; padding:10px 12px; border-radius:var(--radius-control); background:var(--mint-soft); color:var(--primary-dark); font:500 14px/1.5 var(--font-sans); }
 /* 선택된 입력 방식만 체크로 표시하고 실제 라디오 입력은 키보드에서 유지합니다. */
 dialog#quick-type-picker .quick-check-type-card { cursor:pointer; }
 dialog#quick-type-picker .quick-check-type-preview { pointer-events:none; }
