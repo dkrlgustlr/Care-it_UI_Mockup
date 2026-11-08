@@ -6,6 +6,9 @@ const vm = require('node:vm');
 const source = fs.readFileSync(path.join(__dirname, 'mockup.js'), 'utf8');
 const context = vm.createContext({});
 vm.runInContext(source.slice(0, source.indexOf('(() => {')), context);
+assert.equal(context.mockupProfileInitial('QA'),'Q');
+assert.equal(context.mockupProfileInitial(' 김선생 '),'김');
+assert.equal(context.mockupProfileInitial(''),'?');
 for (const [plan, expected] of [['starter',14900],['team',39900],['yearly',null]]) {
   assert.equal(context.mockupCheckoutPrice(plan),expected);
 }
@@ -39,6 +42,25 @@ for (const terms of [false,true]) for (const renewal of [false,true]) {
   assert.equal(context.mockupSubscriptionPeriod(cancelled,'2026-02-28').ended,true);
 }
 assert.equal(context.mockupCheckoutSubscription('yearly','2026-01-31',{terms:true,renewal:true},'now'),null);
+assert.equal(context.mockupRefundDeadline('2026-11-08'),'2026-11-15');
+assert.equal(context.mockupRefundDeadline('2026-01-31'),'2026-02-07');
+assert.equal(context.mockupRefundDeadline('2026-02-30'),null);
+assert.equal(context.mockupSubscriptionPeriod({refundDemoOn:'2026-11-08'},'2026-11-08').ended,true);
+assert.equal(context.mockupActivePlan({subscription:null},'2026-11-08'),null);
+assert.equal(context.mockupActivePlan({subscription:{plan:'starter',autoRenew:true,nextBillingOn:'2026.12.08'}},'2026-11-08'),'starter');
+assert.equal(context.mockupActivePlan({subscription:{plan:'team',autoRenew:false,nextBillingOn:'2026.12.08'}},'2026-11-08'),'team');
+assert.equal(context.mockupActivePlan({subscription:{plan:'team',autoRenew:false,nextBillingOn:'2026.11.08'}},'2026-11-08'),null);
+assert.equal(context.mockupActivePlan({subscription:{plan:'team',refundDemoOn:'2026-11-08'}},'2026-11-08'),null);
+const restoreState={subscription:{plan:'starter',nextBillingOn:'2026.12.08',autoRenew:true},recipients:[{active:true},{active:false,pausedByPlanLimit:true},{active:false},{active:false,deleted:true,pausedByPlanLimit:true}]};
+context.mockupRestorePlanRecipients(restoreState,'2026-11-08');
+assert.equal(restoreState.recipients[1].active,true);
+assert.equal(restoreState.recipients[1].pausedByPlanLimit,undefined);
+assert.equal(restoreState.recipients[2].active,false);
+assert.equal(restoreState.recipients[3].active,false);
+const capped={subscription:restoreState.subscription,recipients:[...Array.from({length:4},()=>({active:true})),{active:false,pausedByPlanLimit:true},{active:false,pausedByPlanLimit:true}]};
+context.mockupRestorePlanRecipients(capped,'2026-11-08');
+assert.equal(capped.recipients.filter(r=>r.active).length,5);
+assert.equal(capped.recipients[5].pausedByPlanLimit,true);
 for (const legacy of [
   {plan:'team',cycle:'yearly',amount:346800,paidOn:'2026-10-06',nextBillingOn:'2027.10.06',invites:['sample@example.test']},
   {plan:'team',cycle:'monthly',amount:29900,paidOn:'2026-10-06',nextBillingOn:'2026.11.06',invites:[]}

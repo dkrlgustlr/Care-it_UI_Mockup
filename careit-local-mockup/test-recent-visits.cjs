@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const source=fs.readFileSync('mockup.js','utf8');
+const context=vm.createContext({});
+vm.runInContext(source.slice(0,source.indexOf('(() => {')),context);
+const asArray=value=>JSON.parse(JSON.stringify(value));
+const initial=[{key:'a',at:1},{key:'b',at:2}];
+assert.deepEqual(asArray(context.mockupRecentVisitUpsert(initial,{key:'b',at:3})),[{key:'b',at:3},{key:'a',at:1}]);
+assert.equal(context.mockupRecentVisitUpsert(Array.from({length:20},(_,i)=>({key:String(i)})),{key:'new'}).length,20);
+assert.equal(context.mockupRecentJournalHash('메모'),context.mockupRecentJournalHash('메모'));
+assert.notEqual(context.mockupRecentJournalHash('메모'),context.mockupRecentJournalHash('다른 메모'));
+console.log('Recent visit checks passed.');

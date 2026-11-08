@@ -1,0 +1,20 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const source = fs.readFileSync(require('node:path').join(__dirname, '..', 'mockup.js'), 'utf8');
+const context = vm.createContext({});
+vm.runInContext(source.slice(0, source.indexOf('function mockupReportWeek')), context);
+const run = expression => vm.runInContext(expression, context);
+
+assert.equal(run("mockupBillingDate('2026-11-30',3)"), '2027.02.28');
+assert.equal(run("JSON.stringify(mockupCouponPeriod({},'2026-11-08',7))"), '{"start":"2026-11-08","end":"2026-11-14"}');
+assert.equal(run("JSON.stringify(mockupCouponPeriod({couponPlusUntil:'2026-11-14'},'2026-11-08',14))"), '{"start":"2026-11-15","end":"2026-11-28"}');
+assert.equal(run("mockupCouponPeriod({subscription:{plan:'team',nextBillingOn:'2026.12.08',autoRenew:true}},'2026-11-08',7)"), null);
+assert.equal(run("mockupCouponPeriod({subscription:{plan:'team',nextBillingOn:'2026.12.08',autoRenew:false}},'2026-11-08',7)"), null);
+assert.equal(run("JSON.stringify(mockupCouponPeriod({subscription:{plan:'starter',nextBillingOn:'2026.12.08',autoRenew:true}},'2026-11-08',7))"), '{"start":"2026-12-08","end":"2026-12-14"}');
+assert.equal(run("JSON.stringify(mockupCouponPeriod({subscription:{plan:'starter',nextBillingOn:'2026.12.08',autoRenew:false}},'2026-11-08',7))"), '{"start":"2026-12-08","end":"2026-12-14"}');
+assert.equal(run("JSON.stringify(mockupCouponPeriod({subscription:{plan:'starter',nextBillingOn:'2026.12.15',autoRenew:true},couponPlusUntil:'2026-12-14'},'2026-11-08',14))"), '{"start":"2026-12-15","end":"2026-12-28"}');
+assert.equal(run("mockupActivePlan({couponPlusFrom:'2026-12-08',couponPlusUntil:'2026-12-14'},'2026-12-08')"), 'starter');
+assert.equal(run("mockupActivePlan({couponPlusFrom:'2026-12-08',couponPlusUntil:'2026-12-14'},'2026-12-15')"), null);
+assert.equal(run("mockupRecipientCapacity({couponPlusFrom:'2026-12-08',couponPlusUntil:'2026-12-14'},'2026-12-08')"), 5);
+console.log('Coupon expiry, immediate use, extension, scheduled use and plan access passed.');

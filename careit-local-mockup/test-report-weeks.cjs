@@ -24,6 +24,8 @@ assert.equal(eligibility(week('2026-10-14'),'2026-10-16').allowed, true);
 assert.equal(eligibility(week('2026-10-23'),'2026-10-14').reason, 'future');
 assert.equal(eligibility(week('2026-09-11'),'2026-10-17').allowed, true);
 assert.equal(eligibility(week('2026-09-11'),'2026-10-18').reason, 'expired');
+assert.equal(eligibility(week('2026-10-02'),'2026-11-07').allowed, true);
+assert.equal(eligibility(week('2026-10-02'),'2026-11-08').reason, 'expired');
 assert.equal(eligibility(week('2026-09-04'),'2026-10-14').reason, 'expired');
 assert.equal(eligibility(week('2019-01-31'),'2019-02-28').expiresOn, '2019-02-28');
 assert.equal(eligibility(week('2019-01-31'),'2019-03-01').allowed, false);

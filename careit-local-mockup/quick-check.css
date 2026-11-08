@@ -1,0 +1,75 @@
+/* 퀵체크 입력은 기존 필드의 크기와 선택 색상을 공유합니다. */
+.quick-check-clear { border:0; background:transparent; color:var(--muted); padding:4px 0; font:600 13px/1.4 var(--font-sans); cursor:pointer; }
+.quick-check-clear:hover { color:var(--primary-dark); text-decoration:underline; }
+.quick-check-time { display:block; min-height:0; }
+.timefield { height:auto; }
+.timefield-parts { display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:8px; }
+.timefield-period,.timefield-part { box-sizing:border-box; min-width:0; width:100%; height:52px; border:0; border-radius:8px; background:var(--neutral-soft); color:var(--text); font:600 16px/1.4 var(--font-sans); }
+.timefield-period { padding:0 12px; cursor:pointer; }
+.timefield-part { display:flex; align-items:baseline; gap:8px; padding:4px 14px; }
+.timefield-part input[type=number] { flex:1; min-width:0; width:0; height:44px; padding:0; border:0; background:transparent; color:var(--text); font:600 16px/1.4 var(--font-sans); text-align:right; }
+.timefield-part input[type=number] { appearance:textfield; }
+.timefield-part input[type=number]::-webkit-inner-spin-button,.timefield-part input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+.timefield-part span { flex:none; color:var(--muted); font:600 14px/1.4 var(--font-sans); }
+.timefield-error { margin:8px 0 0; }
+.timefield-error[hidden] { display:none; }
+.timefield-part:has(input[aria-invalid=true]) { outline:2px solid var(--danger); }
+.quick-check-duration-part { box-sizing:border-box; align-items:baseline; gap:8px; padding:4px 14px; }
+.quick-check-duration-part input[type=number] { flex:1; width:0; padding:0; text-align:right; }
+.quick-check-duration-part span { position:static; flex:none; }
+.quick-check-number-control { display:flex; align-items:baseline; box-sizing:border-box; gap:8px; width:100%; height:52px; padding:4px 14px; border-radius:8px; background:var(--neutral-soft); }
+.quick-check-number-control input[type=number] { flex:1; min-width:0; width:0; height:44px; padding:0; border:0; background:transparent; color:var(--text); font:600 16px/1.4 var(--font-sans); text-align:right; appearance:textfield; }
+.quick-check-number-control input[type=number]::-webkit-inner-spin-button,.quick-check-number-control input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+.quick-check-number-control .quick-check-unit { flex:none; max-width:40%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); font:600 16px/1.4 var(--font-sans); }
+.quick-check-number-control:focus-within { outline:2px solid var(--primary); outline-offset:2px; }
+.quick-check-slider .quick-check-scale-value { display:none; }
+.quick-check-slider-ticks { grid-template-columns:repeat(auto-fit,minmax(44px,1fr)); gap:8px; height:auto; }
+.quick-check-slider-ticks button { min-width:0; min-height:52px; border-radius:8px; background:var(--neutral-soft); color:var(--text); font:600 16px/1.4 var(--font-sans); }
+.quick-check-slider-ticks button[aria-pressed=true], .quick-check-slider-ticks button:has(~ button[aria-pressed=true]) { background:var(--mint-selected); color:var(--primary-dark); font-weight:600; }
+.quick-check-slider-ticks button:focus-visible,.timefield-period:focus-visible,.timefield-part:focus-within,.quick-check-clear:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+
+/* 비교용 URL에서만 척도 시안을 보여줍니다. */
+html[data-scale-preview="number"] .quick-check-slider-ticks { grid-template-columns:repeat(var(--tick-count),minmax(0,1fr)); gap:8px; }
+html[data-scale-preview="number"] .quick-check-slider-ticks button { min-height:52px; border:0; border-radius:8px; background:var(--neutral-soft); }
+html[data-scale-preview="number"] .quick-check-slider-ticks button[aria-pressed="true"], html[data-scale-preview="number"] .quick-check-slider-ticks button:has(~ button[aria-pressed="true"]) { background:var(--mint-selected); color:var(--primary-dark); }
+
+html[data-scale-preview="line"] .quick-check-slider-ticks { position:relative; grid-template-columns:repeat(var(--tick-count),minmax(0,1fr)); gap:0; padding:4px 8px; border-radius:8px; background:var(--neutral-soft); }
+html[data-scale-preview="line"] .quick-check-slider-ticks::before { content:""; position:absolute; bottom:14px; left:calc(8px + (100% - 16px) / var(--tick-count) / 2); right:calc(8px + (100% - 16px) / var(--tick-count) / 2); height:3px; background:var(--chip-bg); pointer-events:none; }
+html[data-scale-preview="line"] .quick-check-slider-ticks button { position:relative; min-height:44px; padding:0 0 15px; border-radius:8px; background:transparent; }
+html[data-scale-preview="line"] .quick-check-slider-ticks button::before { content:""; position:absolute; z-index:1; bottom:6px; left:50%; width:10px; height:10px; border-radius:50%; background:var(--muted); transform:translateX(-50%); }
+html[data-scale-preview="line"] .quick-check-slider-ticks button:has(~ button[aria-pressed="true"])::after, html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="true"]::after { content:""; position:absolute; bottom:9px; left:0; width:100%; height:3px; background:var(--primary); }
+html[data-scale-preview="line"] .quick-check-slider-ticks button:first-child::after { left:50%; width:50%; }
+html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="true"]::after { left:0; width:50%; }
+html[data-scale-preview="line"] .quick-check-slider-ticks button:first-child[aria-pressed="true"]::after { width:0; }
+html[data-scale-preview="line"] .quick-check-slider-ticks button:has(~ button[aria-pressed="true"])::before, html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="true"]::before { background:var(--primary); }
+html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="true"] { color:var(--primary-dark); }
+
+.quick-check-duration-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.quick-check-duration-part:has(input[aria-invalid="true"]) { outline:2px solid var(--danger); }
+.quick-check-duration-error { margin:8px 0 0; }
+.quick-check-duration-error[hidden] { display:none; }
+.quick-check-scale-labels { display:flex; justify-content:space-between; gap:16px; margin-top:8px; color:var(--muted); font:500 13px/1.4 var(--font-sans); }
+.quick-check-scale-labels span { min-width:0; overflow-wrap:anywhere; }
+.quick-check-scale-labels span:last-child { text-align:right; }
+.journal-memo-card textarea { height:96px; min-height:96px; max-height:320px; overflow-y:auto; resize:none; }
+.journal-memo-card > .field { margin-bottom:32px; }
+.journal-page { padding-bottom:0; }
+.journal-page > .journal-toolbar, .journal-page > .journal-card { border:1px solid var(--line); }
+
+/* 작성 상태와 관련 동작을 하나의 플로팅 영역에 모읍니다. */
+.journal-page > .page-header { align-items:center; gap:20px; }
+.journal-page > .page-header > div:first-child { flex:none; }
+.ai-review-fields { max-height:min(50vh,480px); overflow-y:auto; padding:0 4px; text-align:left; }
+.ai-review-fields label { color:var(--text); font:600 14px/1.4 var(--font-sans); }
+.ai-review-fields textarea { box-sizing:border-box; width:100%; min-height:88px; padding:12px 14px; border:0; border-radius:8px; background:var(--neutral-soft); color:var(--text); font:500 14px/1.6 var(--font-sans); resize:vertical; }
+.ai-review-fields textarea:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+.journal-page > .journal-actions { position:static; display:flex; justify-content:space-between; align-items:center; gap:16px; border:1px solid var(--line); }
+.journal-page > .journal-actions > div:first-child { display:grid; gap:3px; min-width:0; }
+.journal-page > .journal-actions > div:last-child { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
+.journal-page > .journal-actions strong { color:var(--text); font:700 14px/1.4 var(--font-sans); }
+.journal-page > .journal-actions span { font:500 13px/1.45 var(--font-sans); }
+@media (max-width:767px) {
+  .journal-page > .page-header { flex-direction:column; align-items:stretch; gap:14px; }
+  .journal-page > .journal-actions { flex-direction:column; align-items:stretch; gap:12px; }
+  .journal-page > .journal-actions > div:last-child { justify-content:flex-end; }
+}
