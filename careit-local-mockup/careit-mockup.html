@@ -628,7 +628,7 @@ textarea,select,.dropdown-trigger,.datefield-trigger,
 .home-today-row:focus-visible,.home-report-row:focus-visible { outline:2px solid var(--primary); outline-offset:2px; border-radius:var(--radius-inset); }
 .home-today-person,.home-report-copy { display:grid; gap:var(--space-1); flex:1; min-width:0; }
 .home-today-person strong,.home-report-copy strong { overflow-wrap:anywhere; white-space:normal; font:600 var(--fs-body)/1.5 var(--font-sans); }
-.home-report-row:hover .home-report-copy strong,.home-report-row:focus-visible .home-report-copy strong { text-decoration:underline; text-underline-offset:3px; }
+.home-report-row:hover .home-report-copy strong,.home-report-row:focus-visible .home-report-copy strong { color:var(--primary-dark); text-decoration:none; }
 .home-today-person small,.home-report-copy small,.home-report-date { color:var(--muted); font:400 var(--fs-body-sm)/1.5 var(--font-sans); }
 .home-row-action { flex:none; color:var(--muted); font:600 var(--fs-body-sm)/1.5 var(--font-sans); white-space:nowrap; }
 .home-today-row.is-draft .home-today-person small { color:var(--primary-dark); font-weight:600; }
@@ -675,7 +675,10 @@ textarea,select,.dropdown-trigger,.datefield-trigger,
 body[data-theme=dark] .home-status-value:not(.is-ready):not(.is-complete) { background:var(--neutral-soft); color:var(--text); }
 .home-status-value.is-ready { background:var(--mint-soft); color:var(--primary-dark); }
 .home-status-value.is-complete { background:var(--primary-action); color:#fff; }
-.home-status-link:hover .home-status-value { box-shadow:inset 0 0 0 1px currentColor; }
+.home-status-link:hover .home-status-value:not(.is-ready):not(.is-complete) { background:color-mix(in srgb,#f1f4f5 92%,#526575); }
+body[data-theme=dark] .home-status-link:hover .home-status-value:not(.is-ready):not(.is-complete) { background:color-mix(in srgb,var(--neutral-soft) 90%,white); }
+.home-status-link:hover .home-status-value.is-ready { background:color-mix(in srgb,var(--mint-soft) 92%,var(--primary-dark)); }
+.home-status-link:hover .home-status-value.is-complete { background:color-mix(in srgb,var(--primary-action) 90%,black); }
 .home-status-link:focus-visible { outline:2px solid var(--primary); outline-offset:2px; border-radius:6px; }
 @media (max-width:420px) {
   .home-today .home-widget-header { gap:4px; }
