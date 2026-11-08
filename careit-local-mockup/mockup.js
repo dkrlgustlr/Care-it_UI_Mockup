@@ -534,7 +534,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       updateReportPeriod();
     }
     recordRecentVisit();
-    $('.site-footer-business').hidden=route!=='/plans'&&!footerBusinessOpen;$('[data-billing-guide]').hidden=route!=='/plans';
+    $('.site-footer-business').hidden=route!=='/plans'&&!footerBusinessOpen;$('[data-billing-guide]').hidden=route!=='/plans';$('[data-settings-license]').hidden=route!=='/settings';
     $('.site-footer-business-toggle')?.setAttribute('aria-expanded',String(footerBusinessOpen));
     if (matchMedia('(max-width:1023px)').matches) $('.app-layout').classList.add('mockup-nav-collapsed');
     syncSidebarButton();
