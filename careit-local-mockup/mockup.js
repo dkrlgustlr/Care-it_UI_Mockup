@@ -953,7 +953,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const reserved=period.start>today;
     const renewing=reserved&&state.subscription?.autoRenew===true;
     const renewalNotice=renewing?`다음 결제일은 ${date(mockupAddDays(period.end,1))}로 미뤄지고, 이후 정기결제돼요.`:'자동 결제는 시작되지 않아요.';
-    dialog(reserved?'쿠폰을 등록할까요?':'쿠폰을 사용할까요?',`<p>플러스를 ${days}일 이용할 수 있어요.</p><p>${date(period.start)}부터 ${date(period.end)}까지 ${reserved?'자동으로 적용돼요':'이용해요'}. ${renewalNotice}</p>`,reserved?'쿠폰 등록':'쿠폰 사용',async()=>{
+    dialog(reserved?'쿠폰을 등록할까요?':'쿠폰을 사용할까요?',`<p>${index<3?`케어릿 초대 이벤트 ${index+1}차 쿠폰 · `:''}플러스를 ${days}일 이용할 수 있어요.</p><p>${date(period.start)}부터 ${date(period.end)}까지 ${reserved?'자동으로 적용돼요':'이용해요'}. ${renewalNotice}</p>`,reserved?'쿠폰 등록':'쿠폰 사용',async()=>{
       const now=currentDate(),next=mockupCouponPeriod(state,now,days);
       if(!next||next.start!==period.start||next.end!==period.end||state.couponUsed?.[index]||now>expires){toast('이용 상태가 변경됐어요. 다시 확인해 주세요.');return;}
       const previous={from:state.couponPlusFrom,until:state.couponPlusUntil,used:copy(state.couponUsed||{}),recipients:copy(state.recipients),subscription:state.subscription?copy(state.subscription):null};
@@ -1545,7 +1545,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       <form id="checkout-form" class="checkout-body" novalidate>
         <section class="checkout-summary" aria-labelledby="checkout-amount-title">
           <div class="checkout-total"><h3 id="checkout-amount-title">오늘 결제 금액</h3><strong>${won(amount)}</strong></div>
-          <p class="checkout-tax">부가가치세 포함</p>
+          <p class="checkout-tax">VAT 포함 금액</p>
           <dl class="checkout-billing"><div><dt>결제 주기</dt><dd>매월 자동결제</dd></div><div><dt>다음 결제일</dt><dd>${nextBillingOn}</dd></div><div><dt>다음 결제 금액</dt><dd>${won(amount)}</dd></div></dl>
         </section>
         <div class="checkout-notices"><p>결제 후 바로 이용할 수 있어요. 해지 전까지 매월 ${won(amount)}이 자동 결제돼요.</p><p>요금제에서 언제든 자동갱신을 해지할 수 있어요. 해지 후에도 결제한 기간까지 이용해요.</p><p>결제 후 7일 이내 · 유료 기능 미사용 시 전액 환불해요. 사용 후·7일 경과 시의 제한과 법령상 예외는 환불 기준에서 확인해 주세요.</p>${selected==='team'?'<p class="checkout-team-notice">팀 플랜은 결제자만 결제·자동갱신 해지·환불을 관리합니다. 결제자가 해지하면 이용기간 종료일에 팀원도 무료 플랜으로 전환됩니다.</p>':''}</div>
@@ -1588,7 +1588,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const sub=state.subscription, cycle=checkoutCycles[sub.cycle];
     const period=mockupSubscriptionPeriod(sub,currentDate());
     return `<dl class="subscription-details">
-      <div><dt>결제 금액</dt><dd>${won(sub.amount)}<small>부가가치세 포함</small></dd></div>
+      <div><dt>결제 금액</dt><dd>${won(sub.amount)}<small>VAT 포함 금액</small></dd></div>
       <div><dt>결제일</dt><dd>${mockupBillingDate(sub.paidOn)}</dd></div>
       <div><dt>${sub.autoRenew===false?'유료 이용 종료일':'다음 결제일'}</dt><dd>${sub.autoRenew===false?period.end:sub.nextBillingOn}</dd></div>
       <div><dt>다음 결제</dt><dd>${sub.autoRenew===false?'없음':won(sub.amount)}<small>${sub.autoRenew===false?'자동갱신 해지됨':`${cycle.months===12?'매년':'매월'} 정기 결제`}</small></dd></div>
@@ -1598,14 +1598,14 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const stopped=sub.autoRenew===false;
     return `<dl class="subscription-overview-details">
       <div><dt>${stopped?'이용 종료일':'다음 결제일'}</dt><dd>${stopped?period.end:sub.nextBillingOn}</dd></div>
-      <div><dt>결제 금액</dt><dd>${stopped?'다음 결제 없음':won(sub.amount)}</dd>${stopped?'':`<p>${cycle.months===12?'매년':'매월'} 정기 결제 · 부가가치세 포함</p>`}</div>
+      <div><dt>결제 금액</dt><dd>${stopped?'다음 결제 없음':won(sub.amount)}</dd>${stopped?'':`<p>${cycle.months===12?'매년':'매월'} 정기 결제 · VAT 포함 금액</p>`}</div>
       <div class="subscription-first-payment"><dt>첫 결제일</dt><dd>${mockupBillingDate(sub.paidOn)}</dd></div>
     </dl>`;
   }
   function openCheckoutPolicy(type,plan,date) {
     const renewal=type==='renewal', amount=mockupCheckoutPrice(plan);
     if (renewal && (!Number.isInteger(amount) || !/^\d{4}-\d{2}-\d{2}$/.test(date||''))) return;
-    const html=renewal?`<p><strong>${checkoutPlans[plan].name} · 월 ${won(amount)}</strong> (부가가치세 포함)</p><p>첫 결제는 ${mockupBillingDate(date)}, 다음 결제는 ${mockupBillingDate(date,1)}에 ${won(amount)}이에요. 이후에도 첫 결제일과 같은 날짜에 매월 자동 결제돼요. 해당 날짜가 없는 달에는 마지막 날에 결제해요.</p><p>결제 직후 유료 기능이 제공돼요. 요금제 → 자동갱신 해지 또는 support@careit.kr를 통해 다음 결제부터 해지할 수 있어요. 이미 결제한 기간까지 이용할 수 있으며, 자동갱신 해지는 환불 신청과 달라요.</p>${plan==='team'?'<p>팀의 해지·환불은 결제자가 요청해요. 이용기간이 끝나면 결제자와 팀원 모두 무료 요금제로 전환돼요.</p>':''}<p>요금이 인상되는 경우 변경 금액과 적용 시점을 미리 안내하고 별도 동의를 받아요.</p>`:$('#checkout-policy-template').innerHTML;
+    const html=renewal?`<p><strong>${checkoutPlans[plan].name} · 월 ${won(amount)}</strong> (VAT 포함 금액)</p><p>첫 결제는 ${mockupBillingDate(date)}, 다음 결제는 ${mockupBillingDate(date,1)}에 ${won(amount)}이에요. 이후에도 첫 결제일과 같은 날짜에 매월 자동 결제돼요. 해당 날짜가 없는 달에는 마지막 날에 결제해요.</p><p>결제 직후 유료 기능이 제공돼요. 요금제 → 자동갱신 해지 또는 support@careit.kr를 통해 다음 결제부터 해지할 수 있어요. 이미 결제한 기간까지 이용할 수 있으며, 자동갱신 해지는 환불 신청과 달라요.</p>${plan==='team'?'<p>팀의 해지·환불은 결제자가 요청해요. 이용기간이 끝나면 결제자와 팀원 모두 무료 요금제로 전환돼요.</p>':''}<p>요금이 인상되는 경우 변경 금액과 적용 시점을 미리 안내하고 별도 동의를 받아요.</p>`:$('#checkout-policy-template').innerHTML;
     const modal=editorDialog('checkout-policy-dialog','checkout-dialog',renewal?'정기결제·자동갱신':'이용약관·환불 기준',`<div class="checkout-body"><div class="checkout-policy-copy">${html}</div><button type="button" class="button secondary" data-action="close-modal" data-modal="checkout-policy-dialog">확인</button></div>`);
     const title=$('#checkout-policy-dialog-title',modal);title.tabIndex=-1;title.focus();
   }

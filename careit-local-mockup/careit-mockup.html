@@ -130,7 +130,7 @@ SOFTWARE.
 .recipients-page-header>div { min-width:0; }
 .recipients-page-header p { max-width:760px; margin:var(--space-2) 0 0; color:var(--muted); font:400 var(--fs-body-sm)/1.65 var(--font-sans); }
 .recipients-page>.record-tabs { margin-bottom:var(--space-6); }
-.recipient-list-heading { display:flex; align-items:center; justify-content:space-between; gap:var(--space-4); margin:0 0 var(--space-4); }
+.recipient-list-heading { display:flex; align-items:center; justify-content:space-between; gap:var(--space-4); min-height:44px; margin:0 0 var(--space-4); }
 .recipient-list-heading h2 { margin:0; font:var(--type-card-title); }
 .recipient-list-heading h2 span { margin-left:var(--space-2); color:var(--muted); font:500 var(--fs-body-sm)/1.5 var(--font-sans); }
 .recipient-list-heading .button { flex:none; }
@@ -160,9 +160,9 @@ SOFTWARE.
 .recipient-form-dialog>header h2 { margin:0; font:var(--type-dialog-title); }
 .recipient-form-dialog .recipient-form-grid { display:grid; grid-template-columns:1fr; }
 .recipient-form-dialog .field select { width:100%; min-height:42px; padding:0 var(--space-4); border:0; border-radius:var(--radius-control); background:var(--neutral-soft); color:var(--text); font:700 var(--fs-body-sm)/normal var(--font-sans); }
-.template-library>h2 { margin:0 0 var(--space-4); font:var(--type-card-title); }
-.template-library-grid { gap:var(--space-5); grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr)); display:grid; }
-.recipients-page .template-library-card { min-width:0; min-height:150px; padding:var(--space-6); border:1px solid var(--line); box-shadow:var(--shadow-card); align-items:flex-start; justify-content:space-between; gap:var(--space-4); display:flex; }
+.template-library>h2 { display:flex; align-items:center; min-height:44px; margin:0 0 var(--space-4); font:var(--type-card-title); }
+.template-library-grid { gap:var(--space-5); grid-template-columns:minmax(0,1fr); display:grid; }
+.recipients-page .template-library-card { min-width:0; min-height:156px; padding:var(--space-6); border:1px solid var(--line); box-shadow:var(--shadow-card); align-items:flex-start; justify-content:space-between; gap:var(--space-4); display:flex; }
 .recipients-page .template-library-content { min-width:0; flex:1; }
 .recipients-page .template-library-card h3 { min-width:0; margin:0 0 var(--space-5); overflow:hidden; color:var(--text); font:var(--type-card-title); text-overflow:ellipsis; white-space:nowrap; }
 .recipients-page .template-library-card p { margin:var(--space-1) 0 0; color:var(--muted); font:400 var(--fs-body-sm)/1.5 var(--font-sans); }
@@ -200,10 +200,13 @@ SOFTWARE.
 .reports-page .report-recipient-info h2 { color:var(--text); }
 .reports-page .report-generation-card,.reports-page .report-preview { border:1px solid var(--line); }
 .app-content .reports-page .report-generation-card { margin-bottom:var(--space-4); padding:var(--space-6); }
+.reports-page .report-generation-card { container:report-fields / inline-size; }
 .reports-page .report-generation-card .report-generation-fields { grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--space-6); }
-.reports-page .report-generation-card .report-recipient-info { display:grid; grid-template-rows:auto auto; align-content:start; gap:0; }
+.reports-page .report-generation-card .report-generation-field { display:flex; flex-direction:column; min-width:0; }
+.reports-page .report-generation-card .report-recipient-info { gap:0; align-items:stretch; }
 .reports-page .report-generation-card .report-generation-field>h2 { margin:0 0 var(--space-2); }
-.reports-page .report-generation-card .report-recipient-info>.dropdown { flex:none; width:100%; }
+.reports-page .report-generation-card .report-generation-field>.dropdown,.reports-page .report-generation-card .report-generation-field>.datefield { flex:none; min-width:0; width:100%; margin-top:auto; }
+.reports-page .report-generation-card .report-generation-field :is(.dropdown-trigger,.datefield-trigger) { height:44px; min-height:44px; }
 .reports-page .report-generation-card .report-template-heading { min-width:0; display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-2); flex-wrap:wrap; margin-bottom:var(--space-2); }
 .reports-page .report-generation-card .report-template-heading h2 { margin:0; }
 .reports-page .report-generation-card .report-template-heading :is(.report-template-summary,.report-generation-status) { margin:0; white-space:nowrap; }
@@ -216,9 +219,26 @@ SOFTWARE.
 .reports-page .configured-report .configured-report-actions { align-items:center; }
 @media(max-width:767px) {
   .app-content .reports-page .report-generation-card { padding:var(--space-4); }
-  .reports-page .report-generation-card .report-generation-fields { grid-template-columns:minmax(0,1fr); gap:var(--space-4); }
   .reports-page>.report-recipient-change .button { width:100%; max-width:320px; }
   .reports-page .configured-report .configured-report-actions { align-items:stretch; }
+}
+@container report-fields (max-width:70rem) {
+  .reports-page .report-generation-card .report-generation-fields { grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-4); }
+  .reports-page .report-generation-card .report-generation-field:last-child { grid-column:1 / -1; }
+}
+@container report-fields (max-width:42rem) {
+  .reports-page .report-generation-card .report-generation-fields { grid-template-columns:minmax(0,1fr); }
+  .reports-page .report-generation-card .report-generation-field:last-child { grid-column:auto; }
+}
+@supports not (container-type:inline-size) {
+  @media (max-width:1400px) {
+    .reports-page .report-generation-card .report-generation-fields { grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-4); }
+    .reports-page .report-generation-card .report-generation-field:last-child { grid-column:1 / -1; }
+  }
+  @media (max-width:900px) {
+    .reports-page .report-generation-card .report-generation-fields { grid-template-columns:minmax(0,1fr); }
+    .reports-page .report-generation-card .report-generation-field:last-child { grid-column:auto; }
+  }
 }
 @media print { .reports-page .report-preview { border:0; } }
 .report-recipient-info .dropdown { width:min(430px,100%); }
@@ -284,9 +304,10 @@ body[data-theme=dark] .settings-page .settings-card .account-invite-controls .bu
 @media(max-width:767px) { .settings-page .settings-card { padding:var(--space-5); } .settings-page .settings-links { padding-top:0; padding-bottom:0; } }
 .coupons-page>.coupon-tabs { margin-bottom:var(--space-6); }
 .coupon-panel[hidden] { display:none; }
-.coupon-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr)); gap:var(--space-4); }
-.coupons-page .coupon-card { box-sizing:border-box; padding:var(--space-6); border:1px solid var(--line); border-radius:var(--radius-card); background:var(--surface); box-shadow:var(--shadow-card); }
-.coupon-card-main h2 { margin:var(--space-4) 0 var(--space-2); color:var(--text); font-size:var(--fs-page); line-height:1.3; font-weight:700; }
+.coupon-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr)); gap:var(--space-4); }
+.coupons-page .coupon-card { box-sizing:border-box; container-type:inline-size; padding:var(--space-6); border:1px solid var(--line); border-radius:var(--radius-card); background:var(--surface); box-shadow:var(--shadow-card); }
+.coupon-card-main h2 { margin:var(--space-4) 0 var(--space-2); overflow:hidden; color:var(--text); font-size:18px; line-height:1.3; font-weight:700; text-overflow:ellipsis; white-space:nowrap; }
+@supports (font-size:1cqi) { .coupon-card-main h2 { font-size:clamp(15px,7cqi,18px); } }
 .coupon-card-main p { margin:0; color:var(--muted); font-size:var(--fs-body-sm); line-height:1.5; }
 .coupon-example { display:inline-block; padding:var(--space-1) var(--space-2); border-radius:var(--radius-control); background:var(--mint-soft); color:var(--primary-dark); font-size:var(--fs-caption); font-weight:700; }
 .coupon-status { display:inline-block; padding:var(--space-1) var(--space-2); border-radius:var(--radius-control); background:var(--neutral-soft); color:var(--muted); font-size:var(--fs-caption); font-weight:700; }
@@ -300,6 +321,16 @@ body[data-theme=dark] .settings-page .settings-card .account-invite-controls .bu
 .journal-page>.page-header { order:0; }.journal-page>.journal-toolbar { order:1; }.journal-page>.journal-quick-check-card { order:2; }.journal-page>.journal-memo-card { order:3; }.journal-page>.journal-actions { order:4; }
 @media (width>=768px) { .recipient-memo-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (width>=1440px) { .recipient-memo-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (width>=768px) { .template-library-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (width>=1440px) { .template-library-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (width<768px) { .recipients-page .template-library-card { min-height:160px; } }
+@media (width<400px) {
+  .recipients-page .recipient-list-heading { flex-wrap:nowrap; gap:var(--space-2); }
+  .recipients-page .recipient-list-heading h2,.recipients-page .template-library>h2 { font-size:18px; }
+  .recipients-page .recipient-list-heading h2 { white-space:nowrap; }
+  .recipients-page .recipient-list-heading h2 span { margin-left:var(--space-1); font-size:12px; }
+  .recipients-page .recipient-list-heading .add-recipient-button { gap:var(--space-1); padding-inline:var(--space-2); }
+}
 @media (width<900px) { .home-intro { min-height:600px; }.home-intro-slide{min-height:600px;padding:var(--space-6);grid-template-columns:1fr;gap:var(--space-5)}.home-intro-stage{min-height:286px;margin:0 calc(-1 * var(--space-6)) calc(-1 * var(--space-6));}.home-preview-record{top:22px;left:9%;}.home-preview-ai{top:76px;left:34%;}.home-preview-report{right:6%;bottom:20px}.home-intro-controls{left:var(--space-6);bottom:var(--space-5)}.recipient-memo-card,.template-library-card{padding:var(--space-5)}.template-library-card{min-height:132px} }
 @media (width<540px) { .home-intro { min-height:572px; }.home-intro-slide { min-height:572px; }.home-preview-card { padding:13px; }.home-preview-record { left:3%; transform:scale(.86) rotate(-4deg); transform-origin:top left; }.home-preview-ai { left:26%; transform:scale(.78); transform-origin:top left; }.home-preview-report { right:-1%; transform:scale(.8) rotate(3deg); transform-origin:bottom right; } }
 /* 실제 케어릿 홈 캐러셀과 같은 구조·치수입니다. */
@@ -615,7 +646,7 @@ textarea,select,.dropdown-trigger,.datefield-trigger,
 /* 리포트도 기록 화면과 같은 기간 달력과 회색 날짜 선택칸을 사용합니다. */
 .reports-page .report-generation-field .datefield { width:100%; display:flex; }
 .reports-page .report-generation-field .datefield-trigger { height:100%; }
-.reports-page .report-generation-field .datefield-trigger>span { min-width:0; overflow-wrap:anywhere; }
+.reports-page .report-generation-card .datefield-trigger>span { min-width:0; overflow:hidden; overflow-wrap:normal; text-overflow:ellipsis; white-space:nowrap; }
 @media(max-width:767px) {
   .app-content .records-page .records-date-filter { padding:var(--space-4); }
   .records-page .records-date-filter .records-date-filter-fields { grid-template-columns:minmax(0,1fr); gap:var(--space-4); }
@@ -1693,9 +1724,9 @@ html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="t
   </template>
   <template id="page-plans" data-path="/plans">
     <section class="page pricing-page"><header class="page-header"><div><h1>요금제</h1></div></header><div class="pricing-audience" role="group" aria-label="요금제 종류"><button type="button" class="is-selected" aria-pressed="true">개인</button><button type="button" aria-pressed="false" disabled>비즈니스<span class="pricing-soon">준비 중</span></button></div><ul class="pricing-grid">
-      <li class="pricing-card"><div class="pricing-head"><h2>무료</h2><p class="pricing-audience-note">먼저 써보는 분</p></div><div class="pricing-price-block"><p class="pricing-price">0원</p><p class="pricing-price-note">모든 사용자 무료</p></div><button type="button" class="button secondary" disabled>무료 요금제</button><ul class="pricing-features"><li><span>돌봄 일지와 퀵체크</span></li><li><span>관리대상 1명</span></li><li><span>하루 일지 1개</span></li><li><span>자유 메모 1,000자 · 영역별 500자</span></li></ul></li>
-      <li class="pricing-card"><div class="pricing-head"><h2>플러스</h2><p class="pricing-audience-note">매일 적는 보호자</p></div><div class="pricing-price-block"><p class="pricing-price">월 14,900원</p><p class="pricing-price-note">부가가치세가 포함된 최종 결제금액</p></div><a class="button pricing-button--soft" href="#/plans?plan=starter" data-action="plan" data-plan="starter">플러스 선택</a><ul class="pricing-features"><li><span>무료의 모든 기능</span></li><li><span>AI 다듬기 · 대상별 하루 1회</span></li><li><span>주간 리포트와 PDF·Word 내려받기</span></li><li><span>리포트 생성 알림</span></li><li><span>일지 및 리포트 채점 문항 직접 만들기</span></li></ul></li>
-      <li class="pricing-card"><div class="pricing-head"><h2>팀</h2><p class="pricing-audience-note">각자 기록하는 세 사람</p></div><div class="pricing-price-block"><p class="pricing-price">월 39,900원</p><p class="pricing-price-note">부가가치세가 포함된 최종 결제금액</p></div><a class="button pricing-button--soft" href="#/plans?plan=team" data-action="plan" data-plan="team">팀 선택</a><ul class="pricing-features"><li><span>플러스의 모든 기능을 3명이 각자</span></li><li><span>결제는 1명, 최대 2명 초대</span></li><li><span>관리대상 1인당 최대 5명</span></li><li><span>각자 계정으로 기록은 따로</span></li></ul></li>
+      <li class="pricing-card"><div class="pricing-head"><h2>무료</h2><p class="pricing-audience-note">한 명의 돌봄을 기록하는 분</p></div><div class="pricing-price-block"><p class="pricing-price">0원</p><p class="pricing-price-note">모든 사용자 무료</p></div><button type="button" class="button secondary" disabled>무료 요금제</button><ul class="pricing-features"><li><span>돌봄 일지와 퀵체크</span></li><li><span>관리대상 1명</span></li><li><span>하루 일지 1개</span></li><li><span>자유 메모 1,000자 · 영역별 500자</span></li></ul></li>
+      <li class="pricing-card"><div class="pricing-head"><h2>플러스</h2><p class="pricing-audience-note">일지와 리포트를 함께 관리하는 분</p></div><div class="pricing-price-block"><p class="pricing-price">월 14,900원</p><p class="pricing-price-note">(VAT 포함 금액)</p></div><a class="button pricing-button--soft" href="#/plans?plan=starter" data-action="plan" data-plan="starter">플러스 선택</a><ul class="pricing-features"><li><span>무료의 모든 기능</span></li><li><span>AI 다듬기 · 대상별 하루 1회</span></li><li><span>주간 리포트와 PDF·Word 내려받기</span></li><li><span>리포트 생성 알림</span></li><li><span>일지 및 리포트 채점 문항 직접 만들기</span></li></ul></li>
+      <li class="pricing-card"><div class="pricing-head"><h2>팀</h2><p class="pricing-audience-note">각자의 기록을 따로 관리하는 팀</p></div><div class="pricing-price-block"><p class="pricing-price">월 39,900원</p><p class="pricing-price-note">(VAT 포함 금액)</p></div><a class="button pricing-button--soft" href="#/plans?plan=team" data-action="plan" data-plan="team">팀 선택</a><ul class="pricing-features"><li><span>플러스의 모든 기능을 3명이 각자</span></li><li><span>결제는 1명, 최대 2명 초대</span></li><li><span>관리대상 1인당 최대 5명</span></li><li><span>각자 계정으로 기록은 따로</span></li></ul></li>
     </ul></section>
   </template>
 
@@ -2235,13 +2266,13 @@ SOFTWARE.
     <section class="page coupons-page"><header class="page-header"><div><h1>쿠폰함</h1></div></header>
       <div class="record-tabs coupon-tabs" role="group" aria-label="쿠폰 목록"><button type="button" data-action="coupon-tab" data-tab="available" aria-pressed="true">사용 가능</button><button type="button" data-action="coupon-tab" data-tab="history" aria-pressed="false">사용 완료·기간 만료</button></div>
       <div class="coupon-panel" data-coupon-panel="available"><div class="coupon-grid">
-        <article class="coupon-card"><div class="coupon-card-main"><h2>플러스 7일 이용권</h2><p>초대한 분 보상</p></div><div class="coupon-card-meta"><span>사용 기한: 발급일로부터 3개월</span><button type="button" class="button tertiary" data-action="coupon-preview" data-coupon="초대한 분 보상 · 플러스 7일 이용권">사용하기</button></div></article>
-        <article class="coupon-card"><div class="coupon-card-main"><h2>플러스 7일 이용권</h2><p>초대한 분 보상</p></div><div class="coupon-card-meta"><span>사용 기한: 발급일로부터 3개월</span><button type="button" class="button tertiary" data-action="coupon-preview" data-coupon="초대한 분 보상 · 플러스 7일 이용권">사용하기</button></div></article>
-        <article class="coupon-card"><div class="coupon-card-main"><h2>플러스 14일 이용권</h2><p>초대한 분 보상</p></div><div class="coupon-card-meta"><span>사용 기한: 발급일로부터 3개월</span><button type="button" class="button tertiary" data-action="coupon-preview" data-coupon="초대한 분 보상 · 플러스 14일 이용권">사용하기</button></div></article>
+        <article class="coupon-card"><div class="coupon-card-main"><h2>케어릿 초대 이벤트 1차 쿠폰</h2><p>플러스 7일 이용권</p></div><div class="coupon-card-meta"><span>사용 기한: 발급일로부터 3개월</span><button type="button" class="button tertiary" data-action="coupon-preview" data-coupon="초대한 분 보상 · 플러스 7일 이용권">사용하기</button></div></article>
+        <article class="coupon-card"><div class="coupon-card-main"><h2>케어릿 초대 이벤트 2차 쿠폰</h2><p>플러스 7일 이용권</p></div><div class="coupon-card-meta"><span>사용 기한: 발급일로부터 3개월</span><button type="button" class="button tertiary" data-action="coupon-preview" data-coupon="초대한 분 보상 · 플러스 7일 이용권">사용하기</button></div></article>
+        <article class="coupon-card"><div class="coupon-card-main"><h2>케어릿 초대 이벤트 3차 쿠폰</h2><p>플러스 14일 이용권</p></div><div class="coupon-card-meta"><span>사용 기한: 발급일로부터 3개월</span><button type="button" class="button tertiary" data-action="coupon-preview" data-coupon="초대한 분 보상 · 플러스 14일 이용권">사용하기</button></div></article>
         <article class="coupon-card"><div class="coupon-card-main"><h2>플러스 7일 이용권</h2><p>초대받은 분께 드리는 혜택</p></div><div class="coupon-card-meta"><span>사용 기한: 발급일로부터 3개월</span><button type="button" class="button tertiary" data-action="coupon-preview" data-coupon="초대받은 분 보상 · 플러스 7일 이용권">사용하기</button></div></article>
       </div></div>
       <div class="coupon-panel" data-coupon-panel="history" hidden><div class="coupon-grid">
-        <article class="coupon-card coupon-card--past"><div class="coupon-card-main"><span class="coupon-status">사용 완료</span><h2>플러스 14일 이용권</h2><p>초대한 분 보상</p></div><div class="coupon-card-meta"><span>사용 기한: 발급일로부터 3개월</span></div></article>
+        <article class="coupon-card coupon-card--past"><div class="coupon-card-main"><span class="coupon-status">사용 완료</span><h2>케어릿 초대 이벤트 3차 쿠폰</h2><p>플러스 14일 이용권</p></div><div class="coupon-card-meta"><span>사용 기한: 발급일로부터 3개월</span></div></article>
         <article class="coupon-card coupon-card--past"><div class="coupon-card-main"><span class="coupon-status">기간 만료</span><h2>플러스 7일 이용권</h2><p>초대받은 분께 드리는 혜택</p></div><div class="coupon-card-meta"><span>사용 기한: 발급일로부터 3개월</span></div></article>
       </div></div>
     </section>
@@ -4554,7 +4585,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const reserved=period.start>today;
     const renewing=reserved&&state.subscription?.autoRenew===true;
     const renewalNotice=renewing?`다음 결제일은 ${date(mockupAddDays(period.end,1))}로 미뤄지고, 이후 정기결제돼요.`:'자동 결제는 시작되지 않아요.';
-    dialog(reserved?'쿠폰을 등록할까요?':'쿠폰을 사용할까요?',`<p>플러스를 ${days}일 이용할 수 있어요.</p><p>${date(period.start)}부터 ${date(period.end)}까지 ${reserved?'자동으로 적용돼요':'이용해요'}. ${renewalNotice}</p>`,reserved?'쿠폰 등록':'쿠폰 사용',async()=>{
+    dialog(reserved?'쿠폰을 등록할까요?':'쿠폰을 사용할까요?',`<p>${index<3?`케어릿 초대 이벤트 ${index+1}차 쿠폰 · `:''}플러스를 ${days}일 이용할 수 있어요.</p><p>${date(period.start)}부터 ${date(period.end)}까지 ${reserved?'자동으로 적용돼요':'이용해요'}. ${renewalNotice}</p>`,reserved?'쿠폰 등록':'쿠폰 사용',async()=>{
       const now=currentDate(),next=mockupCouponPeriod(state,now,days);
       if(!next||next.start!==period.start||next.end!==period.end||state.couponUsed?.[index]||now>expires){toast('이용 상태가 변경됐어요. 다시 확인해 주세요.');return;}
       const previous={from:state.couponPlusFrom,until:state.couponPlusUntil,used:copy(state.couponUsed||{}),recipients:copy(state.recipients),subscription:state.subscription?copy(state.subscription):null};
@@ -5146,7 +5177,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       <form id="checkout-form" class="checkout-body" novalidate>
         <section class="checkout-summary" aria-labelledby="checkout-amount-title">
           <div class="checkout-total"><h3 id="checkout-amount-title">오늘 결제 금액</h3><strong>${won(amount)}</strong></div>
-          <p class="checkout-tax">부가가치세 포함</p>
+          <p class="checkout-tax">VAT 포함 금액</p>
           <dl class="checkout-billing"><div><dt>결제 주기</dt><dd>매월 자동결제</dd></div><div><dt>다음 결제일</dt><dd>${nextBillingOn}</dd></div><div><dt>다음 결제 금액</dt><dd>${won(amount)}</dd></div></dl>
         </section>
         <div class="checkout-notices"><p>결제 후 바로 이용할 수 있어요. 해지 전까지 매월 ${won(amount)}이 자동 결제돼요.</p><p>요금제에서 언제든 자동갱신을 해지할 수 있어요. 해지 후에도 결제한 기간까지 이용해요.</p><p>결제 후 7일 이내 · 유료 기능 미사용 시 전액 환불해요. 사용 후·7일 경과 시의 제한과 법령상 예외는 환불 기준에서 확인해 주세요.</p>${selected==='team'?'<p class="checkout-team-notice">팀 플랜은 결제자만 결제·자동갱신 해지·환불을 관리합니다. 결제자가 해지하면 이용기간 종료일에 팀원도 무료 플랜으로 전환됩니다.</p>':''}</div>
@@ -5189,7 +5220,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const sub=state.subscription, cycle=checkoutCycles[sub.cycle];
     const period=mockupSubscriptionPeriod(sub,currentDate());
     return `<dl class="subscription-details">
-      <div><dt>결제 금액</dt><dd>${won(sub.amount)}<small>부가가치세 포함</small></dd></div>
+      <div><dt>결제 금액</dt><dd>${won(sub.amount)}<small>VAT 포함 금액</small></dd></div>
       <div><dt>결제일</dt><dd>${mockupBillingDate(sub.paidOn)}</dd></div>
       <div><dt>${sub.autoRenew===false?'유료 이용 종료일':'다음 결제일'}</dt><dd>${sub.autoRenew===false?period.end:sub.nextBillingOn}</dd></div>
       <div><dt>다음 결제</dt><dd>${sub.autoRenew===false?'없음':won(sub.amount)}<small>${sub.autoRenew===false?'자동갱신 해지됨':`${cycle.months===12?'매년':'매월'} 정기 결제`}</small></dd></div>
@@ -5199,14 +5230,14 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const stopped=sub.autoRenew===false;
     return `<dl class="subscription-overview-details">
       <div><dt>${stopped?'이용 종료일':'다음 결제일'}</dt><dd>${stopped?period.end:sub.nextBillingOn}</dd></div>
-      <div><dt>결제 금액</dt><dd>${stopped?'다음 결제 없음':won(sub.amount)}</dd>${stopped?'':`<p>${cycle.months===12?'매년':'매월'} 정기 결제 · 부가가치세 포함</p>`}</div>
+      <div><dt>결제 금액</dt><dd>${stopped?'다음 결제 없음':won(sub.amount)}</dd>${stopped?'':`<p>${cycle.months===12?'매년':'매월'} 정기 결제 · VAT 포함 금액</p>`}</div>
       <div class="subscription-first-payment"><dt>첫 결제일</dt><dd>${mockupBillingDate(sub.paidOn)}</dd></div>
     </dl>`;
   }
   function openCheckoutPolicy(type,plan,date) {
     const renewal=type==='renewal', amount=mockupCheckoutPrice(plan);
     if (renewal && (!Number.isInteger(amount) || !/^\d{4}-\d{2}-\d{2}$/.test(date||''))) return;
-    const html=renewal?`<p><strong>${checkoutPlans[plan].name} · 월 ${won(amount)}</strong> (부가가치세 포함)</p><p>첫 결제는 ${mockupBillingDate(date)}, 다음 결제는 ${mockupBillingDate(date,1)}에 ${won(amount)}이에요. 이후에도 첫 결제일과 같은 날짜에 매월 자동 결제돼요. 해당 날짜가 없는 달에는 마지막 날에 결제해요.</p><p>결제 직후 유료 기능이 제공돼요. 요금제 → 자동갱신 해지 또는 support@careit.kr를 통해 다음 결제부터 해지할 수 있어요. 이미 결제한 기간까지 이용할 수 있으며, 자동갱신 해지는 환불 신청과 달라요.</p>${plan==='team'?'<p>팀의 해지·환불은 결제자가 요청해요. 이용기간이 끝나면 결제자와 팀원 모두 무료 요금제로 전환돼요.</p>':''}<p>요금이 인상되는 경우 변경 금액과 적용 시점을 미리 안내하고 별도 동의를 받아요.</p>`:$('#checkout-policy-template').innerHTML;
+    const html=renewal?`<p><strong>${checkoutPlans[plan].name} · 월 ${won(amount)}</strong> (VAT 포함 금액)</p><p>첫 결제는 ${mockupBillingDate(date)}, 다음 결제는 ${mockupBillingDate(date,1)}에 ${won(amount)}이에요. 이후에도 첫 결제일과 같은 날짜에 매월 자동 결제돼요. 해당 날짜가 없는 달에는 마지막 날에 결제해요.</p><p>결제 직후 유료 기능이 제공돼요. 요금제 → 자동갱신 해지 또는 support@careit.kr를 통해 다음 결제부터 해지할 수 있어요. 이미 결제한 기간까지 이용할 수 있으며, 자동갱신 해지는 환불 신청과 달라요.</p>${plan==='team'?'<p>팀의 해지·환불은 결제자가 요청해요. 이용기간이 끝나면 결제자와 팀원 모두 무료 요금제로 전환돼요.</p>':''}<p>요금이 인상되는 경우 변경 금액과 적용 시점을 미리 안내하고 별도 동의를 받아요.</p>`:$('#checkout-policy-template').innerHTML;
     const modal=editorDialog('checkout-policy-dialog','checkout-dialog',renewal?'정기결제·자동갱신':'이용약관·환불 기준',`<div class="checkout-body"><div class="checkout-policy-copy">${html}</div><button type="button" class="button secondary" data-action="close-modal" data-modal="checkout-policy-dialog">확인</button></div>`);
     const title=$('#checkout-policy-dialog-title',modal);title.tabIndex=-1;title.focus();
   }
