@@ -65,12 +65,12 @@ SOFTWARE.
 .license-item+.license-item { border-top:1px solid var(--line); }
 .license-item h2 { margin:0; color:var(--text); font:var(--type-card-title); }
 .license-item p { margin:var(--space-2) 0; color:var(--muted); font:400 var(--fs-body-sm)/1.5 var(--font-sans); }
-.license-item>a,.license-item summary,.licenses-live-link a,.policy-article a,.policy-source a { color:var(--primary-dark); }
+.license-item>a,.license-item summary,.licenses-live-link a,.policy-article a { color:var(--primary-dark); }
 .license-item>a,.license-item summary { font:600 var(--fs-body-sm)/1.5 var(--font-sans); }
 .license-item details { margin-top:var(--space-3); }
 .license-item summary { cursor:pointer; }
 .license-item pre { max-height:360px; margin:var(--space-4) 0 0; padding:var(--space-4); overflow:auto; border-radius:var(--radius-control); background:var(--neutral-soft); color:var(--text); white-space:pre-wrap; overflow-wrap:anywhere; font:400 13px/1.6 monospace; }
-.licenses-live-link,.policy-source { margin:var(--space-5) 0 0; color:var(--muted); font:400 var(--fs-body-sm)/1.6 var(--font-sans); }
+.licenses-live-link { margin:var(--space-5) 0 0; color:var(--muted); font:400 var(--fs-body-sm)/1.6 var(--font-sans); }
 .policy-article { padding:var(--space-8); color:var(--text); font:400 var(--fs-body)/1.75 var(--font-sans); overflow-wrap:anywhere; }
 .policy-article h1 { margin:0 0 var(--space-5); font:700 24px/1.35 var(--font-sans); }
 .policy-article h2 { margin:var(--space-8) 0 var(--space-3); font:var(--type-card-title); }
@@ -217,6 +217,7 @@ SOFTWARE.
 .reports-page .stored-reports .empty-state h2 { font:700 var(--fs-card-title)/1.5 var(--font-sans); }
 .reports-page .stored-reports .empty-state p { font:400 var(--fs-body-sm)/1.5 var(--font-sans); }
 .reports-page .configured-report .configured-report-actions { align-items:center; }
+.reports-page .report-footer { border-top:0; }
 @media(max-width:767px) {
   .app-content .reports-page .report-generation-card { padding:var(--space-4); }
   .reports-page>.report-recipient-change .button { width:100%; max-width:320px; }
@@ -243,6 +244,49 @@ SOFTWARE.
 @media print { .reports-page .report-preview { border:0; } }
 .report-recipient-info .dropdown { width:min(430px,100%); }
 .reports-page .report-generation-field .datefield-trigger { height:42px; min-height:42px; }
+.report-mobile-period-status,.report-mobile-journal-link,.report-mobile-preview-trigger { display:none; }
+.report-mobile-preview-wrap { display:contents; }
+@media screen and (max-width:767px) {
+  body .app-layout #main-content:has(.reports-page) { background:var(--surface); }
+  .reports-page .page-header { margin-bottom:20px; }
+  .reports-page .page-header h1 { font-size:calc(20px * var(--native-text-scale,1)); }
+  body .app-content .reports-page .report-generation-card { padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; }
+  .reports-page .report-generation-card .report-generation-fields { gap:16px; }
+  .reports-page .report-generation-card .report-generation-field h2 { font-size:calc(16px * var(--native-text-scale,1)); }
+  .reports-page .report-period-heading .report-generation-status { display:none; }
+  .reports-page .report-mobile-period-status:not([hidden]) { display:block; color:var(--muted); font:500 calc(13px * var(--native-text-scale,1))/1.5 var(--font-sans); }
+  .reports-page .stored-reports .empty-state { padding-top:24px; }
+  .reports-page .report-mobile-journal-link { display:inline-flex; margin-top:16px; min-height:44px; }
+  .reports-page:is(.report-needs-journals,.report-no-period) > .report-recipient-change { display:none; }
+  body .reports-page .report-preview { padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; }
+  .reports-page .configured-report-action-controls { display:block; width:100%; }
+  .reports-page .configured-report-action-controls .configured-report-file-actions { display:grid; grid-column:1/-1; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; width:100%; }
+  .reports-page .configured-report-file-actions > .button { width:100%; min-width:0; }
+  .reports-page .configured-report-file-actions > .button:first-child { grid-column:1/-1; }
+  body .reports-page .configured-report-question-details > summary { box-sizing:border-box; min-height:44px; padding:12px 16px; font:700 16px/1.4 var(--font-sans); }
+  body .reports-page .configured-report-question-details > div { gap:24px; }
+  body .reports-page .configured-report-question-details section h3 { font-size:16px; line-height:1.4; }
+  body .reports-page .configured-report-question-details li { display:flex; flex-direction:column; align-items:stretch; gap:4px; padding:14px 0; }
+  body .reports-page .configured-report-question-details li p { margin:0; font:400 15px/1.55 var(--font-sans); }
+  body .reports-page .configured-report-question-details li > span { font:400 13px/1.5 var(--font-sans); white-space:normal; overflow-wrap:anywhere; }
+  .reports-page .report-mobile-preview-wrap { display:block; position:relative; min-width:0; width:100%; }
+  .reports-page .report-mobile-preview-trigger { position:absolute; inset:0; z-index:1; display:flex; align-items:flex-start; justify-content:flex-end; width:100%; padding:12px; border:0; background:transparent; cursor:pointer; }
+  .reports-page .report-mobile-preview-trigger span { display:flex; align-items:center; min-height:44px; padding:0 14px; border-radius:var(--radius-control); background:var(--primary-action); color:#fff; box-shadow:var(--shadow-card); font:700 14px/1.4 var(--font-sans); }
+  .reports-page .configured-report-viewport { padding:8px; }
+  .report-document-modal { box-sizing:border-box; width:100vw; max-width:none; height:100dvh; max-height:none; margin:0; padding:0; border:0; border-radius:0; background:var(--screen); color:var(--text); overflow:hidden; }
+  .report-document-modal[open] { display:flex; flex-direction:column; }
+  .report-document-modal::backdrop { background:rgba(0,0,0,.5); }
+  .report-document-modal-header { display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:60px; padding:8px 16px; background:var(--surface); border-bottom:1px solid var(--line); }
+  .report-document-modal-header strong { font:700 16px/1.4 var(--font-sans); }
+  .report-document-modal-header button { display:grid; place-items:center; flex:none; width:44px; height:44px; padding:0; border:0; background:transparent; color:var(--muted); font:400 26px/1 var(--font-sans); cursor:pointer; }
+  .report-document-modal-content { box-sizing:border-box; flex:1; min-height:0; padding:12px; overflow:auto; overscroll-behavior:contain; }
+  .report-document-modal-content .configured-report-pages { width:calc(794px * var(--configured-report-scale)); margin:0 auto; }
+  .report-document-modal-content .configured-report-page { transform:scale(var(--configured-report-scale)); }
+  .report-document-modal-controls { display:flex; justify-content:center; align-items:center; gap:8px; padding:8px 16px max(8px,env(safe-area-inset-bottom)); border-top:1px solid var(--line); background:var(--surface); }
+  .report-document-modal-controls button { min-width:44px; min-height:44px; padding:0 12px; border:0; border-radius:var(--radius-control); background:var(--neutral-soft); color:var(--text); font:600 15px/1 var(--font-sans); cursor:pointer; }
+  .report-document-modal-controls button:disabled { opacity:.45; cursor:default; }
+  .report-document-modal-controls output { min-width:48px; text-align:center; color:var(--muted); font:600 14px/1 var(--font-sans); }
+}
 .settings-card .account-value:has(button) { display:flex; justify-content:space-between; align-items:center; gap:var(--space-4); }
 .settings-page #account-name { box-sizing:border-box; flex:1; min-width:0; width:100%; height:38px; padding:0 var(--space-4); border:0; border-radius:var(--radius-form-control); background:var(--neutral-soft); color:var(--text); font:500 var(--fs-body)/1.5 var(--font-sans); }
 .settings-page .settings-account .account-profile-row.is-editing>dt { min-height:0; margin-top:0; align-self:center; }
@@ -319,6 +363,26 @@ body[data-theme=dark] .settings-page .settings-card .account-invite-controls .bu
 .subscription-card [data-action="team-invite"]:disabled { background:var(--neutral); color:var(--muted); opacity:1; }
 @media(max-width:767px) { .report-recipient-info { align-items:stretch; flex-direction:column; } }
 .journal-page { flex-direction:column; display:flex; }
+@media (max-width:767px) {
+  .journal-page .page-header { margin-bottom:20px; }
+  .journal-page .page-header h1 { font-size:calc(20px * var(--native-text-scale,1)); }
+  .journal-page .journal-title-prefix { display:none; }
+}
+@media (max-width:767px) {
+  body .app-layout #main-content:has(.journal-page) { background:var(--surface); }
+  body .app-content .journal-page > :is(.journal-toolbar,.journal-card,.journal-actions) { border:0; border-radius:0; background:transparent; box-shadow:none; }
+  body .app-content .journal-page > .journal-toolbar { padding:0; margin-bottom:24px; }
+  body .app-content .journal-page > .journal-card { padding:24px 0 0; margin-bottom:24px; border-top:1px solid var(--line); }
+  body .app-content .journal-page > .journal-actions { padding:20px 0 0; border-top:1px solid var(--line); }
+  body .app-content .journal-page > .journal-actions > div:last-child { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; width:100%; }
+  body .app-content .journal-page > .journal-actions > div:last-child > .button { min-width:0; width:100%; grid-column:auto; }
+  body .app-content .journal-page > .journal-actions > div:last-child > [data-action="delete-journal"] { grid-column:1/-1; width:auto; justify-self:start; }
+  .journal-page .journal-toolbar > .field > span { font-size:calc(16px * var(--native-text-scale,1)); }
+  .journal-page .journal-quick-check-heading { margin-bottom:20px; }
+  .journal-page .journal-quick-check-heading h2 { font-size:calc(18px * var(--native-text-scale,1)); }
+  body .app-content .journal-page .journal-quick-checks,body .app-content .journal-page .journal-memo-fields { row-gap:28px; }
+  .journal-page .quick-check-clear { min-width:44px; min-height:44px; }
+}
 .journal-page>.page-header { order:0; }.journal-page>.journal-toolbar { order:1; }.journal-page>.journal-quick-check-card { order:2; }.journal-page>.journal-memo-card { order:3; }.journal-page>.journal-actions { order:4; }
 @media (width>=768px) { .recipient-memo-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (width>=1440px) { .recipient-memo-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
@@ -741,6 +805,7 @@ textarea,select,.dropdown-trigger,.datefield-trigger,
 .home-today-list { display:block; padding-right:0; }
 .home-status-table { width:100%; border-collapse:collapse; table-layout:fixed; }
 .home-status-table th:first-child { width:40%; }
+@media (min-width:960px) and (max-width:1239px) { .home-status-table th:first-child { width:48%; } }
 .home-status-table thead th { padding:0 8px 10px 0; color:var(--muted); text-align:left; font:500 var(--fs-body-sm)/1.5 var(--font-sans); }
 .home-status-table tbody tr { border-top:1px solid var(--line); }
 .home-status-table tbody th,.home-status-table tbody td { padding:12px 8px 12px 0; text-align:left; vertical-align:middle; }
@@ -771,6 +836,31 @@ body[data-theme=dark] .home-status-link:hover .home-status-value:not(.is-ready):
   .home-status-table tbody td { display:block; padding:0; min-width:0; }
   .home-status-table tbody td:nth-child(2) { text-align:left; }
   .home-status-label { display:block; color:var(--muted); font:400 var(--fs-body-sm)/1.5 var(--font-sans); }
+}
+@media (max-width:767px) {
+  .home-workspace-grid > .home-reports { display:none; }
+  .home-page .home-today { padding:var(--space-4); }
+  .home-today .home-widget-header { margin-bottom:var(--space-4); }
+  .home-page .home-header h1 { font-size:calc(22px * var(--native-text-scale,1)); }
+  .home-today .home-widget-header h2 { font-size:calc(18px * var(--native-text-scale,1)); }
+  .home-today .home-widget-header p { font-size:calc(13px * var(--native-text-scale,1)); }
+  .home-today-name { font-size:calc(15px * var(--native-text-scale,1)); }
+  .home-status-table thead { display:none; }
+  .home-status-table,.home-status-table tbody { display:block; }
+  .home-status-table tbody tr { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.4fr); gap:4px 8px; padding:15px 0 4px; }
+  .home-status-table tbody tr:last-child { padding-bottom:0; }
+  .home-status-table tbody th:first-child { grid-column:1/-1; width:auto; padding:0; }
+  .home-status-table tbody td,.home-status-table tbody td:nth-child(2),.home-status-table tbody td:last-child { display:block; min-width:0; padding:0; text-align:left; }
+  .home-status-table .home-status-link { display:flex; box-sizing:border-box; width:100%; height:100%; min-height:44px; align-items:flex-start; gap:4px; padding:12px 0; border-radius:8px; background:transparent; }
+  .home-status-table .home-status-value::after { content:'›'; margin-left:4px; color:var(--muted); font:600 14px/1 var(--font-sans); }
+  .home-status-table .home-status-label { display:block; flex:none; color:var(--muted); font:400 calc(14px * var(--native-text-scale,1))/1.45 var(--font-sans); }
+  body .home-today .home-status-table .home-status-link .home-status-value { width:auto; padding:0; background:transparent; color:var(--muted); text-align:left; font:600 calc(14px * var(--native-text-scale,1))/1.45 var(--font-sans); }
+  body .home-today .home-status-table .home-status-link .home-status-value:is(.is-action,.is-ready) { color:var(--primary-dark); }
+}
+@media (max-width:365px) {
+  .home-status-table .home-status-link { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:auto auto; gap:2px; align-content:start; }
+  .home-status-table .home-status-label { grid-column:1; grid-row:1; }
+  body .home-today .home-status-table .home-status-link .home-status-value { grid-column:1; grid-row:2; overflow-wrap:normal; word-break:keep-all; }
 }
 .home-announcement { margin-bottom:var(--space-7); border-radius:var(--radius-card); box-shadow:var(--shadow-card); }
 .home-announcement-link { position:relative; box-sizing:border-box; min-height:176px; display:flex; align-items:center; padding:var(--space-5) 3%; overflow:hidden; background:#00130d; border-radius:inherit; text-decoration:none; }
@@ -827,7 +917,23 @@ body[data-theme=dark] .home-status-link:hover .home-status-value:not(.is-ready):
 @media(max-width:1023px) { .app-layout > .nav-handle { left:auto; right:12px; } }
 .app-layout.mockup-nav-collapsed > .nav-handle { left:var(--space-4); right:auto; }
 .app-layout.mockup-nav-collapsed > .nav-handle svg { transform:scaleX(-1); }
+.app-layout > .mobile-header-brand,.app-layout > .nav-handle .nav-handle-hamburger { display:none; }
+@media (max-width:1239px) {
+  .app-layout > .nav-handle { top:16px; left:172px; right:auto; width:44px; height:44px; transform:none; background:transparent; box-shadow:none; }
+  .app-layout.mockup-nav-collapsed > .nav-handle { top:10px; left:16px; right:auto; }
+  .app-layout.mockup-nav-collapsed::before { content:""; position:fixed; z-index:20; inset:0 0 auto; height:64px; background:var(--surface-soft); border-bottom:1px solid var(--line); }
+  .app-layout.mockup-nav-collapsed > main { padding-top:80px; }
+}
+@media (max-width:1023px) { .app-layout:not(.mockup-nav-collapsed) > .nav-handle { left:auto; right:16px; } }
+@media (max-width:767px) {
+  .app-layout > .nav-handle,.app-layout.mockup-nav-collapsed > .nav-handle,.app-layout:not(.mockup-nav-collapsed) > .nav-handle { top:10px; left:auto; right:16px; }
+  .app-layout > .nav-handle .nav-handle-chevron { display:none; }
+  .app-layout > .nav-handle .nav-handle-hamburger { display:block; transform:none; }
+  .app-layout:not(.mockup-nav-collapsed) > .sidebar { padding-top:18px; }
+  .app-layout.mockup-nav-collapsed > .mobile-header-brand { display:flex; position:fixed; z-index:25; top:18px; left:20px; padding:0; }
+}
 @media print { .app-layout > .nav-handle { display:none!important; } }
+@media print { .app-layout.mockup-nav-collapsed::before,.mobile-header-brand { display:none!important; } }
 .mockup-toggle { position: fixed; right: 20px; bottom: 18px; z-index: 80; border: 1px solid #d5dfe1; border-radius: 30px; padding: 10px 16px; background: #fff; color: #30443d; box-shadow: var(--shadow-ui); font: 600 14px/1.3 Pretendard,sans-serif; cursor: pointer; }
 .mockup-panel { position: fixed; right: 20px; bottom: 68px; z-index: 81; width: 330px; max-width: calc(100vw - 32px); max-height: calc(100dvh - 100px); overflow-y: auto; padding: 20px; border: 1px solid #d5dfe1; border-radius: 14px; background: #fff; color: #16202a; box-shadow: var(--shadow-ui); font: 14px/1.5 Pretendard,sans-serif; }
 .mockup-panel-heading { display:flex; align-items:center; justify-content:space-between; }
@@ -1041,7 +1147,10 @@ dialog { color:var(--text); }
 #consent-dialog .consent-items { gap:var(--space-3); margin-top:var(--space-5); }
 #consent-dialog .consent-items legend { margin-bottom:var(--space-3); font:700 14px/1.4 var(--font-sans); }
 #consent-dialog .consent-item { display:grid; grid-template-columns:20px minmax(0,1fr); align-items:start; gap:var(--space-3); padding:var(--space-4); border:0; border-radius:var(--radius-control); background:var(--neutral-soft); }
-#consent-dialog .consent-item input { margin:1px 0 0; }
+#consent-dialog .consent-item input { appearance:none; box-sizing:border-box; display:grid; place-items:center; width:20px; height:20px; margin:1px 0 0; border:1px solid color-mix(in srgb,var(--muted) 38%,var(--surface)); border-radius:3px; background:var(--surface); cursor:pointer; }
+#consent-dialog .consent-item input:checked { border-color:var(--primary-action); background:var(--primary-action); }
+#consent-dialog .consent-item input:checked::after { content:""; width:6px; height:10px; margin-top:-2px; border:solid #fff; border-width:0 2px 2px 0; transform:rotate(45deg); }
+#consent-dialog .consent-item input:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
 #consent-dialog .consent-item label { color:var(--text); font:700 14px/1.5 var(--font-sans); cursor:pointer; }
 #consent-dialog .consent-item p { margin:var(--space-1) 0 0; color:var(--muted); font:400 13px/1.5 var(--font-sans); }
 #consent-dialog .dialog-actions { position:static; justify-content:flex-end; gap:var(--space-2); margin-top:var(--space-5); padding:0; }
@@ -1338,6 +1447,29 @@ dialog#quick-type-picker .quick-check-type-footer>p { margin:0; color:var(--text
 .report-toolbar{justify-content:space-between;align-items:end;gap:var(--space-3);margin-bottom:var(--space-5);display:flex}.report-toolbar label{gap:var(--space-2);font-size:var(--fs-caption);font-weight:700;display:grid}.settings-card{margin-bottom:var(--space-5);padding:var(--space-5) var(--space-6);border-radius:var(--radius-card);background:var(--surface);box-shadow:var(--shadow-card)}.settings-card h2{margin:0 0 var(--space-4);font:var(--type-card-title)}.settings-card p{margin:0 0 var(--space-4);color:var(--muted);font-size:var(--fs-body-sm);font-weight:650;line-height:1.65}.reports-page .reports-layout{gap:var(--space-6);grid-template-columns:minmax(0,1fr);align-items:start;display:grid}.reports-page .stored-reports{margin-top:var(--space-6)}.report-preview{min-height:560px;padding:var(--space-7);border-radius:var(--radius-card);background:var(--surface);box-shadow:var(--shadow-card)}.report-preview>header{justify-content:space-between;gap:var(--space-4);padding-bottom:var(--space-4);border-bottom:1px solid var(--line);display:flex}.report-preview>header h2{font:var(--type-card-title);margin:0}.report-preview>header p{margin:var(--space-1) 0 0;color:var(--muted);font-size:var(--fs-body-sm);font-weight:650;line-height:1.65}.report-actions,.report-footer{gap:var(--space-2);flex-wrap:wrap;display:flex}.report-retention-expired{width:100%;color:var(--muted);font:var(--type-caption);margin:0}.report-markdown{padding:var(--space-6) 0;line-height:1.5}.report-markdown h2,.report-markdown h3{margin:var(--space-5) 0 var(--space-2)}.report-markdown p{margin:0 0 var(--space-3);white-space:pre-wrap}.report-markdown ul{margin:0 0 var(--space-4);padding-left:var(--space-6)}.report-footer{padding-top:var(--space-4);border-top:1px solid var(--line);justify-content:flex-end}.notification-list{gap:var(--space-5);margin:0;padding:0;list-style:none;display:grid}.notification-list li{justify-content:space-between;align-items:flex-start;gap:var(--space-4);padding:var(--space-4) var(--space-5);border-radius:var(--radius-card);background:var(--surface);box-shadow:var(--shadow-card);transition:background-color var(--motion-hover) var(--ease), color var(--motion-hover) var(--ease), box-shadow var(--motion-hover) var(--ease), transform var(--motion-hover) var(--ease);flex-direction:column;display:flex}.notification-list li.unread{background:var(--mint-soft)}.notification-list strong{font-size:var(--fs-caption)}.notification-list p{margin:var(--space-2) 0;color:var(--muted);font-size:var(--fs-body-sm);font-weight:650;line-height:1.65}.notification-list time{color:var(--muted);font-size:var(--fs-caption)}.notification-actions{gap:var(--space-2);width:100%;display:flex}.notification-actions .button{flex:1}.notification-limit-notice{margin:var(--space-4) 0 0;color:var(--muted);font-size:var(--fs-caption);text-align:center}.page.settings-page{max-width:680px}.settings-licenses{justify-content:flex-end;gap:var(--space-4);margin:0;display:flex}.settings-licenses a{min-height:44px;color:var(--muted);font-size:var(--fs-caption);text-underline-offset:3px;align-items:center;font-weight:650;text-decoration:underline;display:inline-flex}.settings-licenses a:hover{color:var(--text)}.session-details>summary{min-height:44px;margin-bottom:var(--space-3);color:var(--primary-dark);cursor:pointer;font-size:var(--fs-caption);align-items:center;font-weight:700;display:flex}.session-details:not([open])>summary{margin-bottom:0}.settings-card dl{margin:0 0 var(--space-4)}.settings-card dl>div{gap:var(--space-3);padding:var(--space-3) 0;border-top:1px solid var(--line);grid-template-columns:100px 1fr;display:grid}.settings-card dt{color:var(--muted);font-size:var(--fs-caption)}.settings-card dd{font-size:var(--fs-caption);word-break:break-all;margin:0}.settings-card dd.account-value{white-space:normal;overflow-wrap:anywhere;min-width:0}.session-list{margin:0 0 var(--space-4);border-bottom:1px solid var(--line);gap:0;padding:0;list-style:none;display:grid}.session-list li{justify-content:space-between;align-items:flex-start;gap:var(--space-4);padding:var(--space-4) 0;border-top:1px solid var(--line);flex-direction:column;display:flex}.session-info{gap:var(--space-1);min-width:0;display:grid}.session-info>div{align-items:center;gap:var(--space-2);flex-wrap:wrap;display:flex}.session-info strong{font-size:var(--fs-caption);word-break:break-word}.session-info>span{color:var(--muted);font-size:var(--fs-caption)}.session-badge{padding:var(--space-1) var(--space-2);background:var(--mint-soft);color:var(--primary-dark);font-size:var(--fs-caption);white-space:nowrap;border-radius:999px;font-weight:700}.session-password-form{margin-top:var(--space-4);padding:var(--space-4);border-radius:var(--radius-card);background:var(--surface-soft)}.session-password-form .field{margin-bottom:var(--space-3)}.session-password-form>div:last-child{justify-content:flex-end;gap:var(--space-2);display:flex}@media print{.write-tabs-row,.sidebar,.nav-open-button,.page-header,.report-toolbar,.report-actions,.report-footer,.toast{display:none!important}.app-layout main{padding:0!important}.report-preview{min-height:0;box-shadow:none;padding:0}}@media (width>=1024px){.notification-list li,.session-list li{flex-direction:row;align-items:center}.notification-actions{width:auto}.notification-actions .button{flex:none}}.reports-page .report-recipient-card{padding:var(--space-5) var(--space-6);border-radius:var(--radius-card);background:var(--surface);box-shadow:var(--shadow-card);justify-content:space-between;align-items:center;gap:var(--space-6);margin-bottom:var(--space-6);display:flex}.reports-page .report-recipient-info{align-items:center;gap:var(--space-4);min-width:0;display:flex}.reports-page .report-recipient-info>.dropdown{flex:0 432px;width:432px;min-width:0}.reports-page .report-recipient-info h2{font:var(--type-card-title);flex:none;margin:0}.reports-page .report-recipient-change{justify-content:flex-end;align-items:center;gap:var(--space-3);min-width:0;display:flex}.reports-page .report-recipient-change>.dropdown{flex:none}.reports-page .report-feature-notice{margin:-var(--space-4) 0 var(--space-6);color:var(--muted);font:var(--type-caption)}.reports-page .report-generation-card{gap:var(--space-5);margin-bottom:var(--space-6);padding:var(--space-5) var(--space-6);border-radius:var(--radius-card);background:var(--surface);box-shadow:var(--shadow-card);display:grid}.reports-page .report-generation-fields{align-items:stretch;gap:var(--space-5);grid-template-columns:1fr;display:grid}.reports-page .report-generation-field{grid-template-rows:auto 1fr;min-width:0;display:grid}.reports-page .report-generation-card h2{margin:0 0 var(--space-1);font:var(--type-card-title)}.reports-page .report-generation-card p{color:var(--muted);font:var(--type-caption);margin:0}.reports-page .report-generation-field .dropdown{width:100%;display:flex}.reports-page .report-generation-field .dropdown-trigger{height:100%}.reports-page .report-generation-field>p{align-items:center;min-height:42px;display:flex}.reports-page .report-generation-status-loading{align-items:center;gap:var(--space-2);display:flex}@media (width<768px){.reports-page .report-recipient-card{align-items:stretch;gap:var(--space-4);padding:var(--space-4);flex-direction:column}.reports-page .report-recipient-change{flex-wrap:wrap;justify-content:stretch;width:100%}.reports-page .report-recipient-change>.dropdown{width:100%}.reports-page .report-generation-card{gap:var(--space-4);padding:var(--space-4)}.reports-page .report-generation-fields{gap:var(--space-4);grid-template-columns:1fr}}@media (width>=1024px){.reports-page .report-generation-fields{grid-template-columns:minmax(0,1fr) minmax(280px,1.4fr)}}@media print{.reports-page .report-recipient-card,.reports-page .report-generation-card{display:none!important}}.reports-page .report-summary{margin-bottom:var(--space-7);padding-bottom:var(--space-7);border-bottom:1px solid var(--line)}.reports-page .report-summary header>.report-summary-kicker{margin:0 0 var(--space-2);color:var(--primary-dark);font-weight:700}.reports-page .report-summary h2{font:var(--type-section-title)}.reports-page .report-summary-meta{gap:var(--space-8);margin:var(--space-6) 0;flex-wrap:wrap;display:flex}.reports-page .report-summary dt{color:var(--muted);font:var(--type-caption)}.reports-page .report-summary dd{margin:var(--space-1) 0 0;overflow-wrap:anywhere;font-weight:700}.reports-page .report-summary-overview{gap:var(--space-5);grid-template-columns:1fr;display:grid}.reports-page .report-summary-caption{padding:var(--space-6);border-radius:var(--radius-control);background:var(--neutral)}.reports-page .report-summary-caption h3{margin:0 0 var(--space-3);color:var(--primary-dark);font-size:var(--fs-caption)}.reports-page .report-summary-caption p{font:var(--type-card-body);margin:0}.reports-page .report-summary-caption p+p{margin-top:var(--space-2);color:var(--muted);font:var(--type-caption)}.reports-page .report-summary-stats{gap:var(--space-4);grid-template-columns:repeat(2,minmax(0,1fr));margin:0;display:grid}.reports-page .report-summary-stats>div{padding:var(--space-3) var(--space-4);border-left:1px solid var(--line)}.reports-page .report-summary-stats dd{font:var(--type-card-title)}@media (width>=1024px){.reports-page .report-summary-overview{grid-template-columns:minmax(0,3fr) minmax(0,2fr)}}@media print{.reports-page .report-summary{display:none!important}}.notification-list li:hover{box-shadow:var(--shadow-hairline);transform:translateY(-1px)}.reports-page .report-generation-field .datefield{width:100%;min-width:0}.reports-page .report-generation-field .datefield-trigger>span{overflow-wrap:anywhere;min-width:0}.reports-page .configured-report-area{border-color:var(--line)}.reports-page .report-generation-field{grid-template-rows:auto auto auto;align-content:start}.team-card .session-info{overflow-wrap:anywhere;min-width:0}.team-card .session-list>li,.team-card .dialog-actions{flex-wrap:wrap}.team-join-page h1{overflow-wrap:anywhere}.account-name-form,.account-name-form .field,.account-password-dialog .field{min-width:0}.account-name-form .dialog-actions{flex-wrap:wrap}.account-password-dialog .field{margin-bottom:var(--space-4)}.settings-card dl>.account-profile-row{align-items:center}.account-profile-row>.account-value:not(:has(form)){align-items:center;gap:var(--space-2);display:flex}.account-profile-row.is-editing>dt{min-height:42px;margin-top:calc(1.5em + var(--space-2));align-self:start;align-items:center;display:flex}.account-profile-row .field-heading{line-height:1.5}.account-profile-row .field-heading>label{line-height:inherit}.account-profile-row>.account-value>.button{margin-left:auto}.settings-card>[role=status]:empty{margin:0}.account-actions{align-items:center;gap:var(--space-2);flex-wrap:wrap;display:flex}.account-link-actions,.account-main-actions{gap:var(--space-2);flex-wrap:wrap;display:flex}.account-main-actions{margin-left:auto}.account-link-actions{gap:var(--space-4)}.account-provider{align-items:center;gap:var(--space-2);min-height:44px;color:var(--text);font:inherit;font-size:var(--fs-caption);background:0 0;border:0;padding:0;display:inline-flex}.account-provider.is-linked{color:var(--primary-dark);font-weight:700}button.account-provider{cursor:pointer;transition:color var(--motion-hover) var(--ease)}button.account-provider:hover{color:var(--primary)}.account-provider-mark{width:var(--space-6);height:var(--space-6);border-radius:999px;flex:none;place-items:center;display:inline-grid}.account-provider-mark svg{width:60%;height:60%}.account-provider-mark.kakao{background:#fee500}.account-provider-mark.google{border:1px solid var(--line);background:#fff}.consent-row{min-width:0}.consent-row+.consent-row{border-top:1px solid var(--line);margin-top:var(--space-5);padding-top:var(--space-5)}.consent-row-heading{justify-content:space-between;align-items:center;gap:var(--space-3);margin-bottom:var(--space-3);display:flex}.consent-row-heading h3{font:var(--type-card-title);min-width:0;margin:0}
 .pricing-grid{gap:var(--space-4);margin:0 0 var(--space-7);grid-template-columns:1fr;padding:0;list-style:none;display:grid}.pricing-card{gap:var(--space-6);padding:calc(var(--space-7) + var(--space-1)) var(--space-7);border-radius:var(--radius-dialog);background:var(--surface);box-shadow:var(--shadow-card);border:0;flex-direction:column;display:flex}body:not([data-theme=dark]) .pricing-card{--muted:#5f6d7a;--line:#16202a14;--primary-action:#06784f;--shadow-primary:0 8px 18px #0000001a}.pricing-card--highlight{outline:2px solid var(--primary);outline-offset:-2px}.pricing-card.is-current{background:var(--mint-soft)}.pricing-head{gap:var(--space-chip-gap);flex-direction:column;display:flex}.pricing-card h2{align-items:center;gap:var(--space-2);font:700 var(--fs-card-title)/1.5 var(--font-sans);flex-wrap:wrap;margin:0;display:flex}.pricing-badge{padding:var(--space-1) var(--space-2);border-radius:var(--radius-control);background:var(--badge-share-bg);color:var(--badge-share-fg);font-size:var(--fs-caption);font-weight:700}.pricing-audience-note,.pricing-price-note{color:var(--muted);font:400 var(--fs-body-sm)/1.5 var(--font-sans);margin:0}.pricing-price-block{gap:var(--space-chip-gap);flex-direction:column;justify-content:flex-end;display:flex}.pricing-price{font:700 var(--fs-metric)/1.2 var(--font-sans);margin:0}.pricing-card>.button,.pricing-hint>.button{--motion-hover:.5s;--ease:cubic-bezier(.22, .61, .36, 1);width:100%;min-height:44px;padding:var(--space-nav-gap) var(--space-4);border-radius:var(--radius-form-control);font:700 var(--fs-button)/1.5 var(--font-sans);box-shadow:none;transition:box-shadow var(--motion-hover) var(--ease), background var(--motion-hover) var(--ease)}.pricing-card>.button:hover:not(:disabled),.pricing-card>.button:active:not(:disabled){transform:none}.pricing-hint{display:block;position:relative}.pricing-hint-bubble{z-index:1;pointer-events:none;animation:popup-panel-in var(--motion-popup) var(--ease) backwards;padding:var(--space-2) var(--space-3);border-radius:var(--radius-control);box-shadow:var(--shadow-soft);background:var(--neutral-soft);color:var(--text);font:400 var(--fs-caption)/1.45 var(--font-sans);display:none;position:absolute;top:calc(100% + 6px);left:0;right:0}.pricing-hint-bubble:before{content:"";background:var(--neutral-soft);width:8px;height:8px;position:absolute;top:-4px;left:50%;transform:translate(-50%)rotate(45deg)}.pricing-hint:hover .pricing-hint-bubble{display:block}@media (prefers-reduced-motion:reduce){.pricing-hint-bubble{animation:none!important}}.pricing-card>.pricing-button--soft,.pricing-hint>.pricing-button--soft{background:var(--mint-soft);color:var(--primary-dark)}.pricing-card.is-current>.pricing-button--soft{background:var(--surface)}.pricing-card>.pricing-button--soft:hover:not(:disabled){background:#d1f0e0}body[data-theme=dark] .pricing-card>.pricing-button--soft:hover:not(:disabled){background:var(--mint-selected)}.pricing-features{gap:var(--space-3);padding:var(--space-6) 0 0;border-top:1px solid var(--line);flex-direction:column;margin:0;list-style:none;display:flex}.pricing-features li{align-items:flex-start;gap:var(--space-nav-gap);font:400 var(--fs-body)/1.5 var(--font-sans);display:flex}.pricing-features svg{width:18px;height:18px;margin-top:calc(var(--space-3) / 4);color:var(--primary);flex:none}.pricing-unavailable{margin:var(--space-2) 0 0;color:var(--muted);font:650 var(--fs-body-sm)/1.65 var(--font-sans)}@media (width<768px){.pricing-card{padding:calc(var(--space-6) + var(--space-1)) var(--space-6)}}@media (width>=768px){.pricing-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (width>=1024px){.pricing-grid{row-gap:var(--space-6);grid-template-columns:repeat(3,minmax(0,1fr))}.pricing-card{grid-template-rows:subgrid;grid-row:span 4;display:grid}.pricing-price-block{min-height:128px}.pricing-price{white-space:nowrap;font-size:min(var(--fs-metric), calc((100vw - 511px) * .06))}}.checkout-dialog{border-radius:var(--radius-dialog);background:var(--surface);width:min(520px,100vw - 32px);max-height:calc(100dvh - 32px);color:var(--text);box-shadow:var(--shadow-dialog);border:0;padding:0;overflow:auto}.team-invite-body{gap:var(--space-5)}.team-invite-lead{color:var(--muted);font-size:var(--fs-body-sm);margin:0;line-height:1.6}.team-invite-field{gap:var(--space-2);display:grid}.team-invite-field label{font-size:var(--fs-body-sm);font-weight:700}.team-invite-row{gap:var(--space-2);display:flex}.team-invite-row input{min-width:0;min-height:48px;padding:0 var(--space-4);border:1px solid var(--line);border-radius:var(--radius-form-control);background:var(--surface-soft);color:var(--text);font:inherit;font-size:var(--fs-body);flex:1}.team-invite-row .button{flex:none}.team-invite-meta{gap:var(--space-1);color:var(--muted);font-size:var(--fs-body-sm);display:grid}.team-invite-meta p{margin:0}.team-invite-notice{padding:var(--space-3) var(--space-4);border-radius:var(--radius-control);background:var(--mint-soft);color:var(--primary-dark);font-size:var(--fs-body-sm);margin:0;line-height:1.6}.team-invite-actions{justify-content:space-between;gap:var(--space-3);flex-wrap:wrap;display:flex}.team-notice-dialog{width:min(440px,100vw - 32px);padding:var(--space-7) var(--space-7) var(--space-6);text-align:center}.team-notice-dialog[open]{align-items:center;gap:var(--space-4);flex-direction:column;display:flex}.team-notice-dialog h2{font:var(--type-dialog-title);margin:0;line-height:1.4}.team-notice-dialog p{color:var(--muted);font-size:var(--fs-body);margin:0;line-height:1.6}.team-notice-mark{width:var(--space-9);height:var(--space-9);background:var(--mint-soft);color:var(--primary-action);font-size:var(--fs-section);border-radius:50%;place-items:center;font-weight:700;display:grid}.team-notice-mark svg{width:26px;height:26px}.team-notice-mark.is-warn{background:var(--badge-todo-bg);color:var(--badge-todo-fg)}.team-notice-dialog .team-notice-list,.team-notice-steps{text-align:left;border-top:1px solid var(--line);width:100%;margin:0;padding:0;list-style:none}.team-notice-list li{gap:var(--space-3);padding:var(--space-3) 0;border-bottom:1px solid var(--line);font-size:var(--fs-body-sm);align-items:flex-start;line-height:1.5;display:flex}.team-notice-list svg{width:18px;height:18px;margin-top:var(--space-1);color:var(--primary-action);flex:none}.team-notice-steps{counter-reset:step}.team-notice-steps li{counter-increment:step;column-gap:var(--space-3);padding:var(--space-3) 0;border-bottom:1px solid var(--line);grid-template-columns:auto 1fr;display:grid}.team-notice-steps li:before{content:counter(step);width:var(--space-7);height:var(--space-7);background:var(--neutral-soft);font-size:var(--fs-body-sm);border-radius:50%;grid-row:span 2;place-items:center;font-weight:700;display:grid}.team-notice-steps li:first-child:before{background:var(--primary-action);color:#fff}.team-notice-steps strong{font-size:var(--fs-body-sm)}.team-notice-steps span{color:var(--muted);font-size:var(--fs-body-sm)}.team-notice-actions{gap:var(--space-2);width:100%;margin-top:var(--space-2);display:flex}.team-notice-actions>*{flex:1}.checkout-dialog::backdrop{background:#16202a59}.checkout-dialog.is-full{--checkout-read-width:720px;width:100vw;max-width:none;height:100dvh;max-height:none;box-shadow:none;border-radius:0;margin:0;inset:0}.checkout-dialog.is-full[open]{flex-direction:column;display:flex;overflow:hidden}.checkout-dialog.is-full .checkout-dialog-header{background:var(--surface);padding-inline:max(var(--space-7), calc((100% - var(--checkout-read-width)) / 2 + var(--space-7)));flex:none}.checkout-dialog.is-full .checkout-body{box-sizing:border-box;min-height:0;padding-inline:max(var(--space-7), calc((100% - var(--checkout-read-width)) / 2 + var(--space-7)));flex:1;align-content:start;overflow:auto}html:has(.checkout-dialog.is-full[open]){overflow:hidden}body:has(.checkout-dialog[open]){overflow:hidden}.checkout-dialog-header{justify-content:space-between;align-items:center;gap:var(--space-4);padding:var(--space-7) var(--space-7) var(--space-6);border-bottom:1px solid var(--line);display:flex}.checkout-dialog-header h2{font:var(--type-dialog-title);margin:0}.checkout-dialog-header .button{flex:none}.checkout-body{gap:var(--space-6);padding:var(--space-5) var(--space-7) var(--space-7);display:grid}.checkout-tax,.checkout-consent,.checkout-preview-note{font-size:var(--fs-caption);line-height:1.5}.checkout-summary{padding:var(--space-5);border-radius:var(--radius-card);background:var(--neutral-soft)}.checkout-refund-note{color:var(--muted);font-size:var(--fs-body-sm);margin:0;line-height:1.65}.checkout-total{justify-content:space-between;align-items:center;gap:var(--space-2) var(--space-4);flex-wrap:wrap;display:flex}.checkout-total h3{font-size:var(--fs-body-sm);margin:0;font-weight:700}.checkout-total>strong{white-space:nowrap;font-size:var(--fs-page);font-variant-numeric:tabular-nums;margin-left:auto;line-height:1.4}.checkout-tax{margin:var(--space-1) 0 0;color:var(--muted);text-align:right}.checkout-billing{gap:var(--space-2);margin:var(--space-4) 0 0;padding-top:var(--space-4);border-top:1px solid var(--line);font-size:var(--fs-body-sm);line-height:1.5;display:grid}.checkout-billing>div{justify-content:space-between;gap:var(--space-3);display:flex}.checkout-billing dt{color:var(--muted)}.checkout-billing dd{text-align:right;font-variant-numeric:tabular-nums;margin:0}.checkout-policy-copy p{font-size:var(--fs-body-sm);margin:0;line-height:1.65}.checkout-required{color:var(--muted);white-space:nowrap}.checkout-policy-link{font:inherit;color:var(--primary-dark);text-underline-offset:3px;cursor:pointer;background:0 0;border:0;flex:none;margin-left:auto;padding:0;text-decoration:underline}.checkout-policy-copy{gap:var(--space-4);display:grid}.checkout-policy-intro{gap:var(--space-2);padding:var(--space-5);border-radius:var(--radius-card);background:var(--neutral-soft);display:grid}.checkout-policy-copy h3{font-size:var(--fs-body);margin:0;font-weight:650}.checkout-policy-list{gap:var(--space-2);padding-left:var(--space-5);font-size:var(--fs-body-sm);margin:0;line-height:1.65;display:grid}.checkout-policy-copy a{color:var(--primary-dark)}.checkout-full-terms{padding-top:var(--space-4);border-top:1px solid var(--line);font-size:var(--fs-body-sm)}.checkout-full-terms h4{margin:var(--space-5) 0 var(--space-2);font-size:var(--fs-body);font-weight:650}.checkout-full-terms p+p{margin-top:var(--space-2)}.checkout-footer{gap:var(--space-4);padding-top:var(--space-5);border-top:1px solid var(--line);display:grid}.checkout-consent{align-items:flex-start;gap:var(--space-2);display:flex}.checkout-consent>input{width:18px;height:18px;margin:calc(var(--space-1) / 2) 0 0;accent-color:var(--primary-action);flex:none}.checkout-consent>label{cursor:pointer}.checkout-submit{width:100%;min-height:44px}.checkout-preview-note{margin:calc(-1 * var(--space-2)) 0 0;color:var(--muted);text-align:center}.subscription-card{margin-bottom:var(--space-5);padding:var(--space-6);background:var(--surface);border-radius:var(--radius-card);box-shadow:var(--shadow-card)}.subscription-header,.subscription-heading,.subscription-footer{justify-content:space-between;align-items:center;gap:var(--space-4);display:flex}.subscription-header{flex-wrap:wrap}.subscription-heading{justify-content:flex-start;gap:var(--space-3)}.subscription-heading h2{font:var(--type-card-title);margin:0}.subscription-header p,.team-records-note{margin:var(--space-2) 0 0;color:var(--muted);font-size:var(--fs-body-sm);line-height:1.65}.subscription-badge{padding:var(--space-1) var(--space-2);border-radius:var(--radius-control);color:var(--primary-dark);background:var(--mint-soft);font-size:var(--fs-body-sm);flex:none;font-weight:650;line-height:20px;display:inline-block}.plan-info{gap:var(--space-6) var(--space-9);margin-top:var(--space-6);grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));display:grid}.plan-info h3{margin:0 0 var(--space-1);color:var(--muted);font-size:var(--fs-body-sm);font-weight:700}.plan-info dl{border-bottom:1px solid var(--line);margin:0}.plan-info dl>div{justify-content:space-between;align-items:baseline;gap:var(--space-4);padding:var(--space-3) 0;border-top:1px solid var(--line);display:flex}.plan-info dt{color:var(--muted);font-size:var(--fs-body-sm);flex:none}.plan-info dd{font-size:var(--fs-body-sm);text-align:right;font-variant-numeric:tabular-nums;margin:0;font-weight:650}.plan-info small{color:var(--muted);font-weight:400;display:block}.subscription-footer{margin-top:var(--space-5);flex-wrap:wrap}.subscription-footer p{font-size:var(--fs-caption);color:var(--muted);margin:0}.subscription-comparison{margin:var(--space-6) 0}.subscription-comparison>summary{width:fit-content;color:var(--primary-dark);cursor:pointer;font-size:var(--fs-body-sm);font-weight:650}.subscription-comparison .pricing-grid{margin-top:var(--space-5)}.team-manage-toggle[aria-pressed=true]{background:var(--primary-action);color:#fff}.team-member-remove{width:44px;height:44px;margin-block:calc(var(--space-2) * -1);color:var(--danger);cursor:pointer;transition:color var(--motion-hover) var(--ease);background:0 0;border:0;flex:none;place-items:center;padding:0;display:grid}.team-member-remove:hover{color:color-mix(in srgb, var(--danger) 75%, white)}.team-member-remove svg{width:28px;height:28px}.team-member-list{margin:var(--space-5) 0 0;padding:0;list-style:none}.team-member-list li{justify-content:space-between;align-items:center;gap:var(--space-4);padding:var(--space-4) 0;border-top:1px solid var(--line);display:flex}.team-member-list li>div{min-width:0}.team-member-list strong{font-size:var(--fs-body);overflow-wrap:anywhere;font-weight:650;display:block}.team-member-list li>div>span{margin-top:var(--space-1);font-size:var(--fs-caption);color:var(--muted);display:block}.team-member-list .button{flex:none}.team-member-status{min-height:40px;padding:0 var(--space-4);color:var(--primary-dark);font-size:var(--fs-button);flex:none;align-content:center;justify-items:center;font-weight:650;display:inline-grid}.team-member-status:before{content:"초대하기";visibility:hidden;height:0;font-weight:700;overflow:hidden}@media (width<768px),(pointer:coarse){.team-member-status{min-height:44px}}@media (width<=767px){.subscription-card{padding:var(--space-5)}}@media (width<=479px){.checkout-dialog-header{padding:var(--space-6) var(--space-5) var(--space-5)}.checkout-dialog.is-full .checkout-dialog-header,.checkout-dialog.is-full .checkout-body{padding-inline:var(--space-5)}.checkout-body{padding:var(--space-5) var(--space-5) var(--space-6);gap:var(--space-5)}.checkout-summary{padding:var(--space-4)}}.qa-billing-toggle{z-index:80;padding:var(--space-nav-gap) var(--space-4);color:#30443d;box-shadow:var(--shadow-ui);font:600 var(--fs-button)/1.3 Pretendard,sans-serif;cursor:pointer;background:#fff;border:1px solid #d5dfe1;border-radius:30px;position:fixed;bottom:18px;right:20px}.qa-billing-panel{z-index:81;width:330px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 100px);padding:var(--space-5);color:#16202a;box-shadow:var(--shadow-ui);font:var(--fs-body-sm)/1.5 Pretendard,sans-serif;background:#fff;border:1px solid #d5dfe1;border-radius:14px;position:fixed;bottom:68px;right:20px;overflow-y:auto}.qa-billing-panel-heading{justify-content:space-between;align-items:center;display:flex}.qa-billing-panel-heading strong{font-size:calc(var(--fs-body) * 17 / 16)}.qa-billing-panel button{cursor:pointer;padding:var(--space-2) var(--space-3);color:#16202a;font:inherit;background:#f6f8fa;border:1px solid #d5dfe1;border-radius:8px}.qa-billing-panel-heading button{font-size:var(--fs-page);padding:0 var(--space-1);background:0 0;border:0}.qa-billing-panel-options{gap:var(--space-chip-gap);margin-top:var(--space-3);display:grid}.qa-billing-panel-note{margin:var(--space-4) 0 0;color:#5f6d7a;font-weight:700}.qa-billing-panel button[aria-pressed=true]{color:#fff;background:#06784f;border-color:#06784f}@media (width<=600px){.qa-billing-toggle{bottom:12px;right:12px}.qa-billing-panel{bottom:60px;right:12px}}@media print{.qa-billing-toggle,.qa-billing-panel{display:none!important}}.plan-cancel-link{min-height:44px;color:var(--muted);font:inherit;font-size:calc(13px * var(--native-text-scale,1));text-underline-offset:3px;cursor:pointer;transition:color var(--motion-hover) var(--ease);background:0 0;border:0;padding:0;text-decoration:underline}.plan-cancel-link:hover:not(:disabled){color:var(--text)}.plan-cancel-dialog{text-align:left}.plan-cancel-option{margin-top:var(--space-5);padding:var(--space-4);border:1.5px solid var(--primary);border-radius:var(--radius-card);background:var(--mint-soft)}.plan-cancel-option strong{font-size:var(--fs-body);font-weight:700}.plan-cancel-dialog .plan-cancel-refund{margin-top:var(--space-4)}.plan-cancel-refund a{color:inherit;text-decoration:underline}.plan-cancel-dialog .dialog-actions{justify-content:flex-end}.plan-cancel-options{border:0;min-width:0;margin:0;padding:0}.plan-cancel-choice{align-items:baseline;gap:var(--space-3);border-color:var(--line);background:var(--surface);cursor:pointer;min-height:44px;display:flex}.plan-cancel-choice:has(input:checked){border-color:var(--primary);background:var(--mint-soft)}:root[data-input-modality=keyboard] .plan-cancel-choice:has(input:focus-visible){outline:2px solid var(--primary-dark);outline-offset:2px}.plan-cancel-choice input{width:auto;accent-color:var(--primary-action);flex:none;margin:0}.plan-cancel-badge{padding:var(--space-1) var(--space-2);border-radius:var(--radius-control);background:var(--mint-soft);color:var(--primary-dark);font-size:var(--fs-caption);display:inline-block}.plan-cancel-effects{gap:var(--space-2);margin:var(--space-5) 0;padding-left:var(--space-5);font-size:var(--fs-body-sm);display:grid}.plan-cancel-dialog .plan-cancel-refund{font-size:var(--fs-caption);color:var(--muted)}.plan-cancel-dialog .dialog-actions .button{min-height:44px}#smartropay-wrapper{z-index:99998;display:none;position:fixed;inset:0;overflow:auto}#smartropay_iframe{z-index:99999;background:#fff;border:0;margin:0;padding:0;display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}.smartropay_wp_dim{background:#000000b3;position:fixed;inset:0}#smartropay-loading{z-index:9999;text-align:center;color:#fff;place-content:center;display:grid;position:absolute;inset:0}
 </style>
+  <style id="responsive-qa-styles">
+@media (min-width:768px) and (max-width:1239px) {
+  .home-page { --home-columns:minmax(0,1fr); }
+}
+@media (min-width:1024px) and (max-width:1279px) {
+  .reports-page .configured-report-actions { flex-direction:column; align-items:stretch; }
+  .reports-page .configured-report-file-actions { justify-content:flex-end; }
+}
+#mockup-dialog.is-journal-navigation { width:min(520px,calc(100vw - 32px)); }
+.recipient-form-dialog .recipient-detail-footer [data-recipient-cancel] { color:var(--muted); }
+.recipient-form-dialog .recipient-detail-footer [data-recipient-cancel]:hover { color:var(--text); }
+.reports-page .configured-report-question-details > div { gap:24px; }
+.reports-page .configured-report-question-details ol { background:transparent; gap:0; }
+.reports-page .configured-report-question-details li { align-items:baseline; padding:12px 0; background:transparent; border-bottom:1px solid var(--line); }
+.reports-page .configured-report-question-details li:last-child { border-bottom:0; }
+.reports-page .configured-report-question-details p { min-width:0; font:400 15px/1.6 var(--font-sans); overflow-wrap:anywhere; }
+.reports-page .configured-report-question-details li > span { color:var(--muted); font:600 14px/1.5 var(--font-sans); }
+.configuration-page .configuration-create-card:not(:disabled) { border-color:color-mix(in srgb,var(--primary) 65%,transparent); }
+@media (min-width:768px) and (max-width:1099px) {
+  .pricing-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+.configured-report-pages { grid-template-columns:minmax(0,1fr); }
+</style>
   <style id="iep-styles">/* 기존 케어릿 색상·폰트·그림자·모서리 토큰을 공유합니다. */
 .iep-page { min-width:0; }
 .iep-page h2 { scroll-margin-top:24px; }
@@ -1479,6 +1611,10 @@ dialog#quick-type-picker .quick-check-type-footer>p { margin:0; color:var(--text
 .quick-check-slider .quick-check-scale-value { display:none; }
 .quick-check-slider-ticks { grid-template-columns:repeat(auto-fit,minmax(44px,1fr)); gap:8px; height:auto; }
 .quick-check-slider-ticks button { min-width:0; min-height:52px; border-radius:8px; background:var(--neutral-soft); color:var(--text); font:600 16px/1.4 var(--font-sans); }
+@media (min-width:768px) {
+  .quick-check-slider-ticks { grid-template-columns:repeat(var(--tick-count),minmax(0,1fr)); gap:clamp(4px,.5vw,8px); }
+  .quick-check-slider-ticks button { padding-inline:0; }
+}
 .quick-check-slider-ticks button[aria-pressed=true], .quick-check-slider-ticks button:has(~ button[aria-pressed=true]) { background:var(--mint-selected); color:var(--primary-dark); font-weight:600; }
 .quick-check-slider-ticks button:focus-visible,.timefield-period:focus-visible,:root[data-input-modality=keyboard] .timefield-part:focus-within:not(:has(input[aria-invalid=true])),.quick-check-clear:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
 
@@ -1554,7 +1690,8 @@ html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="t
         <div class="sidebar-tools"><button class="icon-button" aria-label="다크 모드로 변경" data-tooltip="다크 모드로 변경" data-action="theme"><svg viewBox="30 -930 900 900" fill="currentColor" aria-hidden="true"><path d="M480-120q-150 0-255-105T120-480q0-150 105-255t255-105q14 0 27.5 1t26.5 3q-41 29-65.5 75.5T444-660q0 90 63 153t153 63q55 0 101-24.5t75-65.5q2 13 3 26.5t1 27.5q0 150-105 255T480-120Zm0-80q88 0 158-48.5T740-375q-20 5-40 8t-40 3q-123 0-209.5-86.5T364-660q0-20 3-40t8-40q-78 32-126.5 102T200-480q0 116 82 198t198 82Zm-10-270Z"/></svg></button><a aria-label="쿠폰함" data-tooltip="쿠폰함" class="icon-button" href="#/coupons" data-route="/coupons"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></a><a aria-label="케어릿 공식 카페 (새 창)" data-tooltip="케어릿 공식 카페" class="icon-button" href="https://cafe.naver.com/careitofficial" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/><path d="M8 12h.01"/><path d="M12 12h.01"/><path d="M16 12h.01"/></svg></a></div>
         <a class="account-summary" href="#/settings" data-route="/settings" aria-label="계정 설정, 합성 QA c9b8b579"><span class="avatar" aria-hidden="true">합</span><div><strong>합성 QA c9b8b579</strong><span>qa1@careit.kr</span></div></a>
       </aside>
-      <button class="nav-handle" aria-label="메뉴 접기" title="메뉴 접기" aria-controls="app-sidebar" aria-expanded="true" data-action="sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m11 17-5-5 5-5m7 10-5-5 5-5"/></svg></button>
+      <a class="brand mobile-header-brand" href="#/" data-route="/"><img class="brand-mark" width="28" height="28" alt="" src="assets/logo.webp"><div><strong>케어릿</strong></div></a>
+      <button class="nav-handle" aria-label="메뉴 접기" title="메뉴 접기" aria-controls="app-sidebar" aria-expanded="true" data-action="sidebar"><svg class="nav-handle-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m11 17-5-5 5-5m7 10-5-5 5-5"/></svg><svg class="nav-handle-hamburger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
       <main id="main-content" tabindex="-1"><div class="app-content"><div id="screen"></div>
         <footer class="site-footer"><div class="site-footer-row"><a href="#/privacy">개인정보 처리방침</a><a href="#/terms">이용약관</a><a href="#/settings/licenses" data-settings-license hidden>오픈소스 라이선스</a><a href="https://app.careit.kr/billing-guide" data-billing-guide hidden>결제·환불 안내</a><span>케어릿은 의료 서비스가 아니에요</span></div><address id="site-footer-business" class="site-footer-business" hidden><span>케어릿 · 공동대표 김현식 · 김도윤 · 사업자등록번호 447-29-02187 · 통신판매업 신고 2026-수원영통-1232(경기도 수원시 영통구) · <a href="https://www.ftc.go.kr/bizCommPop.do?wrkr_no=4472902187" target="_blank" rel="noreferrer">사업자정보 확인</a></span><span>경기도 수원시 영통구 광교마을로 156, 4007동 1404호(하동, 광교 더 포레스트) · <a href="tel:01056509628">010-5650-9628</a> · <a href="mailto:support@careit.kr" aria-label="문의 이메일 support@careit.kr">support@careit.kr</a></span></address></footer>
       </div></main>
@@ -1611,7 +1748,7 @@ html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="t
   </template>
 
   <template id="page-journal" data-path="/journals/new">
-    <section class="page journal-page"><header class="page-header"><div><h1>오늘의 일지 작성</h1></div></header>
+    <section class="page journal-page"><header class="page-header"><div><h1><span class="journal-title-prefix">오늘의 </span>일지 작성</h1></div></header>
       <section class="journal-toolbar" aria-label="일지 대상과 기록 선택">
         <label class="field"><span>관리대상</span><div class="dropdown"><button type="button" class="dropdown-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="관리대상" data-options="recipients"><span>산책 샘플</span></button></div></label>
         <label class="field"><span>템플릿</span><div class="dropdown"><button type="button" class="dropdown-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="템플릿" data-options="journal-templates"><span>일지 템플릿 1</span></button></div></label>
@@ -1652,7 +1789,7 @@ html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="t
       <dialog class="recipient-detail-dialog recipient-form-dialog" aria-labelledby="recipient-form-title">
         <div class="recipient-detail-header"><h2 id="recipient-form-title">관리대상 추가하기</h2><button class="recipient-form-close" type="button" data-action="cancel-recipient" aria-label="닫기" title="닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
         <form id="recipient-form" class="recipient-detail-form" novalidate><div class="recipient-detail-body"><div class="recipient-detail-content"><div class="recipient-form-grid">
-          <div class="field"><span class="field-heading"><label for="recipient-name">별명</label><small class="field-limit" id="recipient-name-limit">0/30자</small></span><input id="recipient-name" required maxlength="30" autocomplete="off" aria-describedby="recipient-name-limit" placeholder="이름 대신 별명을 사용하는 것을 더 추천해요"></div></div>
+          <div class="field"><span class="field-heading"><label for="recipient-name">별명</label><small class="field-limit" id="recipient-name-limit">0/20자</small></span><input id="recipient-name" required maxlength="20" autocomplete="off" aria-describedby="recipient-name-limit" placeholder="이름 대신 별명을 사용하는 것을 더 추천해요"></div></div>
           <div class="recipient-detail-templates"><label class="field"><span>일지 템플릿</span><div class="dropdown"><button id="recipient-journal-template" class="dropdown-trigger" type="button" data-options="recipient-form-journal" data-value="0" aria-haspopup="listbox" aria-expanded="false" aria-label="새 대상 일지 템플릿"><span></span></button></div></label><label class="field"><span>리포트 템플릿</span><div class="dropdown"><button id="recipient-report-template" class="dropdown-trigger" type="button" data-options="recipient-form-report" data-value="누리과정" aria-haspopup="listbox" aria-expanded="false" aria-label="새 대상 리포트 템플릿"><span>누리과정</span></button></div></label></div>
         </div></div><footer class="recipient-detail-footer"><button class="button secondary" type="button" data-action="cancel-recipient" data-recipient-cancel>취소</button><div class="recipient-manage-actions"><button class="button tertiary" type="button" data-action="form-toggle-recipient" hidden>비활성화</button><button class="button danger" type="button" data-action="delete-recipient" hidden>삭제</button></div><div class="recipient-detail-save"><button class="button primary" type="submit">추가하기</button></div></footer></form>
       </dialog>
@@ -1768,14 +1905,14 @@ html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="t
               <p>AI 기능을 위한 개인정보 국외 이전에 동의합니다. (AI 기능 이용 시 필수)</p>
               <dl class="settings-terms-list">
                 <div><dt>처리 목적</dt><dd>회원이 요청한 AI 문장 다듬기, 주간 리포트의 문항별 채점 및 기록 변화 요약 생성</dd></div>
-                <div><dt>처리 항목</dt><dd>AI로 다듬기에는 회원이 선택한 일지 본문을 사용합니다. 주간 리포트에는 해당 주에 저장된 일지 본문과 퀵체크의 항목명·선택지명·숫자·시간·자유 입력 내용을 사용합니다. 기록 변화 요약에는 해당 주와 바로 이전 주에 저장된 일지 본문을 사용하며, 퀵체크 값은 기록 변화 요약에 사용하지 않습니다.</dd></div>
+                <div><dt>처리 항목</dt><dd>AI로 다듬기에는 회원이 선택한 일지 본문을 사용합니다. 주간 리포트에는 해당 주에 저장된 일지 본문을 사용합니다. 기록 변화 요약에는 해당 주와 바로 이전 주에 저장된 일지 본문을 사용합니다.</dd></div>
                 <div><dt>처리 시점</dt><dd>회원이 AI로 다듬기 또는 주간 리포트 생성 버튼을 누른 때</dd></div>
                 <div><dt>회사 보유</dt><dd>회사는 AI로 다듬기 요청의 전송 입력 사본, AI가 반환한 결과 및 회원이 저장한 결과를 해당 일지의 AI 다듬기 기록으로 보관합니다. 주간 리포트의 AI 요약·근거 인용은 리포트에 보관합니다. 호출 기록에는 모델명, 토큰 수, 결과 상태, 대상 주·관리대상 정보만 보관하며 일지 본문과 인용문은 저장하지 않습니다. 관련 일지 또는 리포트의 보유·파기 기준은 개인정보처리방침에 따릅니다.</dd></div>
                 <div><dt>이전받는 자</dt><dd>Google LLC</dd></div>
                 <div><dt>연락처</dt><dd>googlekrsupport@google.com 및 케어릿 고객지원 support@careit.kr</dd></div>
                 <div><dt>이전 국가</dt><dd>미국</dd></div>
                 <div><dt>이전 시기와 방법</dt><dd>회원이 AI로 다듬기 또는 주간 리포트 생성을 요청한 때, 암호화된 통신을 통해 전송</dd></div>
-                <div><dt>이전 항목</dt><dd>위 1항의 AI 기능 처리 항목과 같은 범위의 일지·퀵체크 관련 정보 및 AI가 생성한 결과</dd></div>
+                <div><dt>이전 항목</dt><dd>위 1항의 AI 기능 처리 항목과 같은 범위의 일지 관련 정보 및 AI가 생성한 결과</dd></div>
                 <div><dt>이전 목적</dt><dd>AI 문장 다듬기, 주간 리포트의 문항별 채점 및 기록 변화 요약 생성</dd></div>
                 <div><dt>보유·이용 기간</dt><dd>Google Gemini API의 적용 약관과 운영정책에 따라, 전송된 프롬프트·맥락 정보·출력은 서비스 안전성, 오남용 확인 및 법적·규제상 의무 이행을 위해 최대 55일간 보관될 수 있습니다. 케어릿이 보관하는 AI 입력 사본·결과와 리포트는 위 회사 보유 기준과 개인정보처리방침에 따릅니다.</dd></div>
                 <div><dt>거부·철회 방법과 영향</dt><dd>동의하지 않으면 AI로 다듬기와 AI 기반 주간 리포트 생성 기능을 이용할 수 없습니다. 이미 동의한 이용자는 support@careit.kr로 철회를 요청할 수 있으며, 철회 후에는 새로운 국외 이전이 중단됩니다. 이미 전송된 정보는 Google의 보유 기간이 끝나기 전에는 즉시 회수 또는 삭제되지 않을 수 있습니다.</dd></div>
@@ -2238,14 +2375,14 @@ SOFTWARE.
 <section><h2>3. 관리대상 정보와 민감정보</h2><p>관리대상은 별도 회원이 아니라 이용자가 직접 추가하여 기록하는 대상입니다. 이용자는 관리대상 정보를 입력하기 전에 해당 정보를 입력할 정당한 권한 또는 필요한 동의를 갖추어야 합니다.</p><p>돌봄 기록에는 건강에 관한 정보 등 민감정보가 포함될 수 있습니다. 회사는 민감정보 처리에 필요한 별도 동의 또는 그 밖의 적법한 처리 근거를 갖춘 범위에서만 이를 처리합니다. 민감정보 처리에 동의하지 않거나 적법한 처리 근거가 없는 경우, 해당 정보를 입력·저장하는 기능을 이용할 수 없습니다.</p><p>관리대상이 만 14세 미만이거나 이용자 본인이 아닌 경우에는, 이용자가 법정대리인 권한 또는 해당 정보를 처리할 수 있는 적법한 근거를 갖추어야 합니다. 회사는 필요하다고 판단하는 경우 이를 확인하기 위한 설명을 요청하거나 처리를 제한할 수 있습니다.</p><p>이 조항은 회사에 적용되는 개인정보 보호 관련 법령상 의무를 제한하지 않습니다.</p></section>
 <section><h2>4. AI 기능</h2><p>회사가 AI 기능을 제공하는 경우, 이용자가 해당 기능을 요청한 때에만 필요한 기록 일부가 AI 제공자에게 전송될 수 있습니다. 회사는 AI 기능을 제공하기 전에 다음 사항을 별도로 안내하고, 필요한 경우 별도 동의를 받습니다.</p><ul><li>AI 제공자와 처리 국가</li><li>전송되는 정보의 항목</li><li>이용 목적과 보유·이용 기간</li><li>전송 거부 방법 및 거부 시 이용 제한되는 기능</li></ul><p>AI 기능을 사용하지 않아도 직접 기록을 작성·저장할 수 있는 범위는 유지합니다. AI 결과는 보조 정보이며, 회사는 결과의 완전성·정확성 또는 의료적 적합성을 보장하지 않습니다.</p></section>
 <section><h2>5. 개인정보의 보유·이용 기간과 파기</h2><p>회사는 개인정보의 처리 목적이 달성되거나 이용자가 삭제·탈퇴를 요청한 경우 지체 없이 파기합니다. 다만 관계 법령에 따라 보관이 필요한 경우에는 해당 기간 동안 필요한 최소 정보만 보관합니다.</p><div class="policy-table-scroll" tabindex="0"><table><thead><tr><th scope="col">구분</th><th scope="col">보유 기간</th></tr></thead><tbody><tr><td>계정·관리대상·돌봄 일지</td><td>이용자가 삭제하거나 계정 탈퇴가 완료될 때까지</td></tr><tr><td>리포트</td><td>생성일부터 1년간 보관 후 30일간 휴지통 보관</td></tr><tr><td>접속기록</td><td>2년</td></tr><tr><td>결제·취소·환불 등 거래기록</td><td>결제 도입 후 관계 법령이 정한 기간(원칙적으로 5년)</td></tr><tr><td>법령 또는 분쟁 대응상 보관이 필요한 기록</td><td>해당 법령상 기간 또는 분쟁 해결에 필요한 기간</td></tr></tbody></table></div><p>이용자가 삭제한 일지와 리포트는 30일간 휴지통에 보관된 뒤 완전삭제 대상이 됩니다. 완전삭제된 정보는 백업 시스템에 최대 14일간 더 남을 수 있으며, 그 기간이 지나면 복구할 수 없는 방법으로 삭제합니다. 계정 탈퇴에 따른 삭제 절차도 같은 기준으로 처리합니다.</p></section>
-<section><h2>6. 개인정보의 처리 위탁과 국외 이전</h2><p>회사는 아래와 같이 서비스 운영에 필요한 업무를 외부 사업자에게 위탁하고, 계약과 관리·감독을 통해 개인정보를 안전하게 처리하도록 합니다.</p><div class="policy-table-scroll" tabindex="0"><table><thead><tr><th scope="col">수탁자</th><th scope="col">위탁 업무</th><th scope="col">처리하는 정보</th></tr></thead><tbody><tr><td>Supabase Pte. Ltd.</td><td>데이터베이스 보관·운영 및 인증</td><td>계정 정보, 관리대상 정보, 돌봄 일지, 퀵체크, 리포트, 설정, 동의 기록 등 서비스에 저장되는 정보</td></tr><tr><td>Amazon Web Services, Inc.</td><td>케어릿 서버 운영 및 서비스 요청 처리</td><td>서비스 요청 정보 및 운영에 필요한 최소 정보. 돌봄 일지 본문은 AWS 서버에 영구 저장하지 않음</td></tr><tr><td>Cloudflare, Inc.</td><td>웹 화면 제공, 통신 중계 및 보안</td><td>이용자 기기와 케어릿 서버 사이에 전송되는 정보 및 접속 정보</td></tr><tr><td>Google LLC</td><td>AI 문장 다듬기 및 주간 리포트 생성</td><td>이용자가 AI 기능을 요청할 때 필요한 일지·퀵체크·리포트 관련 정보</td></tr></tbody></table></div><p>케어릿의 데이터베이스는 대한민국 서울에 보관합니다. 다만 Supabase의 장애 대응·시스템 점검 과정에서 미국·싱가포르 등 해외 소재 인력이 조회할 가능성이 있어, 회사는 서비스 계약 이행에 필요한 국외 이전으로 보고 이 방침에 필요한 사항을 공개합니다.</p><p>이용자 기기와 케어릿 서버 사이의 통신은 Cloudflare 망을 거칠 수 있으며, 접속 지점에 따라 미국·일본 등 해외에서 통신이 중계·처리될 수 있습니다. 이는 서비스 제공과 보안을 위한 것으로, 개별적으로 거부하면 서비스를 이용할 수 없습니다.</p><p>AI 기능은 Google LLC의 Gemini를 사용합니다. 이용자가 AI 문장 다듬기 또는 리포트 생성을 직접 요청하고 별도 동의한 경우에만 필요한 기록을 미국으로 전송합니다. AI 기능에 관한 국외 이전 동의 화면에서 이전 항목, 시기·방법, 목적, 보유기간, 거부 방법과 효과를 별도로 안내합니다. Google은 전송된 내용과 결과를 오남용 확인 목적으로 최대 55일간 보관할 수 있습니다. 회사는 AI로 다듬기 요청에 사용된 입력 사본, AI 결과 및 회원이 저장한 결과를 해당 일지의 AI 다듬기 기록으로 보관하며, 주간 리포트의 AI 요약과 근거 인용은 해당 리포트에 보관합니다. 각 정보는 관련 일지·리포트의 보유·파기 기준에 따라 삭제합니다. AI 기능을 사용하지 않으면 기록은 외부 AI로 전송되지 않습니다.</p></section>
+<section><h2>6. 개인정보의 처리 위탁과 국외 이전</h2><p>회사는 아래와 같이 서비스 운영에 필요한 업무를 외부 사업자에게 위탁하고, 계약과 관리·감독을 통해 개인정보를 안전하게 처리하도록 합니다.</p><div class="policy-table-scroll" tabindex="0"><table><thead><tr><th scope="col">수탁자</th><th scope="col">위탁 업무</th><th scope="col">처리하는 정보</th></tr></thead><tbody><tr><td>Supabase Pte. Ltd.</td><td>데이터베이스 보관·운영 및 인증</td><td>계정 정보, 관리대상 정보, 돌봄 일지, 퀵체크, 리포트, 설정, 동의 기록 등 서비스에 저장되는 정보</td></tr><tr><td>Amazon Web Services, Inc.</td><td>케어릿 서버 운영 및 서비스 요청 처리</td><td>서비스 요청 정보 및 운영에 필요한 최소 정보. 돌봄 일지 본문은 AWS 서버에 영구 저장하지 않음</td></tr><tr><td>Cloudflare, Inc.</td><td>웹 화면 제공, 통신 중계 및 보안</td><td>이용자 기기와 케어릿 서버 사이에 전송되는 정보 및 접속 정보</td></tr><tr><td>Google LLC</td><td>AI 문장 다듬기 및 주간 리포트 생성</td><td>이용자가 AI 기능을 요청할 때 필요한 일지·리포트 관련 정보</td></tr></tbody></table></div><p>케어릿의 데이터베이스는 대한민국 서울에 보관합니다. 다만 Supabase의 장애 대응·시스템 점검 과정에서 미국·싱가포르 등 해외 소재 인력이 조회할 가능성이 있어, 회사는 서비스 계약 이행에 필요한 국외 이전으로 보고 이 방침에 필요한 사항을 공개합니다.</p><p>이용자 기기와 케어릿 서버 사이의 통신은 Cloudflare 망을 거칠 수 있으며, 접속 지점에 따라 미국·일본 등 해외에서 통신이 중계·처리될 수 있습니다. 이는 서비스 제공과 보안을 위한 것으로, 개별적으로 거부하면 서비스를 이용할 수 없습니다.</p><p>AI 기능은 Google LLC의 Gemini를 사용합니다. 이용자가 AI 문장 다듬기 또는 리포트 생성을 직접 요청하고 별도 동의한 경우에만 필요한 기록을 미국으로 전송합니다. AI 기능에 관한 국외 이전 동의 화면에서 이전 항목, 시기·방법, 목적, 보유기간, 거부 방법과 효과를 별도로 안내합니다. Google은 전송된 내용과 결과를 오남용 확인 목적으로 최대 55일간 보관할 수 있습니다. 회사는 AI로 다듬기 요청에 사용된 입력 사본, AI 결과 및 회원이 저장한 결과를 해당 일지의 AI 다듬기 기록으로 보관하며, 주간 리포트의 AI 요약과 근거 인용은 해당 리포트에 보관합니다. 각 정보는 관련 일지·리포트의 보유·파기 기준에 따라 삭제합니다. AI 기능을 사용하지 않으면 기록은 외부 AI로 전송되지 않습니다.</p></section>
 <section><h2>7. 개인정보의 제3자 제공</h2><p>회사는 이용자의 개인정보를 판매하거나 광고 목적으로 제3자에게 제공하지 않습니다. 다만 다음의 경우에는 필요한 범위에서 제공할 수 있습니다.</p><ul><li>이용자가 사전에 동의한 경우</li><li>법령에 특별한 규정이 있거나 수사기관 등이 적법한 절차에 따라 요구하는 경우</li><li>팀 플랜에서 팀 결제자에게 팀원 관리에 필요한 이름과 이메일 주소를 표시하는 경우</li></ul><p>팀원 사이에는 서로의 관리대상·일지·리포트를 제공하지 않습니다.</p></section>
 <section><h2>8. 이용자의 권리와 행사 방법</h2><p>이용자는 자신의 개인정보에 대해 열람, 정정·삭제, 처리정지 및 동의 철회를 요구할 수 있습니다. 서비스 안에서 가능한 항목은 직접 처리할 수 있고, 그 밖의 요청은 support@careit.kr로 할 수 있습니다.</p><p>회사는 관계 법령에 따라 요청자를 확인하고, 정당한 요청을 처리합니다. 다른 사람의 권리나 법령상 비밀을 침해할 우려가 있는 경우에는 법령이 허용하는 범위에서 요청을 제한하거나 필요한 설명을 드릴 수 있습니다.</p><p>관리대상 본인 또는 법정대리인이 자신의 개인정보에 관한 권리를 행사하려는 경우에도 support@careit.kr로 요청할 수 있습니다. 회사는 본인 또는 적법한 대리인인지 확인하기 위해 필요한 최소한의 자료를 요청할 수 있습니다.</p><p>카카오·구글 계정과의 연결은 회원 탈퇴로 끊을 수 있으며, 이용자는 해당 사업자의 계정 설정에서 케어릿과의 연결을 해제할 수도 있습니다.</p></section>
 <section><h2>9. 안전성 확보 조치</h2><p>회사는 개인정보의 분실·도난·유출·위조·변조·훼손을 막기 위해 접근권한 관리, 인증수단 보호, 접근기록 보관·점검, 암호화, 보안 업데이트 등 합리적인 기술적·관리적 조치를 시행합니다.</p><p>이 방침에는 실제 운영으로 확인되는 조치만 기재합니다. 특정 해시 알고리즘, 네트워크 구성, 보안 헤더처럼 변경될 수 있는 내부 구현 상세는 공개하지 않습니다.</p></section>
 <section><h2>10. 개인정보 유출 등에 대한 대응</h2><p>회사는 개인정보 유출 등이 의심되는 경우 원인을 조사하고, 접근 차단·회수·삭제 등 피해 확산을 막기 위한 조치를 취합니다. 개인정보 유출 등이 발생한 사실을 알게 된 경우에는 관계 법령이 정한 대상, 내용, 기한 및 절차에 따라 정보주체에게 통지하고 관계 기관에 신고합니다.</p></section>
 <section><h2>11. 처리방침의 변경</h2><p>이 방침을 변경하는 경우 시행일과 변경 내용을 서비스 안에 알립니다. 민감정보 처리, AI 전송, 국외 이전 등 이용자의 별도 동의가 필요한 변경은 필요한 절차를 거쳐 적용합니다.</p></section>
 <section><h2>12. 개인정보 침해 상담·신고</h2><p>개인정보 침해에 관한 상담·신고는 다음 기관을 이용할 수 있습니다.</p><ul><li>개인정보침해 신고센터: privacy.kisa.or.kr / 국번 없이 118</li><li>개인정보 분쟁조정위원회: kopico.go.kr / 1833-6972</li><li>대검찰청: spo.go.kr / 국번 없이 1301</li><li>경찰청: ecrm.police.go.kr / 국번 없이 182</li></ul></section>
-</article><p class="policy-source">출처: <a href="https://app.careit.kr/privacy" target="_blank" rel="noopener noreferrer">케어릿 개인정보처리방침</a></p></section></template>
+</article></section></template>
   <template id="page-terms" data-path="/terms"><section class="page policy-page"><a class="policy-back" href="#/settings">‹ 설정</a><article class="policy-article" data-policy-content="terms"><h1>이용약관</h1>
 <section><h2>제1조 목적</h2><p>이 약관은 케어릿(이하 "회사")이 제공하는 케어릿 서비스의 이용 조건과 회사 및 이용자의 권리·의무를 정합니다.</p></section>
 <section><h2>제2조 서비스</h2><p>케어릿은 관리대상별 돌봄 기록 작성·조회, 요약, 리포트 및 이에 부수하는 기능을 제공합니다. 회사는 서비스 화면이나 별도 안내를 통해 기능별 이용 조건을 알릴 수 있습니다.</p></section>
@@ -2259,7 +2396,7 @@ SOFTWARE.
 <section><h2>제10조 책임의 범위</h2><p>회사는 관계 법령이 허용하는 범위에서 이용자의 귀책사유, 이용자의 기기·통신 환경, 제3자의 행위 또는 천재지변 등 불가항력으로 발생한 손해에 책임을 지지 않습니다.</p><p>무료 서비스는 법령에 별도 규정이 있거나 회사의 고의 또는 중대한 과실이 있는 경우를 제외하고 보상 대상이 아닙니다. 이 조항은 관계 법령상 제한할 수 없는 회사의 책임을 제한하지 않습니다.</p></section>
 <section><h2>제11조 약관의 변경</h2><p>회사가 약관을 변경하는 경우 시행일과 변경 사유를 서비스 안에 알리고, 원칙적으로 시행일 7일 전부터 게시합니다. 이용자에게 불리하거나 중요한 변경은 시행일 30일 전부터 공지와 개별 통지 등 합리적인 방법으로 알립니다.</p><p>이용자는 변경 약관에 동의하지 않는 경우 이용계약을 해지할 수 있습니다.</p></section>
 <section><h2>제12조 문의</h2><p>서비스, 결제 및 환불에 관한 문의는 <a href="mailto:support@careit.kr">support@careit.kr</a>로 보내시기 바랍니다.</p></section>
-</article><p class="policy-source">출처: <a href="https://app.careit.kr/terms" target="_blank" rel="noopener noreferrer">케어릿 이용약관</a></p></section></template>
+</article></section></template>
 
   <template id="page-invite" data-path="/invite"><section class="page"><header class="page-header"><div><h1>친구 초대</h1></div></header><section class="settings-card"><h2>케어릿에 초대받았어요</h2><p>목업의 초대 링크 예시예요. 실제 가입이나 쿠폰 지급은 진행되지 않아요.</p><a class="button secondary" href="#/settings">설정으로 돌아가기</a></section></section></template>
 
@@ -2313,7 +2450,7 @@ SOFTWARE.
     <article class="report-preview"><section class="configured-report" aria-label="주간 리포트 문서"><header class="configured-report-actions"><div><h2>주간 리포트</h2><p>산책 샘플 · 2026년 8월 28일 ~ 9. 3.</p></div><div class="configured-report-action-controls"><div class="configured-report-file-actions"><button class="button secondary" type="button" data-action="print-report">인쇄</button><button class="button primary" type="button" data-action="print-report">PDF 다운로드</button><button class="button secondary" type="button" data-action="word-report">Word 다운로드</button></div></div></header><p class="configured-report-word-hint">Word는 서식 유지를 위한 이미지 문서예요.</p><p class="configured-report-status" aria-live="polite"></p>
       <div class="configured-report-viewport"><div class="configured-report-pages" style="--configured-report-scale:1">
         <article class="configured-report-page" data-configured-report-page="1" data-report-fixed-page="true" aria-label="리포트 1페이지"><header class="configured-report-page-header"><div><span>CAREIT CARE REPORT</span><h2>주간 케어 리포트</h2><p>2026년 8월 28일 ~ 9. 3.</p></div></header><div class="configured-report-page-body"><div class="configured-report-block"><section class="configured-report-overview is-metadata-grid-v1"><div class="configured-report-overview-copy"><div class="configured-report-overview-metadata"><div><span>대상자</span><strong>산책 샘플</strong></div><div><span>리포트 작성일</span><strong>2026년 9월 20일</strong></div></div></div><dl class="configured-report-stats"><div><dt>작성된 일지</dt><dd>3건</dd></div><div><dt>기록일</dt><dd>3일</dd></div><div><dt>판정 문항</dt><dd>25/25</dd></div><div><dt>근거 있는 문항</dt><dd>8/25</dd></div><div><dt>근거 부족</dt><dd>17문항</dd></div><div><dt>종합 관찰 점수</dt><dd>28점</dd></div></dl></section></div><div class="configured-report-block"><section class="configured-report-graph-section"><header class="configured-report-section-header"><h3>이전 기간과의 변화</h3><span>이전 기간 기록 없음 · 판정 25/25 · 근거 8/25문항</span></header><div class="configured-report-score-layout"><article class="configured-report-overall-score"><div class="configured-report-score-ring" role="img" aria-label="종합 관찰 점수 28점"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="configured-report-score-track" cx="60" cy="60" r="50"/><circle class="configured-report-score-progress" cx="60" cy="60" r="50" transform="rotate(-90 60 60)" stroke-dasharray="87.9648 314.16"/></svg><div><strong>28</strong><span>관찰 점수</span></div></div><div class="configured-report-overall-copy"><h4>종합 관찰 점수</h4><strong class="configured-report-score-delta">비교하지 않음</strong><p>비교할 이전 주 점수가 없어요.</p></div></article><article class="configured-report-change-panel"><header><strong>영역별 변화</strong><span>이전 기간 → 이번 기간</span></header><div class="configured-report-change-list" data-report-changes></div></article></div></section></div></div><footer class="configured-report-footer">케어릿 · 1 / 2</footer></article>
-        <article class="configured-report-page" data-configured-report-page="2" data-report-fixed-page="true" aria-label="리포트 2페이지"><header class="configured-report-page-header is-compact"><div><h2>주간 케어 리포트</h2><p>산책 샘플 · 2026년 8월 28일 ~ 9. 3. · 발행 2026년 9월 20일</p></div></header><div class="configured-report-page-body"><div class="configured-report-block"><section class="configured-report-graph-section is-care-map-fit"><header class="configured-report-section-header"><h3>케어릿 케어지도</h3></header><div class="configured-report-care-map-layout is-fit-2"><div class="configured-report-care-map-top"><div class="configured-report-radar-panel"><svg class="configured-report-radar" viewBox="-20 -40 460 440" role="img" aria-label="영역별 관찰 점수: 국어 15점, 수학 0점, 사회 20점, 과학 35점, 예술·체육 70점" style="--configured-report-radar-type-size:30.8px"><polygon class="configured-report-radar-grid" points="210,20 352.66,123.65 298.17,291.35 121.83,291.35 67.34,123.65"/><polygon class="configured-report-radar-shape" points="210,147.5 210,170 227.63,194.27 179.14,212.47 110.14,137.55"/><line class="configured-report-radar-axis" x1="210" y1="170" x2="210" y2="20"/><line class="configured-report-radar-axis" x1="210" y1="170" x2="352.658" y2="123.647"/><line class="configured-report-radar-axis" x1="210" y1="170" x2="298.168" y2="291.353"/><line class="configured-report-radar-axis" x1="210" y1="170" x2="121.832" y2="291.353"/><line class="configured-report-radar-axis" x1="210" y1="170" x2="67.342" y2="123.647"/><g><circle class="configured-report-radar-dot" cx="210" cy="147.5" r="5"/><text class="configured-report-radar-label" x="210" y="-13.5"><tspan x="210" dy="0">국어</tspan></text><text class="configured-report-radar-value" x="210" y="41">15</text></g><g><circle class="configured-report-radar-dot" cx="210" cy="170" r="5"/><text class="configured-report-radar-label" x="376.91" y="107.768"><tspan x="376.91" dy="0">수학</tspan></text><text class="configured-report-radar-value" x="332.686" y="130.137">0</text></g><g><circle class="configured-report-radar-dot" cx="227.634" cy="194.271" r="5"/><text class="configured-report-radar-label" x="313.156" y="321.982"><tspan x="313.156" dy="0">사회</tspan></text><text class="configured-report-radar-value" x="285.824" y="274.363">20</text></g><g><circle class="configured-report-radar-dot" cx="179.141" cy="212.473" r="5"/><text class="configured-report-radar-label" x="106.844" y="321.982"><tspan x="106.844" dy="0">과학</tspan></text><text class="configured-report-radar-value" x="134.176" y="274.363">35</text></g><g><circle class="configured-report-radar-dot" cx="110.139" cy="137.553" r="5"/><text class="configured-report-radar-label" x="43.09" y="107.768"><tspan x="43.09" dy="0">예술·체육</tspan></text><text class="configured-report-radar-value" x="87.314" y="130.137">70</text></g></svg></div><aside class="configured-report-care-map-score"><span>종합 관찰 점수</span><strong>28점</strong><p>비교하지 않음</p><small>판정 25/25 · 근거 8/25문항</small></aside></div><div class="configured-report-care-map-cards" data-report-care><article class="configured-report-care-card configured-report-care-guide"><span>CARE GUIDE</span><h4>이번 기록을 바탕으로 다음 돌봄에 참고해 주세요.</h4></article></div></div></section></div><div class="configured-report-block"><section class="configured-report-method is-care-map-fit"><h3>기록 안내 · 산출 기준</h3><p>관찰한 사실을 날짜와 함께 기록해 주세요. 기록이 없는 날을 미수행으로 판단하지 않아요.</p><p>저장된 일지 본문과 퀵체크를 함께 읽어 모든 문항을 0~4점으로 판단해요. AI 사실 요약은 일지 본문만 사용해요.</p><p>문항 점수는 최대점의 0·25·50·75·100%예요. 근거가 없거나 명시적으로 미수행한 문항은 0점이에요. 1점은 시도, 2점은 부분 수행, 3점은 한 날짜의 수행, 4점은 서로 다른 기록일 2일 이상에서 반복 수행을 확인한 경우예요. 모든 문항을 포함해 영역 점수를 계산하고, 반올림 전 영역 점수를 같은 비중으로 평균한 뒤 표시할 때 반올림해요.</p><p>점수와 전주 차이는 기록에서 관찰된 문항의 값이에요. 실제 활동량이나 건강 상태의 변화를 뜻하지 않으며, 진단·치료·처방을 대신하지 않아요.</p></section></div></div><footer class="configured-report-footer">케어릿 · 2 / 2</footer></article>
+        <article class="configured-report-page" data-configured-report-page="2" data-report-fixed-page="true" aria-label="리포트 2페이지"><header class="configured-report-page-header is-compact"><div><h2>주간 케어 리포트</h2><p>산책 샘플 · 2026년 8월 28일 ~ 9. 3. · 발행 2026년 9월 20일</p></div></header><div class="configured-report-page-body"><div class="configured-report-block"><section class="configured-report-graph-section is-care-map-fit"><header class="configured-report-section-header"><h3>케어릿 케어지도</h3></header><div class="configured-report-care-map-layout is-fit-2"><div class="configured-report-care-map-top"><div class="configured-report-radar-panel"><svg class="configured-report-radar" viewBox="-20 -40 460 440" role="img" aria-label="영역별 관찰 점수: 국어 15점, 수학 0점, 사회 20점, 과학 35점, 예술·체육 70점" style="--configured-report-radar-type-size:30.8px"><polygon class="configured-report-radar-grid" points="210,20 352.66,123.65 298.17,291.35 121.83,291.35 67.34,123.65"/><polygon class="configured-report-radar-shape" points="210,147.5 210,170 227.63,194.27 179.14,212.47 110.14,137.55"/><line class="configured-report-radar-axis" x1="210" y1="170" x2="210" y2="20"/><line class="configured-report-radar-axis" x1="210" y1="170" x2="352.658" y2="123.647"/><line class="configured-report-radar-axis" x1="210" y1="170" x2="298.168" y2="291.353"/><line class="configured-report-radar-axis" x1="210" y1="170" x2="121.832" y2="291.353"/><line class="configured-report-radar-axis" x1="210" y1="170" x2="67.342" y2="123.647"/><g><circle class="configured-report-radar-dot" cx="210" cy="147.5" r="5"/><text class="configured-report-radar-label" x="210" y="-13.5"><tspan x="210" dy="0">국어</tspan></text><text class="configured-report-radar-value" x="210" y="41">15</text></g><g><circle class="configured-report-radar-dot" cx="210" cy="170" r="5"/><text class="configured-report-radar-label" x="376.91" y="107.768"><tspan x="376.91" dy="0">수학</tspan></text><text class="configured-report-radar-value" x="332.686" y="130.137">0</text></g><g><circle class="configured-report-radar-dot" cx="227.634" cy="194.271" r="5"/><text class="configured-report-radar-label" x="313.156" y="321.982"><tspan x="313.156" dy="0">사회</tspan></text><text class="configured-report-radar-value" x="285.824" y="274.363">20</text></g><g><circle class="configured-report-radar-dot" cx="179.141" cy="212.473" r="5"/><text class="configured-report-radar-label" x="106.844" y="321.982"><tspan x="106.844" dy="0">과학</tspan></text><text class="configured-report-radar-value" x="134.176" y="274.363">35</text></g><g><circle class="configured-report-radar-dot" cx="110.139" cy="137.553" r="5"/><text class="configured-report-radar-label" x="43.09" y="107.768"><tspan x="43.09" dy="0">예술·체육</tspan></text><text class="configured-report-radar-value" x="87.314" y="130.137">70</text></g></svg></div><aside class="configured-report-care-map-score"><span>종합 관찰 점수</span><strong>28점</strong><p>비교하지 않음</p><small>판정 25/25 · 근거 8/25문항</small></aside></div><div class="configured-report-care-map-cards" data-report-care><article class="configured-report-care-card configured-report-care-guide"><span>CARE GUIDE</span><h4>이번 기록을 바탕으로 다음 돌봄에 참고해 주세요.</h4></article></div></div></section></div><div class="configured-report-block"><section class="configured-report-method is-care-map-fit"><h3>기록 안내 · 산출 기준</h3><p>관찰한 사실을 날짜와 함께 기록해 주세요. 기록이 없는 날을 미수행으로 판단하지 않아요.</p><p>저장된 일지 본문을 바탕으로 모든 문항을 0~4점으로 판단하고 사실을 요약해요.</p><p>문항 점수는 최대점의 0·25·50·75·100%예요. 근거가 없거나 명시적으로 미수행한 문항은 0점이에요. 1점은 시도, 2점은 부분 수행, 3점은 한 날짜의 수행, 4점은 서로 다른 기록일 2일 이상에서 반복 수행을 확인한 경우예요. 모든 문항을 포함해 영역 점수를 계산하고, 반올림 전 영역 점수를 같은 비중으로 평균한 뒤 표시할 때 반올림해요.</p><p>점수와 전주 차이는 기록에서 관찰된 문항의 값이에요. 실제 활동량이나 건강 상태의 변화를 뜻하지 않으며, 진단·치료·처방을 대신하지 않아요.</p></section></div></div><footer class="configured-report-footer">케어릿 · 2 / 2</footer></article>
       </div></div><details class="configured-report-question-details"><summary>문항별 판정 보기</summary><div data-report-questions></div></details></section><div class="report-footer"><button class="button danger-soft" type="button" data-action="trash-report">휴지통으로</button></div></article>
   </template>
 
@@ -3695,6 +3832,17 @@ function mockupAddDays(value, days) {
   date.setUTCDate(date.getUTCDate()+days);
   return date.toISOString().slice(0,10);
 }
+function mockupCouponAdjustedBilling(state,plan,billingOn) {
+  const due=billingOn.replaceAll('.','-');
+  return plan==='starter' && state.couponPlusFrom && state.couponPlusUntil && state.couponPlusFrom<=due && due<=state.couponPlusUntil
+    ? mockupAddDays(state.couponPlusUntil,1).replaceAll('-','.') : billingOn;
+}
+function mockupScoreQuestionCount(domain) {
+  return domain.questions.filter(question=>typeof question==='string'&&question.trim()).length;
+}
+function mockupScoreValid(domains) {
+  return domains.length>=3&&domains.length<=5&&domains.every(domain=>mockupScoreQuestionCount(domain)>=5);
+}
 function mockupCouponPeriod(state,today,days) {
   const sub=state.subscription, paid=sub&&!mockupSubscriptionPeriod(sub,today).ended;
   if(paid&&sub.plan==='team')return null;
@@ -4031,12 +4179,12 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   }
   window.addEventListener('storage',event=>{if(event.storageArea===localStorage&&(event.key===STORAGE||event.key===null))store.check();});
   window.addEventListener('focus',()=>store.check());
-  window.addEventListener('beforeunload',event=>{if(store.pending){event.preventDefault();event.returnValue='';}});
+  window.addEventListener('beforeunload',event=>{if(store.pending||journalEditDirty()){event.preventDefault();event.returnValue='';}});
   $('#mockup-storage-dialog').addEventListener('cancel',event=>event.preventDefault());
   let confirmAction,pendingNavigation=null,pendingClose=null;
   function dialog(title, html, confirmLabel, onConfirm, danger=false) {
     closePopups();
-    const modal=$('#mockup-dialog');
+    const modal=$('#mockup-dialog');modal.classList.remove('is-journal-navigation');
     $('#mockup-dialog-title').textContent=title; $('#mockup-dialog-body').innerHTML=html;
     const infoClose=$('[data-dialog-close]',modal);infoClose.hidden=!!confirmLabel;if(confirmLabel)infoClose.removeAttribute('data-action');else infoClose.dataset.action='close-dialog';
     $('.dialog-actions',modal).innerHTML=confirmLabel?`<button type="button" class="button secondary" data-action="close-dialog">취소</button><button type="button" class="button ${danger?'danger':'primary'}" data-action="confirm-dialog">${escapeHTML(confirmLabel)}</button>`:'';
@@ -4119,10 +4267,13 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const hash = location.hash.slice(1) || '/';
     [route] = hash.split('?'); params = new URLSearchParams(hash.split('?')[1] || '');
     if(['/','/journals/new','/reports'].includes(route)&&state.recipients.filter(r=>r.active&&!r.deleted).length>mockupRecipientCapacity(state,currentDate())){routeTo('#/recipients');return;}
+    let inactiveJournalPerson=null;
     if(route==='/journals/new'){
       const raw=Number(params.get('recipient')||0),requested=Number.isInteger(raw)&&raw>=0?raw:0;
       if(params.has('entry')){if(!state.recipients[requested]||state.recipients[requested].deleted){routeTo('#/records');return;}}
-      else {const chosen=mockupJournalRecipient(state,requested);if(chosen<0){routeTo('#/recipients');toast('일지를 작성하려면 활성 관리대상이 필요해요.');return;}if(chosen!==requested||!params.has('recipient')){params.set('recipient',String(chosen));history.replaceState(null,'','#'+route+'?'+params);}}
+      else if(params.has('recipient')&&state.recipients[requested]&&!state.recipients[requested].deleted&&!state.recipients[requested].active){
+        inactiveJournalPerson=state.recipients[requested].name;route='/recipients';params=new URLSearchParams();recipientTab='recipients';history.replaceState(null,'','#/recipients');
+      }else {const chosen=mockupJournalRecipient(state,requested);if(chosen<0){routeTo('#/recipients');toast('일지를 작성하려면 활성 관리대상이 필요해요.');return;}if(chosen!==requested||!params.has('recipient')){params.set('recipient',String(chosen));history.replaceState(null,'','#'+route+'?'+params);}}
     }
     if(route==='/records'&&!params.has('recipient'))params.set('recipient','all');
     const pageTitles={'/':'홈','/guide':'케어릿 이용 방법','/journals/new':'일지 작성','/reports':'리포트','/records':'기록','/recipients':'대상·템플릿','/plans':'요금제','/settings':'설정','/settings/licenses':'오픈소스 라이선스','/privacy':'개인정보처리방침','/terms':'이용약관','/settings/configuration':'일지 편집','/recipients/scoring':'리포트 템플릿 편집','/notifications':'알림','/notices':'공지사항','/coupons':'쿠폰함','/invite':'친구 초대'};document.title=pageTitles[route]?`${pageTitles[route]} · 케어릿`:'케어릿';
@@ -4136,7 +4287,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const couponLink=$('.sidebar-tools a[data-route="/coupons"]');
     if(route==='/coupons')couponLink.setAttribute('aria-current','page');else couponLink.removeAttribute('aria-current');
     syncSidebarProfile();
-    $$('.sidebar nav a').filter(a=>['/journals/new','/reports'].includes(a.dataset.route)).forEach(a=>a.href=`#${a.dataset.route}?recipient=${recipient}`);
+    $$('.sidebar nav a').filter(a=>['/journals/new','/reports'].includes(a.dataset.route)).forEach(a=>{const active=mockupJournalRecipient(state,recipient);a.href=`#${a.dataset.route}?recipient=${a.dataset.route==='/journals/new'&&active>=0?active:recipient}`;});
     $$('[data-options="recipients"] span', $('#screen')).forEach(x => x.textContent = allRecords?'전체':state.recipients[recipient].name);
     if (route === '/') renderHome();
     if (route === '/notices') {
@@ -4158,7 +4309,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if (route === '/reports') {
       $('[data-options="report-templates"] span').textContent=currentScoring().title;
       const summary=$('[data-report-template-summary]');
-      if(summary)summary.textContent=`영역 ${currentScoring().domains.length}개 · 문항 ${currentScoring().domains.reduce((total,domain)=>total+domain.questions.length,0)}개`;
+      if(summary)summary.textContent=`영역 ${currentScoring().domains.length}개 · 문항 ${currentScoring().domains.reduce((total,domain)=>total+mockupScoreQuestionCount(domain),0)}개`;
       const selected=reportRecords(recipient).find(item=>item.id===params.get('report'));
       if(selected)Object.assign(reportRange,{from:selected.from,to:selected.to});
       else if(params.get('week')==='latest')Object.assign(reportRange,mockupReportWeek(currentDate(),-1));
@@ -4171,11 +4322,13 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if (matchMedia('(max-width:1023px)').matches) $('.app-layout').classList.add('mockup-nav-collapsed');
     syncSidebarButton();
     registerEdits(); window.scrollTo(0,0); requestAnimationFrame(scaleReports);
+    if(inactiveJournalPerson!==null)dialog('비활성화된 관리대상이에요',`<p>${escapeHTML(inactiveJournalPerson)}의 새 일지는 관리대상을 활성화한 뒤 작성할 수 있어요. 기존 일지는 기록에서 확인할 수 있어요.</p>`);
     if (route === '/plans' && !mockupActivePlan(state,currentDate()) && ['starter','team','pro'].includes(params.get('plan'))) openPlanCheckout(params.get('plan'));
   }
   let journalSavedSnapshot=null,journalSavedRecord=null,journalSaving=false,journalAiComparison=null;
   function setDraftStatus(message){$$('[data-draft-status]').forEach(status=>status.textContent=message);}
   function journalSnapshot(){return JSON.stringify({date:$('[data-action="date"]')?.dataset.value,values:Object.fromEntries($$('input[id],textarea[id]',$('#screen')).filter(el=>!el.id.startsWith('journal-field-label-')).map(el=>[el.id,(el.type==='radio'||el.type==='checkbox')?el.checked:el.value]))});}
+  function journalEditDirty(){return route==='/journals/new'&&params.has('entry')&&journalSavedSnapshot!==null&&journalSnapshot()!==journalSavedSnapshot;}
   function journalHasContent(){return $$('input[id],textarea[id]',$('#screen')).some(el=>!el.id.startsWith('journal-field-label-')&&el.type!=='range'&&((el.type==='radio'||el.type==='checkbox')?el.checked:el.value.trim()!==''));}
   function updateJournalSaveState(){
     if(route!=='/journals/new')return;
@@ -4205,10 +4358,10 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       const row = journalRows()[Number(editIndex)];
       if (row) {
         draft = row.values&&typeof row.values==='object' ? row.values : {'journal-raw':row[2]};
-        $('.page-header h1').textContent = '저장한 일지 수정';
+        $('.page-header h1').innerHTML = '<span class="journal-title-prefix">저장한 </span>일지 수정';
         $('[data-options="recipients"]').disabled=true;$('[data-action="date"]').disabled=true;
         setDraftStatus('수정한 내용은 일지 저장을 눌러 반영해 주세요');
-        const controls=$('.journal-actions>div:last-child'),ai=$('[data-action="ai-preview"]');controls.insertAdjacentHTML('afterbegin','<button class="button danger" type="button" data-action="delete-journal">일지 삭제</button>');if(row[0]!==currentDate())ai.disabled=true;
+        const controls=$('.journal-actions>div:last-child'),ai=$('[data-action="ai-preview"]');if(!$('[data-action="delete-journal"]',controls))controls.insertAdjacentHTML('afterbegin','<button class="button danger" type="button" data-action="delete-journal">일지 삭제</button>');if(row[0]!==currentDate())ai.disabled=true;
         $('[data-action="date"] span').textContent = formatDate(row[0]);
         $('[data-action="date"]').dataset.value = row[0];
       }
@@ -4381,25 +4534,39 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   function reportDays(range=reportRange) {
     return mockupReportDays(range,journalRows());
   }
+  function displayedReportDays(report) {
+    return report?.days ?? (recipient===1||recipient===2?4:3);
+  }
   function isSampleReportPeriod() { return reportRange.from==='2026-08-28'&&reportRange.to==='2026-09-03'; }
+  function addReportJournalLink() {
+    const empty=$('.reports-layout .empty-state');if(!empty)return;
+    const link=document.createElement('a');link.className='button secondary report-mobile-journal-link';link.href=`#/journals/new?recipient=${recipient}`;link.textContent='일지 작성하기';empty.append(link);
+  }
   function updateReportPeriod() {
     const {from,to}=reportRange,days=reportDays(),button=$('[data-date-range="report"]');
     const chosen=reportRecords(recipient).find(item=>item.id===params.get('report'));
-    const eligibility=mockupReportEligibility(reportRange,currentDate(),days),domains=currentScoring().domains,validTemplate=domains.length>=3&&domains.length<=5&&domains.every(domain=>domain.questions.length>=5);
-    const periodHeading=button.closest('.report-generation-field').querySelector('.report-period-heading');
+    const eligibility=mockupReportEligibility(reportRange,currentDate(),days),domains=currentScoring().domains,validTemplate=mockupScoreValid(domains);
+    const periodField=button.closest('.report-generation-field'),periodHeading=periodField.querySelector('.report-period-heading');
+    let mobileStatus=periodField.querySelector('.report-mobile-period-status');
+    if(!mobileStatus){mobileStatus=document.createElement('p');mobileStatus.className='report-mobile-period-status';mobileStatus.setAttribute('role','status');periodField.append(mobileStatus);}
+    mobileStatus.textContent=chosen?'리포트 생성 완료':!from?'':!validTemplate?'리포트 채점 기준을 확인해 주세요':eligibility.reason==='insufficient'?`일지 ${days}일 · 3일 이상 필요`:eligibility.allowed?`일지 ${days}일 · 생성 가능`:eligibility.reason==='expired'?'리포트 생성 기한이 지났어요':'주간 종료 후 생성할 수 있어요';
+    mobileStatus.hidden=!mobileStatus.textContent;
+    const reportPage=button.closest('.reports-page');
+    reportPage.classList.toggle('report-needs-journals',!chosen&&eligibility.reason==='insufficient');
     let status=periodHeading.querySelector('.report-generation-status');
     if(chosen||(eligibility.allowed&&validTemplate)){
       if(!status){status=document.createElement('p');status.className='report-generation-status';status.setAttribute('role','status');periodHeading.append(status);}
-      status.textContent=chosen?`생성 완료 · 기록 ${chosen.days??reportDays(chosen)}일`:`생성 가능 · 기록 ${days}일 / 기준 3일`;
+      status.textContent=chosen?`생성 완료 · 기록 ${displayedReportDays(chosen)}일`:`생성 가능 · 기록 ${days}일 / 기준 3일`;
     }else status?.remove();
     const hasAvailableWeek=Array.from({length:6},(_,i)=>mockupReportWeek(currentDate(),-1-i)).some(week=>mockupReportEligibility(week,currentDate(),reportDays(week)).allowed);
+    reportPage.classList.toggle('report-no-period',!!state.liveAppReplica&&!hasAvailableWeek&&!chosen);
     if(state.liveAppReplica&&!hasAvailableWeek){
       button.querySelector('span').textContent='선택 가능한 기간이 없어요';
       button.disabled=true;
       button.setAttribute('aria-description','현재 선택한 관리대상에는 리포트를 생성할 수 있는 기간이 없어요.');
       $('.report-recipient-change button').disabled=true;
       if(chosen)showStoredReport(chosen);
-      else $('.reports-layout').innerHTML='<section class="empty-state"><h2>선택할 수 있는 리포트 기간이 없어요</h2><p>주간 일지가 3일 이상이면 종료 후 한 달 이내에 생성할 수 있어요.</p></section>';
+      else {$('.reports-layout').innerHTML='<section class="empty-state"><h2>선택할 수 있는 리포트 기간이 없어요</h2><p>주간 일지가 3일 이상이면 종료 후 한 달 이내에 생성할 수 있어요.</p></section>';mobileStatus.hidden=true;addReportJournalLink();}
       return;
     }
     $('.report-recipient-change').hidden=!!chosen;
@@ -4408,7 +4575,11 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     $('.report-recipient-change button').disabled=!eligibility.allowed||!validTemplate;
     if(chosen)showStoredReport(chosen);
     else if(isSampleReportPeriod()&&!state.reportRemoved?.[recipient])showStoredReport();
-    else $('.reports-layout').innerHTML='<section class="empty-state"><h2>선택한 기간의 리포트가 없어요</h2><p>다른 기간을 선택하거나 새 리포트를 생성해 주세요.</p></section>';
+    else {
+      const reason=!validTemplate?'리포트 채점 기준을 확인해 주세요.':eligibility.reason==='insufficient'?'주간 일지가 3일 이상 필요해요.':eligibility.reason==='expired'?'리포트 생성 기한이 지났어요.':eligibility.reason==='future'?'주간 종료 후 리포트를 생성할 수 있어요.':'';
+      $('.reports-layout').innerHTML=`<section class="empty-state"><h2>선택한 기간의 리포트가 없어요</h2><p>${reason||'다른 기간을 선택하거나 새 리포트를 생성해 주세요.'}</p></section>`;
+    }
+    if(!chosen&&eligibility.reason==='insufficient')addReportJournalLink();
     requestAnimationFrame(scaleReports);
   }
   const recentVisitsKey=STORAGE+'-recent-visits';
@@ -4516,7 +4687,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       const priorIndex=rows.findIndex(row=>row[0]<today),previousIndex=priorIndex>=0?priorIndex:(rows.length?0:-1),previous=previousIndex>=0?rows[previousIndex]:null;
       const free=singlePreview||!state.subscription||mockupSubscriptionPeriod(state.subscription,today).ended;
       const days=mockupReportDays(week,rows),existing=reportRecords(index).find(report=>report.from===week.from&&report.to===week.to);
-      const eligibility=mockupReportEligibility(week,today,days),domains=currentScoring(index).domains,validTemplate=domains.length>=3&&domains.length<=5&&domains.every(domain=>domain.questions.length>=5);
+      const eligibility=mockupReportEligibility(week,today,days),domains=currentScoring(index).domains,validTemplate=mockupScoreValid(domains);
       const reportStatus=free?'플러스 기능':existing?'생성 완료':eligibility.allowed?(validTemplate?'생성 가능':'템플릿 확인'):`일지 ${days}일 · 3일 필요`;
       const reportHref=free?'#/plans':existing?`#/reports?recipient=${index}&report=${encodeURIComponent(existing.id)}`:`#/reports?recipient=${index}&week=latest`;
       $('[data-home-today-summary]').textContent=singlePreview?'무료 · 1명 미리보기':'';
@@ -4532,11 +4703,11 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       const journalAction=completed?'보기':draft?'이어서 작성':'작성하기';
       const journalHref=completed&&todayIndex>=0?`#/journals/new?recipient=${index}&entry=${todayIndex}`:`#/journals/new?recipient=${index}`;
       const days=mockupReportDays(week,rows),existing=reportRecords(index).find(report=>report.from===week.from&&report.to===week.to);
-      const eligibility=mockupReportEligibility(week,today,days),domains=currentScoring(index).domains,validTemplate=domains.length>=3&&domains.length<=5&&domains.every(domain=>domain.questions.length>=5);
+      const eligibility=mockupReportEligibility(week,today,days),domains=currentScoring(index).domains,validTemplate=mockupScoreValid(domains);
       const reportStatus=existing?'생성 완료':eligibility.allowed?(validTemplate?'생성 가능':'템플릿 확인'):`일지 ${days}일 · 3일 필요`;
       const reportAction=existing?'보기':eligibility.allowed?(validTemplate?'만들기':'확인하기'):'확인하기';
       const reportHref=existing?`#/reports?recipient=${index}&report=${encodeURIComponent(existing.id)}`:`#/reports?recipient=${index}&week=latest`;
-      return `<tr><th scope="row" class="home-today-name">${escapeHTML(person.name)}</th><td><span class="home-status-label">오늘 일지</span><a class="home-status-link" href="${journalHref}" aria-label="${escapeHTML(person.name)} 오늘 일지 ${journalStatus}, ${journalAction}"><span class="home-status-value${completed?' is-complete':draft?' is-ready':''}">${journalStatus}</span></a></td><td><span class="home-status-label">주간 리포트</span><a class="home-status-link" href="${reportHref}" aria-label="${escapeHTML(person.name)} 주간 리포트 ${reportStatus}, ${reportAction}"><span class="home-status-value${existing?' is-complete':eligibility.allowed&&validTemplate?' is-ready':''}">${reportStatus}</span></a></td></tr>`;
+      return `<tr><th scope="row" class="home-today-name">${escapeHTML(person.name)}</th><td><a class="home-status-link" href="${journalHref}" aria-label="${escapeHTML(person.name)} 오늘 일지 ${journalStatus}, ${journalAction}"><span class="home-status-label">일지</span><span class="home-status-value${completed?' is-complete':draft?' is-ready':' is-action'}">${journalStatus}</span></a></td><td><a class="home-status-link" href="${reportHref}" aria-label="${escapeHTML(person.name)} 주간 리포트 ${reportStatus}, ${reportAction}"><span class="home-status-label">리포트</span><span class="home-status-value${existing?' is-complete':eligibility.allowed&&validTemplate?' is-ready':''}">${reportStatus}</span></a></td></tr>`;
     }).join('');
     $('[data-home-today-list]').innerHTML=homeRows?`<table class="home-status-table"><thead><tr><th scope="col">관리대상</th><th scope="col">오늘 일지</th><th scope="col">주간 리포트</th></tr></thead><tbody>${homeRows}</tbody></table>`:'<p class="home-widget-empty">아직 관리대상이 없어요. <a href="#/recipients">관리대상 추가하기</a></p>';
     renderRecentVisits();
@@ -4552,7 +4723,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       content.innerHTML=`<section class="template-library" aria-labelledby="journal-templates-title"><h2 id="journal-templates-title">일지 템플릿</h2><div class="template-library-grid">${state.journalTemplates.map((template,index)=>{const users=state.recipients.filter(r=>!r.deleted&&(r.templateIndex||0)===index).length;return `<article class="card template-library-card"><div class="template-library-content"><h3 title="${escapeHTML(template.name)}">${escapeHTML(template.name)}</h3><p>퀵체크 항목 ${template.quickChecks}개</p><p>관리대상 ${users}명 연결됨</p></div><button class="button secondary" type="button" data-action="journal-template-edit" data-index="${index}">편집</button></article>`;}).join('')}</div></section>`;
     }else{
       const templates=LIVE_SCORING.map((template,index)=>state.reportTemplateConfigs?.[index]||template);
-      content.innerHTML=`<section class="template-library" aria-labelledby="report-templates-title"><h2 id="report-templates-title">리포트 템플릿</h2><div class="template-library-grid">${templates.map((template,index)=>{const count=template.domains.reduce((n,d)=>n+d.questions.length,0),invalid=template.domains.length<3||template.domains.length>5||template.domains.some(d=>d.questions.length<5),users=state.recipients.filter((r,i)=>!r.deleted&&(state.reportTemplates[i]||'누리과정')===template.title).length;return `<article class="card template-library-card"><div class="template-library-content"><h3 title="${escapeHTML(template.title)}">${escapeHTML(template.title)}</h3><p>영역 ${template.domains.length}개 · 문항 ${count}개 ${invalid?'<span class="template-invalid">기준 미충족</span>':''}</p><p>관리대상 ${users}명 연결됨</p></div><button class="button secondary" type="button" data-action="report-template-edit" data-index="${index}">편집</button></article>`;}).join('')}</div></section>`;
+      content.innerHTML=`<section class="template-library" aria-labelledby="report-templates-title"><h2 id="report-templates-title">리포트 템플릿</h2><div class="template-library-grid">${templates.map((template,index)=>{const count=template.domains.reduce((n,d)=>n+mockupScoreQuestionCount(d),0),invalid=!mockupScoreValid(template.domains),users=state.recipients.filter((r,i)=>!r.deleted&&(state.reportTemplates[i]||'누리과정')===template.title).length;return `<article class="card template-library-card"><div class="template-library-content"><h3 title="${escapeHTML(template.title)}">${escapeHTML(template.title)}</h3><p>영역 ${template.domains.length}개 · 문항 ${count}개 ${invalid?'<span class="template-invalid">기준 미충족</span>':''}</p><p>관리대상 ${users}명 연결됨</p></div><button class="button secondary" type="button" data-action="report-template-edit" data-index="${index}">편집</button></article>`;}).join('')}</div></section>`;
     }
     registerEdits();
   }
@@ -4618,7 +4789,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     $('#recipient-form-title').textContent=index===null?'관리대상 추가하기':'관리대상 수정';
     $('#recipient-form button[type=submit]').textContent=index===null?'추가하기':'저장하기';
     $('#recipient-name').value=r.name||'';
-    $('#recipient-name-limit').textContent=`${(r.name||'').length}/30자`;
+    $('#recipient-name-limit').textContent=`${(r.name||'').length}/20자`;
     const journalButton=$('#recipient-journal-template'),reportButton=$('#recipient-report-template');
     journalButton.dataset.value=String(r.templateIndex||0);$('span',journalButton).textContent=state.journalTemplates[r.templateIndex||0]?.name||'일지 템플릿 1';
     reportButton.dataset.value=state.reportTemplates[index]||'누리과정';$('span',reportButton).textContent=reportButton.dataset.value;
@@ -4716,7 +4887,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
         if(kind==='recipients') {
           if(route==='/journals/new')captureDraft();
           const change=()=>{params.set('recipient',choice.value);params.delete('entry');params.delete('report');routeTo('#'+route+'?'+params);};
-          if(configurationDirty())confirmConfigurationNavigation(change);else change();
+          if(journalEditDirty())confirmJournalNavigation(change);else if(configurationDirty())confirmConfigurationNavigation(change);else change();
         }else if(kind==='record-types'){
           recordTab=choice.value;params.set('recipient',params.get('recipient')==='all'?'all':String(recipient));params.set('tab',recordTab);routeTo('#/records?'+params);
         }else if(kind==='recipient-form-journal'||kind==='recipient-form-report'){
@@ -4733,9 +4904,10 @@ function mockupHomeJournalStatus(state, index, today, checks) {
         }else if(kind==='journal-templates'){
           const changed=(state.recipients[recipient].templateIndex||0)!==choice.value;
           const apply=async()=>{if(changed){preserveJournalSchemas(state.recipients[recipient].templateIndex||0);delete state.quickChecks[recipient];delete state.configuration[recipient];}state.recipients[recipient].templateIndex=choice.value;if(!await persist())return;prepareJournal();toast(`「${choice.label}」을 선택했어요.`);};
-          if(changed&&(state.quickChecks[recipient]||state.configuration[recipient]))dialog('일지 템플릿을 변경할까요?','<p>이 대상의 개별 설정이 선택한 공통 템플릿으로 바뀌어요. 기존에 저장한 일지는 보관돼요.</p>','변경',apply);else await apply();
-        }else if(kind==='saved-journals')routeTo(`#/journals/new?recipient=${recipient}&entry=${choice.value}`);
-        else if(kind==='report-templates')dialog('관찰 기준을 바꿀까요?',`<p>선택한 공통 템플릿을 새 리포트에 적용해요. 기존 리포트는 바뀌지 않아요.${state.scoring[recipient]?' 현재 대상의 개별 기준은 선택한 공통 기준으로 바뀌어요.':''}</p>`,'저장하고 적용',async()=>{const previous=state.scoring[recipient],oldTitle=state.reportTemplates[recipient];delete state.scoring[recipient];state.reportTemplates[recipient]=choice.label;if(!await persist()){if(previous)state.scoring[recipient]=previous;state.reportTemplates[recipient]=oldTitle;return;}button.querySelector('span').textContent=choice.label;const summary=$('.report-template-summary');if(summary)summary.textContent=`영역 ${currentScoring().domains.length}개 · 문항 ${currentScoring().domains.reduce((total,domain)=>total+domain.questions.length,0)}개`;updateReportPeriod();});
+          const change=()=>{if(changed&&(state.quickChecks[recipient]||state.configuration[recipient]))dialog('일지 템플릿을 변경할까요?','<p>이 대상의 개별 설정이 선택한 공통 템플릿으로 바뀌어요. 기존에 저장한 일지는 보관돼요.</p>','변경',apply);else apply();};
+          if(changed&&journalEditDirty())confirmJournalNavigation(change);else change();
+        }else if(kind==='saved-journals'){const change=()=>routeTo(`#/journals/new?recipient=${recipient}&entry=${choice.value}`);if(journalEditDirty())confirmJournalNavigation(change);else change();}
+        else if(kind==='report-templates')dialog('관찰 기준을 바꿀까요?',`<p>선택한 공통 템플릿을 새 리포트에 적용해요. 기존 리포트는 바뀌지 않아요.${state.scoring[recipient]?' 현재 대상의 개별 기준은 선택한 공통 기준으로 바뀌어요.':''}</p>`,'저장하고 적용',async()=>{const previous=state.scoring[recipient],oldTitle=state.reportTemplates[recipient];delete state.scoring[recipient];state.reportTemplates[recipient]=choice.label;if(!await persist()){if(previous)state.scoring[recipient]=previous;state.reportTemplates[recipient]=oldTitle;return;}button.querySelector('span').textContent=choice.label;const summary=$('.report-template-summary');if(summary)summary.textContent=`영역 ${currentScoring().domains.length}개 · 문항 ${currentScoring().domains.reduce((total,domain)=>total+mockupScoreQuestionCount(domain),0)}개`;updateReportPeriod();});
         else if(kind==='quick-type'){readQuickDraft();quickDraft.type=choice.label;drawQuickEditor();}
         else if(kind==='score-templates'){readScoreDraft();const change=()=>{editingReportTemplateIndex=choice.value;scoreDraft=copy(state.reportTemplateConfigs?.[choice.value]||scoreSeed(choice.value));scoreSnapshot=JSON.stringify(scoreDraft);scoreCurrentDomain=0;if(route==='/recipients/scoring'){params.set('template',String(choice.value));history.replaceState(null,'','#'+route+'?'+params);}drawScoring();};if(JSON.stringify(scoreDraft)!==scoreSnapshot)confirmScoreNavigation(change);else change();}
       });menu.append(option);
@@ -4792,6 +4964,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       const week=mockupReportWeek(date);
       return mockupReportEligibility(week,currentDate(),reportDays(week)).allowed||(mockupReportEligibility(week,currentDate()).allowed&&reportRecords(recipient).some(item=>item.from===week.from&&item.to===week.to));
     };
+    const canInspect=date=>isReportRange&&matchMedia('(max-width:767px)').matches&&!allowed(date)&&mockupReportEligibility(mockupReportWeek(date),currentDate(),reportDays(mockupReportWeek(date))).reason==='insufficient';
     const paintRange=(preview='')=>{
       if(!isRange)return;
       let from=rangeFrom,end=selectingEnd?(preview>=rangeFrom?preview:rangeFrom):rangeTo;
@@ -4804,7 +4977,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
         from=status.allowed||unavailable||existing?week.from:'';end=status.allowed||unavailable||existing?week.to:'';
         $('[data-report-week-summary]',popup).textContent=week?`${formatShortDate(week.from)} ~ ${formatShortDate(week.to)}`:'금~목 7일 · 종료 후 1개월 이내';
         const notice=$('[data-report-week-notice]',popup);
-        notice.textContent=existing?'이미 만든 리포트가 있어요\n날짜를 눌러 리포트를 볼 수 있어요':mockupReportNotice(status,days);
+        notice.textContent=existing?'이미 만든 리포트가 있어요\n날짜를 눌러 리포트를 볼 수 있어요':status.reason==='empty'&&matchMedia('(max-width:767px)').matches?'날짜를 눌러 생성 가능 여부를 확인해 주세요.':mockupReportNotice(status,days);
         notice.classList.toggle('is-available',status.allowed||!!existing);
       }
       $$('[data-date]',popup).forEach(day=>{
@@ -4821,7 +4994,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       });
     };
     const pick=date=>{
-      if(!allowed(date))return;
+      if(!allowed(date)){if(canInspect(date))paintRange(date);return;}
       if(isReportRange){const week=mockupReportWeek(date);commitRange(week.from,week.to);return;}
       if(isRange){
         if(!selectingEnd||date<rangeFrom){rangeFrom=date;rangeTo='';selectingEnd=true;draw(date);return;}
@@ -4842,8 +5015,8 @@ function mockupHomeJournalStatus(state, index, today, checks) {
         const count=isReportRange?reportDays(week):0;
         const withinPeriod=isReportRange&&mockupReportEligibility(week,currentDate()).allowed;
         const reason=isReportRange?mockupReportNotice(mockupReportEligibility(week,currentDate(),count),count).replace('\n',' '):'';
-        return `<button type="button" class="datefield-day${date===value?' is-picked':''}${date===today?' is-today':''}${adjacent?' is-adjacent-month':''}${isReportRange&&dateDay===1&&date!==dates[0]?' is-month-boundary':''}${withinPeriod?' is-report-period':''}" data-date="${date}" aria-label="${formatDate(date)}" ${reason?`aria-description="${reason}"`:''} aria-pressed="${date===value}" ${date===today?'aria-current="date"':''} ${allowed(date)?'':'disabled'} tabindex="-1">${dateDay}</button>`;
-      }).join('')}</div>${isReportRange?'<p class="report-week-notice" data-report-week-notice role="status" aria-live="polite" aria-atomic="true"></p>':isRange?'<button type="button" class="button tertiary" data-clear-date>날짜 지우기</button>':'<button type="button" class="datefield-today">오늘로</button>'}`;
+        return `<button type="button" class="datefield-day${date===value?' is-picked':''}${date===today?' is-today':''}${adjacent?' is-adjacent-month':''}${isReportRange&&dateDay===1&&date!==dates[0]?' is-month-boundary':''}${withinPeriod?' is-report-period':''}" data-date="${date}" aria-label="${formatDate(date)}" ${reason?`aria-description="${reason}"`:''} aria-pressed="${date===value}" ${date===today?'aria-current="date"':''} ${canInspect(date)?'aria-disabled="true"':allowed(date)?'':'disabled'} tabindex="-1">${dateDay}</button>`;
+      }).join('')}</div>${isReportRange?'<p class="report-week-notice" data-report-week-notice role="status" aria-live="polite" aria-atomic="true"></p>':isRange?'<button type="button" class="button tertiary" data-clear-date>날짜 초기화</button>':'<button type="button" class="datefield-today">날짜 초기화</button>'}`;
       $('.datefield-head [aria-label="이전 달"]',popup).onclick=()=>{month--;if(month<0){month=11;year--;}draw();};
       $('.datefield-head [aria-label="다음 달"]',popup).onclick=()=>{month++;if(month>11){month=0;year++;}draw();};
       $$('[data-date]',popup).forEach(b=>b.onclick=()=>pick(b.dataset.date));
@@ -4868,12 +5041,12 @@ function mockupHomeJournalStatus(state, index, today, checks) {
         if(isReportRange&&(e.key==='PageUp'||e.key==='PageDown'))key=key<min?min:key>max?max:key;
         if(isReportRange){
           const step=['ArrowLeft','ArrowUp','Home','PageUp'].includes(e.key)?-1:1;
-          while(key>=min&&key<=max&&!allowed(key)){
+          while(key>=min&&key<=max&&!allowed(key)&&!canInspect(key)){
             next.setTime(new Date(`${key}T00:00:00`).getTime());next.setDate(next.getDate()+step);
             key=dateKey(next.getFullYear(),next.getMonth(),next.getDate());
           }
         }
-        if(!allowed(key))return;
+        if(!allowed(key)&&!canInspect(key))return;
         if(!$(`[data-date="${key}"]`,popup)){const target=new Date(`${key}T00:00:00Z`);year=target.getUTCFullYear();month=target.getUTCMonth();}
         draw(key);
       }
@@ -4900,7 +5073,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const previousDraft=state.drafts[recipient],previousDraftDate=state.draftDates[recipient];if(!row){delete state.drafts[recipient];delete state.draftDates[recipient];}
     const savedSnapshot=journalSnapshot();journalSaving=true;updateJournalSaveState();
     if(!await persist()){if(previousRecord)Object.assign(existing,previousRecord);else state.savedJournals=state.savedJournals.filter(item=>item!==existing);state.recipients[recipient].count=previousCount;if(!row&&!state.drafts[recipient]){state.drafts[recipient]=previousDraft;state.draftDates[recipient]=previousDraftDate;}journalSaving=false;setDraftStatus('저장하지 못했어요. 다시 시도해 주세요.');updateJournalSaveState();return;}
-    journalSavedRecord=existing;journalSavedSnapshot=savedSnapshot;journalSaving=false;updateJournalSaveState();toast('일지를 저장했어요.');
+    journalSavedRecord=existing;journalSavedSnapshot=savedSnapshot;journalSaving=false;updateJournalSaveState();toast('일지를 저장했어요.');return true;
   }
   async function exportHTML({save=true}={}) {
     if(document.querySelector('script[src]')){
@@ -4932,6 +5105,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const tick=e.target.closest('.quick-check-slider-ticks button');
     if(tick){const slider=tick.closest('.quick-check-slider'),input=$('input[type="range"]',slider),selected=$('input[type="hidden"]',slider);slider.classList.add('is-selected');selected.value='true';input.value=tick.textContent.trim();$$('.quick-check-slider-ticks button',slider).forEach(b=>b.setAttribute('aria-pressed',String(b===tick)));input.dispatchEvent(new Event('change',{bubbles:true}));return;}
     const navigation=e.target.closest('a[href^="#/"]');
+    if(navigation&&journalEditDirty()){e.preventDefault();const href=navigation.getAttribute('href');confirmJournalNavigation(()=>routeTo(href));return;}
     if(navigation&&configurationDirty()){e.preventDefault();const href=navigation.getAttribute('href');confirmConfigurationNavigation(()=>routeTo(href));return;}
     if(navigation&&scorePageDirty()){e.preventDefault();const href=navigation.getAttribute('href');confirmScoreNavigation(()=>routeTo(href));return;}
     const option=e.target.closest('[data-options]');if(option){dropdown(option);return;}
@@ -5050,10 +5224,16 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   $('#mockup-edit-mode').addEventListener('change',e=>setEditMode(e.target.checked));
   $('#mockup-color').addEventListener('input',e=>{state.color=e.target.value;applyDesign();persist();});
   $('#mockup-radius').addEventListener('input',e=>{state.radius=Number(e.target.value);applyDesign();persist();});
-  window.addEventListener('hashchange',render);window.addEventListener('resize',scaleReports);
+  window.addEventListener('hashchange',event=>{
+    if(journalEditDirty()){
+      const next=new URL(event.newURL).hash||'#/';history.replaceState(null,'',new URL(event.oldURL).hash||'#/');
+      confirmJournalNavigation(()=>routeTo(next));return;
+    }
+    render();
+  });window.addEventListener('resize',scaleReports);
   function syncSidebarButton(){const collapsed=$('.app-layout').classList.contains('mockup-nav-collapsed'),button=$('.nav-handle');button.setAttribute('aria-expanded',String(!collapsed));button.setAttribute('aria-label',collapsed?'메뉴 열기':'메뉴 접기');button.title=collapsed?'메뉴 열기':'메뉴 접기';}
   matchMedia('(max-width:1023px)').addEventListener('change', e => { $('.app-layout').classList.toggle('mockup-nav-collapsed',e.matches);syncSidebarButton(); });
-  function scaleReports(){ const viewport=$('.configured-report-viewport');if(!viewport)return;const pages=$('.configured-report-pages');const scale=Math.min(1,viewport.clientWidth/794);pages.style.setProperty('--configured-report-scale',scale); }
+  function scaleReports(){ const viewport=$('.configured-report-viewport');if(!viewport)return;const pages=$('.configured-report-pages'),style=getComputedStyle(viewport),width=viewport.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight);const scale=Math.min(1,Math.max(0,width)/794);pages.style.setProperty('--configured-report-scale',scale); }
   function prepareConfiguration(){
     const common=editingCommonJournal;
     if(common&&!commonJournalDraft){
@@ -5137,6 +5317,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(!await persist()){state.journalTemplates[index].name=previous.name;state.journalTemplateConfigs=previous.templates;state.journalSchemaSnapshots=previous.schemas;commonJournalDraft=previous.draft;return false;}
     return true;
   }
+  function confirmJournalNavigation(move){confirmNavigation(()=>{journalSavedSnapshot=journalSnapshot();move();},saveJournal);$('#mockup-dialog').classList.add('is-journal-navigation');$('#mockup-dialog [data-action="close-dialog"]').textContent='계속 편집';}
   function confirmConfigurationNavigation(move){
     const index=Math.max(0,Number(params.get('template')||1)-1),labelsChanged=JSON.stringify($$('#configuration-form input').map(el=>el.value))!==configSnapshot;
     const affected=journalTemplateRecipients(index).filter(item=>!item.labels).length;
@@ -5174,7 +5355,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if (selected === 'pro') selected = 'team';
     if (!Object.hasOwn(plans, selected)) selected = 'starter';
     const plan = plans[selected];
-    const today = currentDate(), amount=mockupCheckoutPrice(selected), nextBillingOn=mockupBillingDate(today,1);
+    const today = currentDate(), amount=mockupCheckoutPrice(selected), nextBillingOn=mockupCouponAdjustedBilling(state,selected,mockupBillingDate(today,1));
     const modal = editorDialog('checkout-dialog','checkout-dialog',`${plan.name} 요금제`,`
       <form id="checkout-form" class="checkout-body" novalidate>
         <section class="checkout-summary" aria-labelledby="checkout-amount-title">
@@ -5205,6 +5386,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       if (today!==currentDate()) { openPlanCheckout(selected); toast('결제일이 바뀌었어요. 결제 내용을 다시 확인해 주세요.'); return; }
       const subscription=mockupCheckoutSubscription(selected,today,consent(),new Date().toISOString());
       if (!subscription) return;
+      subscription.nextBillingOn=nextBillingOn;subscription.consent.nextBillingOn=nextBillingOn;
       submitting = true;
       $('.checkout-submit',form).disabled = true;
       $('.checkout-submit',form).textContent = '결제 처리 중';
@@ -5239,7 +5421,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   function openCheckoutPolicy(type,plan,date) {
     const renewal=type==='renewal', amount=mockupCheckoutPrice(plan);
     if (renewal && (!Number.isInteger(amount) || !/^\d{4}-\d{2}-\d{2}$/.test(date||''))) return;
-    const html=renewal?`<p><strong>${checkoutPlans[plan].name} · 월 ${won(amount)}</strong> (VAT 포함 금액)</p><p>첫 결제는 ${mockupBillingDate(date)}, 다음 결제는 ${mockupBillingDate(date,1)}에 ${won(amount)}이에요. 이후에도 첫 결제일과 같은 날짜에 매월 자동 결제돼요. 해당 날짜가 없는 달에는 마지막 날에 결제해요.</p><p>결제 직후 유료 기능이 제공돼요. 요금제 → 자동갱신 해지 또는 support@careit.kr를 통해 다음 결제부터 해지할 수 있어요. 이미 결제한 기간까지 이용할 수 있으며, 자동갱신 해지는 환불 신청과 달라요.</p>${plan==='team'?'<p>팀의 해지·환불은 결제자가 요청해요. 이용기간이 끝나면 결제자와 팀원 모두 무료 요금제로 전환돼요.</p>':''}<p>요금이 인상되는 경우 변경 금액과 적용 시점을 미리 안내하고 별도 동의를 받아요.</p>`:$('#checkout-policy-template').innerHTML;
+    const html=renewal?`<p><strong>${checkoutPlans[plan].name} · 월 ${won(amount)}</strong> (VAT 포함 금액)</p><p>첫 결제는 ${mockupBillingDate(date)}, 다음 결제는 ${mockupCouponAdjustedBilling(state,plan,mockupBillingDate(date,1))}에 ${won(amount)}이에요. ${mockupCouponAdjustedBilling(state,plan,mockupBillingDate(date,1))!==mockupBillingDate(date,1)?'쿠폰 적용으로 다음 결제일이 연기돼요. 이후에는 변경된 결제일을 기준으로 매월 자동 결제돼요.':'이후에도 첫 결제일과 같은 날짜에 매월 자동 결제돼요.'} 해당 날짜가 없는 달에는 마지막 날에 결제해요.</p><p>결제 직후 유료 기능이 제공돼요. 요금제 → 자동갱신 해지 또는 support@careit.kr를 통해 다음 결제부터 해지할 수 있어요. 이미 결제한 기간까지 이용할 수 있으며, 자동갱신 해지는 환불 신청과 달라요.</p>${plan==='team'?'<p>팀의 해지·환불은 결제자가 요청해요. 이용기간이 끝나면 결제자와 팀원 모두 무료 요금제로 전환돼요.</p>':''}<p>요금이 인상되는 경우 변경 금액과 적용 시점을 미리 안내하고 별도 동의를 받아요.</p>`:$('#checkout-policy-template').innerHTML;
     const modal=editorDialog('checkout-policy-dialog','checkout-dialog',renewal?'정기결제·자동갱신':'이용약관·환불 기준',`<div class="checkout-body"><div class="checkout-policy-copy">${html}</div><button type="button" class="button secondary" data-action="close-modal" data-modal="checkout-policy-dialog">확인</button></div>`);
     const title=$('#checkout-policy-dialog-title',modal);title.tabIndex=-1;title.focus();
   }
@@ -5291,7 +5473,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if (!Object.prototype.hasOwnProperty.call(state,'planDemoOriginal')) state.planDemoOriginal=previous || null;
     if(plan==='reset'){state.subscription=state.planDemoOriginal;state.planDemoFree=!state.subscription;delete state.planDemoOriginal;}
     else if(plan==='free'){state.subscription=null;state.planDemoFree=true;}
-    else {const today=currentDate();state.subscription={plan,cycle:'monthly',amount:mockupCheckoutPrice(plan),paidOn:today,nextBillingOn:mockupBillingDate(today,1),autoRenew:true,invites:[],source:'demo'};state.planDemoFree=false;}
+    else {const today=currentDate();state.subscription={plan,cycle:'monthly',amount:mockupCheckoutPrice(plan),paidOn:today,nextBillingOn:mockupCouponAdjustedBilling(state,plan,mockupBillingDate(today,1)),autoRenew:true,invites:[],source:'demo'};state.planDemoFree=false;}
     if(previousCapacity===1 && mockupRecipientCapacity(state,currentDate())>1)mockupRestorePlanRecipients(state,currentDate());
     if(!await persist()){state.subscription=previous;state.recipients=previousRecipients;state.planDemoFree=oldFree;if(oldOriginal===undefined)delete state.planDemoOriginal;else state.planDemoOriginal=oldOriginal;return;}
     history.replaceState(null,'','#/plans');render();
@@ -5332,12 +5514,12 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       return;
     }
     comparison.insertAdjacentHTML(teamActive?'beforebegin':'afterend',`<section class="subscription-card subscription-overview" aria-labelledby="subscription-title">
-      <header class="subscription-header"><div><div class="subscription-heading"><h2 id="subscription-title" tabindex="-1">${period.ended?'무료':plan.name} 이용 중</h2><span class="subscription-badge">${sub.refundDemoOn?'환불 완료':sub.autoRenew===false?'자동갱신 해지됨':cycle.name}</span></div><p>${period.ended?'유료 이용기간이 종료됐어요.':sub.plan==='team'?'최대 3명 이용 · 1인당 관리대상 최대 5명':'관리대상 최대 5명'}</p></div></header>
+      <header class="subscription-header"><div><div class="subscription-heading"><h2 id="subscription-title" tabindex="-1">${period.ended?'무료':plan.name} 이용 중</h2><span class="subscription-badge">${sub.refundDemoOn?'환불 완료':sub.autoRenew===false?'자동갱신 해지됨':cycle.name}</span></div>${period.ended?'<p>유료 이용기간이 종료됐어요.</p>':sub.plan==='team'?'<p>최대 3명 이용 · 1인당 관리대상 최대 5명</p>':''}</div></header>
       ${subscriptionOverview(sub,period,cycle)}
       ${sub.autoRenew===false?`<p class="subscription-status">${sub.refundDemoOn?'구독이 해지되고 환불이 완료됐어요.':period.ended?'결제한 이용기간이 끝나 무료 요금제로 전환됐어요.':`${period.end}까지 ${plan.name} 기능을 이용할 수 있어요.${sub.plan==='team'?' 이후 결제자와 팀원 모두 무료 요금제로 전환돼요.':''}`}</p>`:''}
       <div class="subscription-management"><button type="button" class="button tertiary" data-action="payment-details">결제 내역</button>${sub.autoRenew!==false?'<button type="button" class="button tertiary" data-action="cancel-renewal">자동갱신 해지</button>':''}</div>
     </section>${sub.plan==='team'&&!period.ended?teamMembersHTML():''}`);
-    if(state.couponPlusFrom&&state.couponPlusUntil>=today)$('#subscription-title')?.closest('.subscription-card')?.insertAdjacentHTML('beforeend',`<p class="subscription-status">${state.couponPlusFrom>today?'쿠폰 등록 완료':'쿠폰 적용 중'} · ${state.couponPlusFrom.replaceAll('-','.')}부터 ${state.couponPlusUntil.replaceAll('-','.')}까지 플러스 이용</p>`);
+    if(sub.plan==='starter'&&state.couponPlusFrom&&state.couponPlusUntil>=today)$('#subscription-title')?.closest('.subscription-card')?.insertAdjacentHTML('beforeend',`<p class="subscription-status">${state.couponPlusFrom>today?'쿠폰 등록 완료':'쿠폰 적용 중'} · ${state.couponPlusFrom.replaceAll('-','.')}부터 ${state.couponPlusUntil.replaceAll('-','.')}까지 플러스 이용</p>`);
   }
   function teamMembersHTML() {
     const sub=state.subscription, invites=sub.invites, members=teamDemoMembers(sub);
@@ -5357,9 +5539,8 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const modal=editorDialog('checkout-dialog','checkout-dialog',completed?'결제가 완료됐어요':'결제 내역',`<div class="checkout-body">
       <div class="payment-result-heading">${completed?'<span class="payment-success-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4 10-10"/></svg></span>':''}<div><h3>${plan.name} · ${cycle.name}</h3><p>${!completed?'결제한 요금제 내역이에요.':sub.plan==='team'?(canInvite?'이제 함께 이용할 멤버를 초대해 보세요.':'팀 멤버를 확인해 보세요.'):'이제 플러스 기능을 이용할 수 있어요.'}</p></div></div>
       ${subscriptionDetails()}
-      <div class="payment-result-actions"><button type="button" class="button secondary" data-action="close-modal" data-modal="checkout-dialog">요금제 보기</button><button type="button" class="button primary" data-action="${sub.plan==='team'&&!mockupSubscriptionPeriod(sub,currentDate()).ended?(completed&&canInvite?'team-invite':'team-members'):'payment-start'}">${sub.plan==='team'&&!mockupSubscriptionPeriod(sub,currentDate()).ended?(completed&&canInvite?'멤버 초대하기':'팀 멤버 보기'):'일지 작성하기'}</button></div>
+      ${completed || sub.plan!=='team'?`<div class="payment-result-actions"><button type="button" class="button secondary" data-action="close-modal" data-modal="checkout-dialog">요금제 보기</button><button type="button" class="button primary" data-action="${sub.plan==='team'&&!mockupSubscriptionPeriod(sub,currentDate()).ended?(completed&&canInvite?'team-invite':'team-members'):'payment-start'}">${sub.plan==='team'&&!mockupSubscriptionPeriod(sub,currentDate()).ended?(completed&&canInvite?'멤버 초대하기':'팀 멤버 보기'):'일지 작성하기'}</button></div>`:''}
       
-      <button type="button" class="button tertiary payment-back" data-action="payment-back">결제 전으로 돌아가기</button>
     </div>`);
     $('#checkout-dialog-title',modal).tabIndex=-1;
     $('#checkout-dialog-title',modal).focus();
@@ -5469,16 +5650,21 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   function drawScoring(){
     const domains=scoreDraft.domains;
     scoreCurrentDomain=Math.max(0,Math.min(scoreCurrentDomain,domains.length-1));
-    const domainNav=domains.map((d,i)=>`<button type="button" class="score-area-option" data-action="score-select-domain" data-index="${i}" aria-pressed="${i===scoreCurrentDomain}"><span>${escapeHTML(d.name||'이름 없는 영역')}</span><small>${d.questions.length}</small></button>`).join('');
-    const panels=domains.map((d,i)=>`<section class="score-area-panel" ${i===scoreCurrentDomain?'':'hidden'} aria-label="${escapeHTML(d.name)} 문항"><header class="score-area-heading"><div><div class="score-title-editor"><span class="score-title-text">${escapeHTML(d.name)}</span><label class="sr-only" for="score-domain-title-${i}">${i+1}번째 영역명</label><input id="score-domain-title-${i}" maxlength="40" value="${escapeHTML(d.name)}" aria-describedby="score-domain-title-${i}-limit" hidden><button type="button" class="button secondary score-title-edit" data-action="score-title-edit" data-target="score-domain-title-${i}" aria-label="${escapeHTML(d.name)} 영역명 수정">이름 수정</button></div><small class="field-limit" id="score-domain-title-${i}-limit">${d.name.length}/40자</small><p>문항 ${d.questions.length}개${d.questions.length<5?' · 리포트 생성에는 5개 이상 필요':''}</p></div></header><ol class="score-question-list">${d.questions.map((q,j)=>`<li><span>${j+1}</span><div><label class="sr-only" for="score-question-${i}-${j}">${escapeHTML(d.name)} ${j+1}번 문항</label><textarea id="score-question-${i}-${j}" data-score-question="${i}" maxlength="80" rows="1" aria-describedby="score-question-${i}-${j}-limit">${escapeHTML(q)}</textarea><small class="field-limit score-input-limit" id="score-question-${i}-${j}-limit">${q.length}/80자</small></div><button class="button danger" type="button" data-action="score-delete-question" data-index="${i}" data-question="${j}" aria-label="${escapeHTML(d.name)} ${j+1}번 문항 삭제">삭제</button></li>`).join('')}</ol><button class="score-question-add" type="button" data-action="score-add-question" data-index="${i}" ${d.questions.length>=15?'disabled':''}>+ 문항 추가 (${d.questions.length}/15)</button></section>`).join('');
+    const domainNav=domains.map((d,i)=>`<button type="button" class="score-area-option" data-action="score-select-domain" data-index="${i}" aria-pressed="${i===scoreCurrentDomain}"><span>${escapeHTML(d.name||'이름 없는 영역')}</span><small>${mockupScoreQuestionCount(d)}</small></button>`).join('');
+    const panels=domains.map((d,i)=>`<section class="score-area-panel" ${i===scoreCurrentDomain?'':'hidden'} aria-label="${escapeHTML(d.name)} 문항"><header class="score-area-heading"><div><div class="score-title-editor"><span class="score-title-text">${escapeHTML(d.name)}</span><label class="sr-only" for="score-domain-title-${i}">${i+1}번째 영역명</label><input id="score-domain-title-${i}" maxlength="40" value="${escapeHTML(d.name)}" aria-describedby="score-domain-title-${i}-limit" hidden><button type="button" class="button secondary score-title-edit" data-action="score-title-edit" data-target="score-domain-title-${i}" aria-label="${escapeHTML(d.name)} 영역명 수정">이름 수정</button></div><small class="field-limit" id="score-domain-title-${i}-limit">${d.name.length}/40자</small><p data-score-count="${i}">문항 ${mockupScoreQuestionCount(d)}개${mockupScoreQuestionCount(d)<5?' · 리포트 생성에는 5개 이상 필요':''}</p></div></header><ol class="score-question-list">${d.questions.map((q,j)=>`<li><span>${j+1}</span><div><label class="sr-only" for="score-question-${i}-${j}">${escapeHTML(d.name)} ${j+1}번 문항</label><textarea id="score-question-${i}-${j}" data-score-question="${i}" maxlength="80" rows="1" aria-describedby="score-question-${i}-${j}-limit score-question-${i}-${j}-error">${escapeHTML(q)}</textarea><small class="field-limit score-input-limit" id="score-question-${i}-${j}-limit">${q.length}/80자</small><p class="field-error" id="score-question-${i}-${j}-error" role="alert" hidden>문항을 입력해 주세요.</p></div><button class="button danger" type="button" data-action="score-delete-question" data-index="${i}" data-question="${j}" aria-label="${escapeHTML(d.name)} ${j+1}번 문항 삭제">삭제</button></li>`).join('')}</ol><button class="score-question-add" type="button" data-action="score-add-question" data-index="${i}" ${d.questions.length>=15?'disabled':''}>+ 문항 추가 (${d.questions.length}/15)</button></section>`).join('');
     $('.score-editor-page').innerHTML=`<a class="score-editor-back" href="#/recipients?tab=report">‹ 대상·템플릿</a><form id="score-edit-form"><div class="score-editor-heading"><h1>리포트 템플릿 편집</h1></div><section class="score-editor-top card"><div class="score-editor-template"><div class="score-title-editor"><div class="dropdown score-title-text"><button type="button" class="dropdown-trigger" data-options="score-templates" aria-label="편집할 템플릿 고르기" aria-haspopup="listbox" aria-expanded="false"><span>${escapeHTML(scoreDraft.title)}</span></button></div><label class="sr-only" for="score-template-title">템플릿 이름</label><input id="score-template-title" maxlength="40" value="${escapeHTML(scoreDraft.title)}" aria-describedby="score-template-title-limit" hidden><button type="button" class="button secondary score-title-edit" data-action="score-title-edit" data-target="score-template-title" aria-label="템플릿 이름 수정">이름 수정</button></div><small class="field-limit" id="score-template-title-limit">${scoreDraft.title.length}/40자</small></div><div class="score-editor-actions"><button class="button secondary" type="button" data-action="score-reset">초기화</button><button class="button primary" type="submit">저장</button><p class="score-editor-status" role="status" data-score-status></p></div></section><div class="score-editor-workspace card"><aside class="score-area-list"><div class="score-area-list-heading"><h2>영역</h2><span>${domains.length}/5</span></div><div class="score-area-options">${domainNav}</div></aside><div class="score-area-content">${panels||'<p class="score-area-empty">영역이 없어요. 초기화하면 기본 영역을 불러올 수 있어요.</p>'}</div></div></form>`;
     updateScoreSave();
     const rail=$('.score-area-options'),selected=$('.score-area-option[aria-pressed="true"]');
     if(rail&&selected){const r=rail.getBoundingClientRect(),s=selected.getBoundingClientRect();if(s.right>r.right)rail.scrollLeft+=s.right-r.right;else if(s.left<r.left)rail.scrollLeft-=r.left-s.left;}
   }
-  function updateScoreSave(){const form=$('#score-edit-form');if(!form)return;readScoreDraft();$('button[type="submit"]',form).disabled=JSON.stringify(scoreDraft)===scoreSnapshot;}
+  function updateScoreSave(){const form=$('#score-edit-form');if(!form)return;readScoreDraft();$('button[type="submit"]',form).disabled=JSON.stringify(scoreDraft)===scoreSnapshot;
+    scoreDraft.domains.forEach((domain,i)=>{const count=mockupScoreQuestionCount(domain),nav=$(`[data-action="score-select-domain"][data-index="${i}"] small`,form),heading=$(`[data-score-count="${i}"]`,form);if(nav)nav.textContent=count;if(heading)heading.textContent=`문항 ${count}개${count<5?' · 리포트 생성에는 5개 이상 필요':''}`;});
+    $$('[data-score-question]',form).forEach(input=>{if(input.value.trim()){input.removeAttribute('aria-invalid');const error=document.getElementById(input.id+'-error');if(error)error.hidden=true;}});
+  }
   async function saveScoring(confirmed=false){
     readScoreDraft();if(!scoreDraft.title.trim()){$('[data-score-status]').textContent='템플릿 이름을 입력해 주세요.';const input=$('#score-template-title'),editor=input.closest('.score-title-editor');$('.score-title-text',editor).hidden=true;input.hidden=false;$('.score-title-edit',editor).hidden=true;input.focus();return false;}
+    const emptyDomain=scoreDraft.domains.findIndex(domain=>domain.questions.some(question=>!question.trim()));
+    if(emptyDomain!==-1){const emptyQuestion=scoreDraft.domains[emptyDomain].questions.findIndex(question=>!question.trim());scoreCurrentDomain=emptyDomain;drawScoring();const input=$(`#score-question-${emptyDomain}-${emptyQuestion}`);input.setAttribute('aria-invalid','true');$(`#score-question-${emptyDomain}-${emptyQuestion}-error`).hidden=false;input.focus();return false;}
     if(editingCommonReport&&editingReportTemplateIndex!==null&&!confirmed){const affected=reportTemplateRecipients(editingReportTemplateIndex).filter(item=>!item.custom).length;dialog('리포트 템플릿을 저장할까요?',`<p>공통 기준을 사용하는 ${affected}명의 새 리포트에 적용돼요. 기존 리포트와 개별 기준은 그대로 유지돼요.</p>`,'저장',()=>saveScoring(true));return;}
     const previous={configs:copy(state.reportTemplateConfigs||{}),templates:copy(state.reportTemplates),common:copy(state.commonTemplates||{}),scoring:copy(state.scoring)};
     const restore=()=>{state.reportTemplateConfigs=previous.configs;state.reportTemplates=previous.templates;state.commonTemplates=previous.common;state.scoring=previous.scoring;};
@@ -5538,7 +5724,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   }
   function openConsent(){
     const terms=$('#page-settings').content.querySelectorAll('.settings-consent-terms')[1].outerHTML;
-    const modal=editorDialog('consent-dialog','confirm-dialog consent-dialog','AI 기능을 쓰기 전에 알려드려요',`<p>일지 내용을 AI 서비스로 보내 문장을 다듬고, 한 주의 기록을 채점·요약한 리포트를 만들어요. 동의하지 않아도 일지를 직접 쓰고 저장할 수 있어요.</p><details class="consent-terms-toggle"><summary>동의 내용 전체 보기</summary>${terms}</details><fieldset class="consent-items"><legend>내용을 확인하고 선택해 주세요</legend><div class="consent-item"><input type="checkbox" id="consent-data"><div><label for="consent-data">AI 기능을 위한 민감정보(건강정보) 수집·이용에 동의해요</label><p>요청한 AI 기능에 일지와 퀵체크 내용이 사용돼요.</p></div></div><div class="consent-item"><input type="checkbox" id="consent-check"><div><label for="consent-check">AI 기능을 위한 개인정보 국외 이전에 동의해요</label><p>요청 시 관련 정보가 미국의 Google LLC로 전송돼요.</p></div></div></fieldset><p>AI 결과는 틀릴 수 있어요. 저장하기 전에 내용을 확인해 주세요.</p><div class="dialog-actions"><button type="button" class="button secondary" data-action="close-modal" data-modal="consent-dialog">직접 쓸게요</button><button type="button" class="button primary" data-action="accept-consent" disabled>동의하고 켜기</button></div>`);
+    const modal=editorDialog('consent-dialog','confirm-dialog consent-dialog','AI 기능을 쓰기 전에 알려드려요',`<p>일지 내용을 AI 서비스로 보내 문장을 다듬고, 한 주의 기록을 채점·요약한 리포트를 만들어요. 동의하지 않아도 일지를 직접 쓰고 저장할 수 있어요.</p><details class="consent-terms-toggle"><summary>동의 내용 전체 보기</summary>${terms}</details><fieldset class="consent-items"><legend>내용을 확인하고 선택해 주세요</legend><div class="consent-item"><input type="checkbox" id="consent-data"><div><label for="consent-data">AI 기능을 위한 민감정보(건강정보) 수집·이용에 동의해요</label><p>요청한 AI 기능에 일지 내용이 사용돼요.</p></div></div><div class="consent-item"><input type="checkbox" id="consent-check"><div><label for="consent-check">AI 기능을 위한 개인정보 국외 이전에 동의해요</label><p>요청 시 관련 정보가 미국의 Google LLC로 전송돼요.</p></div></div></fieldset><p>AI 결과는 틀릴 수 있어요. 저장하기 전에 내용을 확인해 주세요.</p><div class="dialog-actions"><button type="button" class="button primary" data-action="accept-consent" disabled>동의하고 켜기</button></div>`);
     modal.addEventListener('change',()=>{$('[data-action="accept-consent"]',modal).disabled=!$$('.consent-items input',modal).every(x=>x.checked);});
   }
   function accountDialog(button){
@@ -5606,7 +5792,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     else if(action==='delete-trash'){const i=Number(button.dataset.index);dialog('기록을 완전히 삭제할까요?','<p>완전히 삭제한 기록은 복원할 수 없어요.</p>','완전삭제',async()=>{state.trash.splice(i,1);if(!await persist())return;renderRecords();},true);}
     else if(action==='generate-report'){
       if(!state.aiConsent){openConsent();return true;}
-      if(!mockupReportEligibility(reportRange,currentDate(),reportDays()).allowed||currentScoring().domains.length<3||currentScoring().domains.length>5||currentScoring().domains.some(domain=>domain.questions.length<5)){updateReportPeriod();return true;}
+      if(!mockupReportEligibility(reportRange,currentDate(),reportDays()).allowed||!mockupScoreValid(currentScoring().domains)){updateReportPeriod();return true;}
       dialog('리포트를 생성할까요?',`<p>${escapeHTML(state.recipients[recipient].name)} · ${formatDate(reportRange.from)} ~ ${formatDate(reportRange.to)} · 기록 ${reportDays()}일 / 기준 3일.</p><p>관찰 기준: ${escapeHTML(currentScoring().title)}</p>`,'생성',async()=>{
         if(!state.aiConsent){openConsent();return;}
         if(!mockupReportEligibility(reportRange,currentDate(),reportDays()).allowed){updateReportPeriod();toast('생성 가능한 주간과 기록 일수를 다시 확인해 주세요.');return;}
@@ -5634,6 +5820,23 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       const sub=state.subscription,index=Number(button.dataset.index);
       if(sub?.invites[index])dialog('초대를 취소할까요?',`<p>${escapeHTML(sub.invites[index])}</p>`,'초대 취소',async()=>{const removed=sub.invites.splice(index,1);if(!await persist()){sub.invites.splice(index,0,...removed);return;}render();});
     }
+    else if(action==='report-preview-open'){
+      const original=$('.configured-report-viewport .configured-report-pages');
+      if(!original)return;
+      const viewer=document.createElement('dialog');viewer.className='report-document-modal';viewer.setAttribute('aria-label','리포트 문서 미리보기');
+      viewer.innerHTML='<header class="report-document-modal-header"><strong>문서 미리보기</strong><button type="button" aria-label="미리보기 닫기">×</button></header><div class="report-document-modal-content" tabindex="0" aria-label="리포트 문서"></div><div class="report-document-modal-controls"><button type="button" data-zoom="fit">화면 맞춤</button><button type="button" data-zoom="out" aria-label="축소">−</button><output aria-live="polite"></output><button type="button" data-zoom="in" aria-label="확대">+</button></div>';
+      const pages=original.cloneNode(true);pages.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));pages.querySelectorAll('[contenteditable]').forEach(el=>el.removeAttribute('contenteditable'));
+      const content=$('.report-document-modal-content',viewer),output=$('output',viewer),out=$('[data-zoom="out"]',viewer),inside=$('[data-zoom="in"]',viewer);content.append(pages);document.body.append(viewer);
+      const previousOverflow=document.body.style.overflow;document.body.style.overflow='hidden';let scale=0,fit=0;
+      const updateZoom=()=>{pages.style.setProperty('--configured-report-scale',scale);output.textContent=`${Math.round(scale*100)}%`;out.disabled=scale<=fit;inside.disabled=scale>=2;};
+      const resizeViewer=()=>{const wasFit=scale<=fit;fit=Math.min(1,Math.max(0,(content.clientWidth-24)/794));scale=wasFit?fit:Math.max(fit,scale);updateZoom();};
+      viewer.addEventListener('close',()=>{window.removeEventListener('resize',resizeViewer);document.body.style.overflow=previousOverflow;viewer.remove();if(button.isConnected)button.focus();},{once:true});
+      $('.report-document-modal-header button',viewer).addEventListener('click',()=>viewer.close());
+      $('[data-zoom="fit"]',viewer).addEventListener('click',()=>{scale=fit;content.scrollLeft=0;updateZoom();});
+      out.addEventListener('click',()=>{scale=Math.max(fit,Math.round((scale-.2)*100)/100);updateZoom();});
+      inside.addEventListener('click',()=>{scale=Math.min(2,Math.round((scale+.2)*100)/100);updateZoom();});
+      viewer.showModal();resizeViewer();window.addEventListener('resize',resizeViewer);
+    }
     else if(action==='payment-back')resetPaymentSimulation();
     else if(action==='reset-payment')dialog('결제 시연을 초기화할까요?','<p>목업의 결제·초대 상태만 지워요. 저장한 일지와 계획은 유지돼요.</p>','초기화',resetPaymentSimulation);
     else return false;
@@ -5642,23 +5845,24 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   function showStoredReport(report=reportRecords(recipient).find(item=>item.id==='sample')){
     const tpl=$('#report-document');if(!tpl)return;
     $('.reports-layout').replaceChildren(tpl.content.cloneNode(true));
+    const viewport=$('.configured-report-viewport'),wrap=document.createElement('div'),trigger=document.createElement('button');wrap.className='report-mobile-preview-wrap';trigger.type='button';trigger.className='report-mobile-preview-trigger';trigger.dataset.action='report-preview-open';trigger.setAttribute('aria-label','리포트 문서 미리보기 열기');trigger.innerHTML='<span>문서 미리보기</span>';viewport.before(wrap);wrap.append(viewport,trigger);viewport.setAttribute('aria-label','리포트 문서');requestAnimationFrame(scaleReports);
     $('.configured-report-word-hint').textContent='목업의 Word 파일은 텍스트로 저장돼요.';
-    const dateRange=report?`${formatDate(report.from)} ~ ${formatDate(report.to)}`:'2026년 8월 28일 ~ 2026년 9월 3일',generated=report?formatDate(report.generated):'2026년 9월 20일',version=report?.version>1?` · 버전 ${report.version}`:'',name=recipient===0?'산책 샘플':state.recipients[recipient].name;
+    const dateRange=report?`${formatDate(report.from)} ~ ${formatDate(report.to)}`:'2026년 8월 28일 ~ 2026년 9월 3일',generated=report?formatDate(report.generated):'2026년 9월 20일',version=report?.version>1?` · 버전 ${report.version}`:'',name=state.recipients[recipient].name;
     $('.configured-report-actions p').textContent=`${name} · ${dateRange}`;
     const pages=$$('.configured-report-page');$('.configured-report-page-header p',pages[0]).textContent=dateRange;$('.configured-report-overview-metadata strong',pages[0]).textContent=name;$$('.configured-report-overview-metadata strong',pages[0])[1].textContent=generated+version;
     $('.configured-report-page-header h2',pages[1]).textContent=name;$('.configured-report-page-header p',pages[1]).textContent=`${dateRange} · 발행 ${generated}${version}`;
     const areas=report?.mock?report.scoring.domains.map(domain=>[domain.name,0,0,'목업에서는 AI 분석 결과를 생성하지 않아요.',domain.questions,domain.questions.map(()=>0)]):recipient===1?PICTURE_REPORT_AREAS:recipient===2?(report?.id==='test'?TEST_ORIGINAL_REPORT_AREAS:TEST_REPORT_AREAS):REPORT_AREAS;
-    const total=report?.mock?areas.reduce((sum,area)=>sum+area[4].length,0):recipient===1||report?.id==='test'?59:25,evidence=report?.mock?0:recipient===1?37:report?.id==='test'?7:recipient===2?3:8,score=report?.mock?0:recipient===1?48:recipient===2?9:28,count=report?.mock?report.days:recipient===1||recipient===2?4:3;
-    $$('.configured-report-stats dd',pages[0]).forEach((node,i)=>node.textContent=[`${count}건`,`${count}일`,`${total}/${total}`,`${evidence}/${total}`,`${total-evidence}문항`,`${score}점`][i]);
-    const previous=$('.configured-report-section-header span',pages[0]);if(previous)previous.textContent=`이전 기간 기록 없음 · 판정 ${total}/${total} · 근거 ${evidence}/${total}문항`;
-    $('.configured-report-overall-score strong',pages[0]).textContent=score;$('.configured-report-score-ring',pages[0]).setAttribute('aria-label',`종합 관찰 점수 ${score}점`);$('.configured-report-score-progress',pages[0]).setAttribute('stroke-dasharray',`${314.16*score/100} 314.16`);
-    $('.configured-report-care-map-score strong',pages[1]).textContent=`${score}점`;$('.configured-report-care-map-score small',pages[1]).textContent=`판정 ${total}/${total} · 근거 ${evidence}/${total}문항`;
+    const total=report?.mock?areas.reduce((sum,area)=>sum+area[4].length,0):recipient===1||report?.id==='test'?59:25,evidence=report?.mock?0:recipient===1?37:report?.id==='test'?7:recipient===2?3:8,score=report?.mock?0:recipient===1?48:recipient===2?9:28,count=displayedReportDays(report);
+    $$('.configured-report-stats dd',pages[0]).forEach((node,i)=>node.textContent=[`${count}건`,`${count}일`,report?.mock?`0/${total}`:`${total}/${total}`,`${evidence}/${total}`,report?.mock?'분석 전':`${total-evidence}문항`,report?.mock?'분석 전':`${score}점`][i]);
+    const previous=$('.configured-report-section-header span',pages[0]);if(previous)previous.textContent=`이전 기간 기록 없음 · 판정 ${report?.mock?0:total}/${total} · 근거 ${evidence}/${total}문항`;
+    $('.configured-report-overall-score strong',pages[0]).textContent=report?.mock?'—':score;$('.configured-report-score-ring',pages[0]).setAttribute('aria-label',report?.mock?'종합 관찰 점수 분석 전':`종합 관찰 점수 ${score}점`);$('.configured-report-score-progress',pages[0]).setAttribute('stroke-dasharray',`${314.16*score/100} 314.16`);
+    $('.configured-report-care-map-score strong',pages[1]).textContent=report?.mock?'분석 전':`${score}점`;$('.configured-report-care-map-score small',pages[1]).textContent=`판정 ${report?.mock?0:total}/${total} · 근거 ${evidence}/${total}문항`;
     const radar=$('.configured-report-radar',pages[1]),axes=[[210,20],[352.658,123.647],[298.168,291.353],[121.832,291.353],[67.342,123.647]],points=areas.map((area,i)=>[210+(axes[i][0]-210)*area[1]/100,170+(axes[i][1]-170)*area[1]/100]);
-    radar.setAttribute('aria-label','영역별 관찰 점수: '+areas.map(a=>`${a[0]} ${a[1]}점`).join(', '));$('.configured-report-radar-shape',radar).setAttribute('points',points.map(p=>p.map(n=>n.toFixed(2)).join(',')).join(' '));$$('g',radar).forEach((group,i)=>{const circle=$('circle',group),label=$('.configured-report-radar-label tspan',group),value=$('.configured-report-radar-value',group);circle.setAttribute('cx',points[i][0]);circle.setAttribute('cy',points[i][1]);label.textContent=areas[i][0];value.textContent=areas[i][1];});
-    $('[data-report-changes]').innerHTML=areas.map(([name,score])=>`<article class="configured-report-change-card"><strong>${name}</strong><em>비교하지 않음</em><div><b>${score}점</b></div><small>비교할 이전 주 점수가 없어요.</small></article>`).join('');
-    $('[data-report-care]').insertAdjacentHTML('beforeend',areas.map(([name,score,evidence,copy,questions])=>`<article class="configured-report-care-card"><div><strong>${name}</strong><b>${score}점</b></div><em>판정 ${questions.length}/${questions.length} · 근거 ${evidence}/${questions.length}</em><p>${copy}</p></article>`).join(''));
+    radar.setAttribute('aria-label',report?.mock?'영역별 관찰 점수 분석 전':'영역별 관찰 점수: '+areas.map(a=>`${a[0]} ${a[1]}점`).join(', '));const radarShape=$('.configured-report-radar-shape',radar);radarShape.setAttribute('points',points.map(p=>p.map(n=>n.toFixed(2)).join(',')).join(' '));if(report?.mock)radarShape.style.visibility='hidden';$$('g',radar).forEach((group,i)=>{const circle=$('circle',group),label=$('.configured-report-radar-label tspan',group),value=$('.configured-report-radar-value',group);circle.setAttribute('cx',points[i][0]);circle.setAttribute('cy',points[i][1]);if(report?.mock)circle.style.visibility='hidden';label.textContent=areas[i][0];value.textContent=report?.mock?'—':areas[i][1];});
+    $('[data-report-changes]').innerHTML=areas.map(([name,score])=>`<article class="configured-report-change-card"><strong>${name}</strong><em>비교하지 않음</em><div><b>${report?.mock?'분석 전':`${score}점`}</b></div><small>비교할 이전 주 점수가 없어요.</small></article>`).join('');
+    $('[data-report-care]').insertAdjacentHTML('beforeend',areas.map(([name,score,evidence,copy,questions])=>`<article class="configured-report-care-card"><div><strong>${name}</strong><b>${report?.mock?'분석 전':`${score}점`}</b></div><em>판정 ${report?.mock?0:questions.length}/${questions.length} · 근거 ${evidence}/${questions.length}</em><p>${copy}</p></article>`).join(''));
     const point=n=>Number(n.toFixed(2)).toString(),label=(value,count)=>{const max=100/count,earned=max*(value||0)/4;return value===4?`반복 확인 · 100% · 획득 점수 ${point(earned)}/${point(max)}점 · 근거 2일`:value===3?`명확한 수행 · 75% · 획득 점수 ${point(earned)}/${point(max)}점 · 근거 1일`:value===2?`부분 수행·혼재 · 50% · 획득 점수 ${point(earned)}/${point(max)}점 · 근거 1일`:`근거 없음 · 0점 · 영역 내 배점 0/${point(max)}점`;};
-    $('[data-report-questions]').innerHTML=areas.map(([name,score,evidence,copy,questions,scores])=>`<section><h3>${escapeHTML(name)}</h3><ol>${questions.map((question,i)=>`<li><p>${escapeHTML(question)}</p><span>${label(scores[i],questions.length)}</span></li>`).join('')}</ol></section>`).join('');
+    $('[data-report-questions]').innerHTML=areas.map(([name,score,evidence,copy,questions,scores])=>`<section><h3>${escapeHTML(name)}</h3><ol>${questions.map((question,i)=>`<li><p>${escapeHTML(question)}</p><span>${report?.mock?'분석 전':label(scores[i],questions.length)}</span></li>`).join('')}</ol></section>`).join('');
   }
   function downloadReportWord(){
     const text=$$('.configured-report-page').map(page=>page.innerText).join('\n\n');if(!text.trim())return;
@@ -5703,6 +5907,26 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   $('#iep-mock-outcome').addEventListener('change',event=>iep.simulate('outcome',event.target.value));
   $('#iep-mock-cycle').addEventListener('click',()=>iep.simulate('cycle'));
   applyDesign();syncSidebarTheme();render();
+})();
+</script>
+<script>
+(() => {
+  const embedded = new URLSearchParams(location.search).has('devicePreview');
+  if (embedded) {
+    const reportRoute = () => parent.postMessage({type:'careit-device-route',hash:location.hash},'*');
+    window.addEventListener('hashchange',reportRoute);
+    document.addEventListener('click',()=>setTimeout(reportRoute,0));
+    reportRoute();
+  }
+  document.addEventListener('keydown',event=>{
+    if(!event.altKey||!event.shiftKey||event.ctrlKey||event.metaKey||event.isComposing)return;
+    const device={Digit1:'pc',Digit2:'mac',Digit3:'tablet',Digit4:'phone'}[event.code];
+    if(!device)return;
+    event.preventDefault();
+    if(embedded){parent.postMessage({type:'careit-device-select',device},'*');return;}
+    if(device==='pc')return;
+    const url=new URL('device-preview.html',location.href);url.searchParams.set('device',device);url.hash=location.hash||'#/';location.assign(url.href);
+  });
 })();
 </script>
 </body>

@@ -573,7 +573,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       const row = journalRows()[Number(editIndex)];
       if (row) {
         draft = row.values&&typeof row.values==='object' ? row.values : {'journal-raw':row[2]};
-        $('.page-header h1').textContent = '저장한 일지 수정';
+        $('.page-header h1').innerHTML = '<span class="journal-title-prefix">저장한 </span>일지 수정';
         $('[data-options="recipients"]').disabled=true;$('[data-action="date"]').disabled=true;
         setDraftStatus('수정한 내용은 일지 저장을 눌러 반영해 주세요');
         const controls=$('.journal-actions>div:last-child'),ai=$('[data-action="ai-preview"]');controls.insertAdjacentHTML('afterbegin','<button class="button danger" type="button" data-action="delete-journal">일지 삭제</button>');if(row[0]!==currentDate())ai.disabled=true;
@@ -750,24 +750,35 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     return mockupReportDays(range,journalRows());
   }
   function isSampleReportPeriod() { return reportRange.from==='2026-08-28'&&reportRange.to==='2026-09-03'; }
+  function addReportJournalLink() {
+    const empty=$('.reports-layout .empty-state');if(!empty)return;
+    const link=document.createElement('a');link.className='button secondary report-mobile-journal-link';link.href=`#/journals/new?recipient=${recipient}`;link.textContent='일지 작성하기';empty.append(link);
+  }
   function updateReportPeriod() {
     const {from,to}=reportRange,days=reportDays(),button=$('[data-date-range="report"]');
     const chosen=reportRecords(recipient).find(item=>item.id===params.get('report'));
     const eligibility=mockupReportEligibility(reportRange,currentDate(),days),domains=currentScoring().domains,validTemplate=domains.length>=3&&domains.length<=5&&domains.every(domain=>domain.questions.length>=5);
-    const periodHeading=button.closest('.report-generation-field').querySelector('.report-period-heading');
+    const periodField=button.closest('.report-generation-field'),periodHeading=periodField.querySelector('.report-period-heading');
+    let mobileStatus=periodField.querySelector('.report-mobile-period-status');
+    if(!mobileStatus){mobileStatus=document.createElement('p');mobileStatus.className='report-mobile-period-status';mobileStatus.setAttribute('role','status');periodField.append(mobileStatus);}
+    mobileStatus.textContent=chosen?'리포트 생성 완료':!from?'':!validTemplate?'리포트 채점 기준을 확인해 주세요':eligibility.reason==='insufficient'?`일지 ${days}일 · 3일 이상 필요`:eligibility.allowed?`일지 ${days}일 · 생성 가능`:eligibility.reason==='expired'?'리포트 생성 기한이 지났어요':'주간 종료 후 생성할 수 있어요';
+    mobileStatus.hidden=!mobileStatus.textContent;
+    const reportPage=button.closest('.reports-page');
+    reportPage.classList.toggle('report-needs-journals',!chosen&&eligibility.reason==='insufficient');
     let status=periodHeading.querySelector('.report-generation-status');
     if(chosen||(eligibility.allowed&&validTemplate)){
       if(!status){status=document.createElement('p');status.className='report-generation-status';status.setAttribute('role','status');periodHeading.append(status);}
       status.textContent=chosen?`생성 완료 · 기록 ${chosen.days??reportDays(chosen)}일`:`생성 가능 · 기록 ${days}일 / 기준 3일`;
     }else status?.remove();
     const hasAvailableWeek=Array.from({length:6},(_,i)=>mockupReportWeek(currentDate(),-1-i)).some(week=>mockupReportEligibility(week,currentDate(),reportDays(week)).allowed);
+    reportPage.classList.toggle('report-no-period',!!state.liveAppReplica&&!hasAvailableWeek&&!chosen);
     if(state.liveAppReplica&&!hasAvailableWeek){
       button.querySelector('span').textContent='선택 가능한 기간이 없어요';
       button.disabled=true;
       button.setAttribute('aria-description','현재 선택한 관리대상에는 리포트를 생성할 수 있는 기간이 없어요.');
       $('.report-recipient-change button').disabled=true;
       if(chosen)showStoredReport(chosen);
-      else $('.reports-layout').innerHTML='<section class="empty-state"><h2>선택할 수 있는 리포트 기간이 없어요</h2><p>주간 일지가 3일 이상이면 종료 후 한 달 이내에 생성할 수 있어요.</p></section>';
+      else {$('.reports-layout').innerHTML='<section class="empty-state"><h2>선택할 수 있는 리포트 기간이 없어요</h2><p>주간 일지가 3일 이상이면 종료 후 한 달 이내에 생성할 수 있어요.</p></section>';mobileStatus.hidden=true;addReportJournalLink();}
       return;
     }
     $('.report-recipient-change').hidden=!!chosen;
@@ -777,6 +788,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(chosen)showStoredReport(chosen);
     else if(isSampleReportPeriod()&&!state.reportRemoved?.[recipient])showStoredReport();
     else $('.reports-layout').innerHTML='<section class="empty-state"><h2>선택한 기간의 리포트가 없어요</h2><p>다른 기간을 선택하거나 새 리포트를 생성해 주세요.</p></section>';
+    if(!chosen&&eligibility.reason==='insufficient')addReportJournalLink();
     requestAnimationFrame(scaleReports);
   }
   const recentVisitsKey=STORAGE+'-recent-visits';
@@ -904,7 +916,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       const reportStatus=existing?'생성 완료':eligibility.allowed?(validTemplate?'생성 가능':'템플릿 확인'):`일지 ${days}일 · 3일 필요`;
       const reportAction=existing?'보기':eligibility.allowed?(validTemplate?'만들기':'확인하기'):'확인하기';
       const reportHref=existing?`#/reports?recipient=${index}&report=${encodeURIComponent(existing.id)}`:`#/reports?recipient=${index}&week=latest`;
-      return `<tr><th scope="row" class="home-today-name">${escapeHTML(person.name)}</th><td><span class="home-status-label">오늘 일지</span><a class="home-status-link" href="${journalHref}" aria-label="${escapeHTML(person.name)} 오늘 일지 ${journalStatus}, ${journalAction}"><span class="home-status-value${completed?' is-complete':draft?' is-ready':''}">${journalStatus}</span></a></td><td><span class="home-status-label">주간 리포트</span><a class="home-status-link" href="${reportHref}" aria-label="${escapeHTML(person.name)} 주간 리포트 ${reportStatus}, ${reportAction}"><span class="home-status-value${existing?' is-complete':eligibility.allowed&&validTemplate?' is-ready':''}">${reportStatus}</span></a></td></tr>`;
+      return `<tr><th scope="row" class="home-today-name">${escapeHTML(person.name)}</th><td><a class="home-status-link" href="${journalHref}" aria-label="${escapeHTML(person.name)} 오늘 일지 ${journalStatus}, ${journalAction}"><span class="home-status-label">일지</span><span class="home-status-value${completed?' is-complete':draft?' is-ready':' is-action'}">${journalStatus}</span></a></td><td><a class="home-status-link" href="${reportHref}" aria-label="${escapeHTML(person.name)} 주간 리포트 ${reportStatus}, ${reportAction}"><span class="home-status-label">리포트</span><span class="home-status-value${existing?' is-complete':eligibility.allowed&&validTemplate?' is-ready':''}">${reportStatus}</span></a></td></tr>`;
     }).join('');
     $('[data-home-today-list]').innerHTML=homeRows?`<table class="home-status-table"><thead><tr><th scope="col">관리대상</th><th scope="col">오늘 일지</th><th scope="col">주간 리포트</th></tr></thead><tbody>${homeRows}</tbody></table>`:'<p class="home-widget-empty">아직 관리대상이 없어요. <a href="#/recipients">관리대상 추가하기</a></p>';
     renderRecentVisits();
@@ -986,7 +998,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     $('#recipient-form-title').textContent=index===null?'관리대상 추가하기':'관리대상 수정';
     $('#recipient-form button[type=submit]').textContent=index===null?'추가하기':'저장하기';
     $('#recipient-name').value=r.name||'';
-    $('#recipient-name-limit').textContent=`${(r.name||'').length}/30자`;
+    $('#recipient-name-limit').textContent=`${(r.name||'').length}/20자`;
     const journalButton=$('#recipient-journal-template'),reportButton=$('#recipient-report-template');
     journalButton.dataset.value=String(r.templateIndex||0);$('span',journalButton).textContent=state.journalTemplates[r.templateIndex||0]?.name||'일지 템플릿 1';
     reportButton.dataset.value=state.reportTemplates[index]||'누리과정';$('span',reportButton).textContent=reportButton.dataset.value;
@@ -1160,6 +1172,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       const week=mockupReportWeek(date);
       return mockupReportEligibility(week,currentDate(),reportDays(week)).allowed||(mockupReportEligibility(week,currentDate()).allowed&&reportRecords(recipient).some(item=>item.from===week.from&&item.to===week.to));
     };
+    const canInspect=date=>isReportRange&&matchMedia('(max-width:767px)').matches&&!allowed(date)&&mockupReportEligibility(mockupReportWeek(date),currentDate(),reportDays(mockupReportWeek(date))).reason==='insufficient';
     const paintRange=(preview='')=>{
       if(!isRange)return;
       let from=rangeFrom,end=selectingEnd?(preview>=rangeFrom?preview:rangeFrom):rangeTo;
@@ -1172,7 +1185,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
         from=status.allowed||unavailable||existing?week.from:'';end=status.allowed||unavailable||existing?week.to:'';
         $('[data-report-week-summary]',popup).textContent=week?`${formatShortDate(week.from)} ~ ${formatShortDate(week.to)}`:'금~목 7일 · 종료 후 1개월 이내';
         const notice=$('[data-report-week-notice]',popup);
-        notice.textContent=existing?'이미 만든 리포트가 있어요\n날짜를 눌러 리포트를 볼 수 있어요':mockupReportNotice(status,days);
+        notice.textContent=existing?'이미 만든 리포트가 있어요\n날짜를 눌러 리포트를 볼 수 있어요':status.reason==='empty'&&matchMedia('(max-width:767px)').matches?'날짜를 눌러 생성 가능 여부를 확인해 주세요.':mockupReportNotice(status,days);
         notice.classList.toggle('is-available',status.allowed||!!existing);
       }
       $$('[data-date]',popup).forEach(day=>{
@@ -1189,7 +1202,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       });
     };
     const pick=date=>{
-      if(!allowed(date))return;
+      if(!allowed(date)){if(canInspect(date))paintRange(date);return;}
       if(isReportRange){const week=mockupReportWeek(date);commitRange(week.from,week.to);return;}
       if(isRange){
         if(!selectingEnd||date<rangeFrom){rangeFrom=date;rangeTo='';selectingEnd=true;draw(date);return;}
@@ -1210,8 +1223,8 @@ function mockupHomeJournalStatus(state, index, today, checks) {
         const count=isReportRange?reportDays(week):0;
         const withinPeriod=isReportRange&&mockupReportEligibility(week,currentDate()).allowed;
         const reason=isReportRange?mockupReportNotice(mockupReportEligibility(week,currentDate(),count),count).replace('\n',' '):'';
-        return `<button type="button" class="datefield-day${date===value?' is-picked':''}${date===today?' is-today':''}${adjacent?' is-adjacent-month':''}${isReportRange&&dateDay===1&&date!==dates[0]?' is-month-boundary':''}${withinPeriod?' is-report-period':''}" data-date="${date}" aria-label="${formatDate(date)}" ${reason?`aria-description="${reason}"`:''} aria-pressed="${date===value}" ${date===today?'aria-current="date"':''} ${allowed(date)?'':'disabled'} tabindex="-1">${dateDay}</button>`;
-      }).join('')}</div>${isReportRange?'<p class="report-week-notice" data-report-week-notice role="status" aria-live="polite" aria-atomic="true"></p>':isRange?'<button type="button" class="button tertiary" data-clear-date>날짜 지우기</button>':'<button type="button" class="datefield-today">오늘로</button>'}`;
+        return `<button type="button" class="datefield-day${date===value?' is-picked':''}${date===today?' is-today':''}${adjacent?' is-adjacent-month':''}${isReportRange&&dateDay===1&&date!==dates[0]?' is-month-boundary':''}${withinPeriod?' is-report-period':''}" data-date="${date}" aria-label="${formatDate(date)}" ${reason?`aria-description="${reason}"`:''} aria-pressed="${date===value}" ${date===today?'aria-current="date"':''} ${canInspect(date)?'aria-disabled="true"':allowed(date)?'':'disabled'} tabindex="-1">${dateDay}</button>`;
+      }).join('')}</div>${isReportRange?'<p class="report-week-notice" data-report-week-notice role="status" aria-live="polite" aria-atomic="true"></p>':isRange?'<button type="button" class="button tertiary" data-clear-date>날짜 초기화</button>':'<button type="button" class="datefield-today">날짜 초기화</button>'}`;
       $('.datefield-head [aria-label="이전 달"]',popup).onclick=()=>{month--;if(month<0){month=11;year--;}draw();};
       $('.datefield-head [aria-label="다음 달"]',popup).onclick=()=>{month++;if(month>11){month=0;year++;}draw();};
       $$('[data-date]',popup).forEach(b=>b.onclick=()=>pick(b.dataset.date));
@@ -1236,12 +1249,12 @@ function mockupHomeJournalStatus(state, index, today, checks) {
         if(isReportRange&&(e.key==='PageUp'||e.key==='PageDown'))key=key<min?min:key>max?max:key;
         if(isReportRange){
           const step=['ArrowLeft','ArrowUp','Home','PageUp'].includes(e.key)?-1:1;
-          while(key>=min&&key<=max&&!allowed(key)){
+          while(key>=min&&key<=max&&!allowed(key)&&!canInspect(key)){
             next.setTime(new Date(`${key}T00:00:00`).getTime());next.setDate(next.getDate()+step);
             key=dateKey(next.getFullYear(),next.getMonth(),next.getDate());
           }
         }
-        if(!allowed(key))return;
+        if(!allowed(key)&&!canInspect(key))return;
         if(!$(`[data-date="${key}"]`,popup)){const target=new Date(`${key}T00:00:00Z`);year=target.getUTCFullYear();month=target.getUTCMonth();}
         draw(key);
       }
@@ -1421,7 +1434,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   window.addEventListener('hashchange',render);window.addEventListener('resize',scaleReports);
   function syncSidebarButton(){const collapsed=$('.app-layout').classList.contains('mockup-nav-collapsed'),button=$('.nav-handle');button.setAttribute('aria-expanded',String(!collapsed));button.setAttribute('aria-label',collapsed?'메뉴 열기':'메뉴 접기');button.title=collapsed?'메뉴 열기':'메뉴 접기';}
   matchMedia('(max-width:1023px)').addEventListener('change', e => { $('.app-layout').classList.toggle('mockup-nav-collapsed',e.matches);syncSidebarButton(); });
-  function scaleReports(){ const viewport=$('.configured-report-viewport');if(!viewport)return;const pages=$('.configured-report-pages');const scale=Math.min(1,viewport.clientWidth/794);pages.style.setProperty('--configured-report-scale',scale); }
+  function scaleReports(){ const viewport=$('.configured-report-viewport');if(!viewport)return;const pages=$('.configured-report-pages'),style=getComputedStyle(viewport),width=viewport.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight);const scale=Math.min(1,Math.max(0,width)/794);pages.style.setProperty('--configured-report-scale',scale); }
   function prepareConfiguration(){
     const common=editingCommonJournal;
     if(common&&!commonJournalDraft){
@@ -1725,9 +1738,8 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const modal=editorDialog('checkout-dialog','checkout-dialog',completed?'결제가 완료됐어요':'결제 내역',`<div class="checkout-body">
       <div class="payment-result-heading">${completed?'<span class="payment-success-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4 10-10"/></svg></span>':''}<div><h3>${plan.name} · ${cycle.name}</h3><p>${!completed?'결제한 요금제 내역이에요.':sub.plan==='team'?(canInvite?'이제 함께 이용할 멤버를 초대해 보세요.':'팀 멤버를 확인해 보세요.'):'이제 플러스 기능을 이용할 수 있어요.'}</p></div></div>
       ${subscriptionDetails()}
-      <div class="payment-result-actions"><button type="button" class="button secondary" data-action="close-modal" data-modal="checkout-dialog">요금제 보기</button><button type="button" class="button primary" data-action="${sub.plan==='team'&&!mockupSubscriptionPeriod(sub,currentDate()).ended?(completed&&canInvite?'team-invite':'team-members'):'payment-start'}">${sub.plan==='team'&&!mockupSubscriptionPeriod(sub,currentDate()).ended?(completed&&canInvite?'멤버 초대하기':'팀 멤버 보기'):'일지 작성하기'}</button></div>
+      ${completed || sub.plan!=='team'?`<div class="payment-result-actions"><button type="button" class="button secondary" data-action="close-modal" data-modal="checkout-dialog">요금제 보기</button><button type="button" class="button primary" data-action="${sub.plan==='team'&&!mockupSubscriptionPeriod(sub,currentDate()).ended?(completed&&canInvite?'team-invite':'team-members'):'payment-start'}">${sub.plan==='team'&&!mockupSubscriptionPeriod(sub,currentDate()).ended?(completed&&canInvite?'멤버 초대하기':'팀 멤버 보기'):'일지 작성하기'}</button></div>`:''}
       
-      <button type="button" class="button tertiary payment-back" data-action="payment-back">결제 전으로 돌아가기</button>
     </div>`);
     $('#checkout-dialog-title',modal).tabIndex=-1;
     $('#checkout-dialog-title',modal).focus();
@@ -1906,7 +1918,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   }
   function openConsent(){
     const terms=$('#page-settings').content.querySelectorAll('.settings-consent-terms')[1].outerHTML;
-    const modal=editorDialog('consent-dialog','confirm-dialog consent-dialog','AI 기능을 쓰기 전에 알려드려요',`<p>일지 내용을 AI 서비스로 보내 문장을 다듬고, 한 주의 기록을 채점·요약한 리포트를 만들어요. 동의하지 않아도 일지를 직접 쓰고 저장할 수 있어요.</p><details class="consent-terms-toggle"><summary>동의 내용 전체 보기</summary>${terms}</details><fieldset class="consent-items"><legend>내용을 확인하고 선택해 주세요</legend><div class="consent-item"><input type="checkbox" id="consent-data"><div><label for="consent-data">AI 기능을 위한 민감정보(건강정보) 수집·이용에 동의해요</label><p>요청한 AI 기능에 일지와 퀵체크 내용이 사용돼요.</p></div></div><div class="consent-item"><input type="checkbox" id="consent-check"><div><label for="consent-check">AI 기능을 위한 개인정보 국외 이전에 동의해요</label><p>요청 시 관련 정보가 미국의 Google LLC로 전송돼요.</p></div></div></fieldset><p>AI 결과는 틀릴 수 있어요. 저장하기 전에 내용을 확인해 주세요.</p><div class="dialog-actions"><button type="button" class="button secondary" data-action="close-modal" data-modal="consent-dialog">직접 쓸게요</button><button type="button" class="button primary" data-action="accept-consent" disabled>동의하고 켜기</button></div>`);
+    const modal=editorDialog('consent-dialog','confirm-dialog consent-dialog','AI 기능을 쓰기 전에 알려드려요',`<p>일지 내용을 AI 서비스로 보내 문장을 다듬고, 한 주의 기록을 채점·요약한 리포트를 만들어요. 동의하지 않아도 일지를 직접 쓰고 저장할 수 있어요.</p><details class="consent-terms-toggle"><summary>동의 내용 전체 보기</summary>${terms}</details><fieldset class="consent-items"><legend>내용을 확인하고 선택해 주세요</legend><div class="consent-item"><input type="checkbox" id="consent-data"><div><label for="consent-data">AI 기능을 위한 민감정보(건강정보) 수집·이용에 동의해요</label><p>요청한 AI 기능에 일지 내용이 사용돼요.</p></div></div><div class="consent-item"><input type="checkbox" id="consent-check"><div><label for="consent-check">AI 기능을 위한 개인정보 국외 이전에 동의해요</label><p>요청 시 관련 정보가 미국의 Google LLC로 전송돼요.</p></div></div></fieldset><p>AI 결과는 틀릴 수 있어요. 저장하기 전에 내용을 확인해 주세요.</p><div class="dialog-actions"><button type="button" class="button primary" data-action="accept-consent" disabled>동의하고 켜기</button></div>`);
     modal.addEventListener('change',()=>{$('[data-action="accept-consent"]',modal).disabled=!$$('.consent-items input',modal).every(x=>x.checked);});
   }
   function accountDialog(button){
@@ -2002,6 +2014,23 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       const sub=state.subscription,index=Number(button.dataset.index);
       if(sub?.invites[index])dialog('초대를 취소할까요?',`<p>${escapeHTML(sub.invites[index])}</p>`,'초대 취소',async()=>{const removed=sub.invites.splice(index,1);if(!await persist()){sub.invites.splice(index,0,...removed);return;}render();});
     }
+    else if(action==='report-preview-open'){
+      const original=$('.configured-report-viewport .configured-report-pages');
+      if(!original)return;
+      const viewer=document.createElement('dialog');viewer.className='report-document-modal';viewer.setAttribute('aria-label','리포트 문서 미리보기');
+      viewer.innerHTML='<header class="report-document-modal-header"><strong>문서 미리보기</strong><button type="button" aria-label="미리보기 닫기">×</button></header><div class="report-document-modal-content" tabindex="0" aria-label="리포트 문서"></div><div class="report-document-modal-controls"><button type="button" data-zoom="fit">화면 맞춤</button><button type="button" data-zoom="out" aria-label="축소">−</button><output aria-live="polite"></output><button type="button" data-zoom="in" aria-label="확대">+</button></div>';
+      const pages=original.cloneNode(true);pages.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));pages.querySelectorAll('[contenteditable]').forEach(el=>el.removeAttribute('contenteditable'));
+      const content=$('.report-document-modal-content',viewer),output=$('output',viewer),out=$('[data-zoom="out"]',viewer),inside=$('[data-zoom="in"]',viewer);content.append(pages);document.body.append(viewer);
+      const previousOverflow=document.body.style.overflow;document.body.style.overflow='hidden';let scale=0,fit=0;
+      const updateZoom=()=>{pages.style.setProperty('--configured-report-scale',scale);output.textContent=`${Math.round(scale*100)}%`;out.disabled=scale<=fit;inside.disabled=scale>=2;};
+      const resizeViewer=()=>{const wasFit=scale<=fit;fit=Math.min(1,Math.max(0,(content.clientWidth-24)/794));scale=wasFit?fit:Math.max(fit,scale);updateZoom();};
+      viewer.addEventListener('close',()=>{window.removeEventListener('resize',resizeViewer);document.body.style.overflow=previousOverflow;viewer.remove();if(button.isConnected)button.focus();},{once:true});
+      $('.report-document-modal-header button',viewer).addEventListener('click',()=>viewer.close());
+      $('[data-zoom="fit"]',viewer).addEventListener('click',()=>{scale=fit;content.scrollLeft=0;updateZoom();});
+      out.addEventListener('click',()=>{scale=Math.max(fit,Math.round((scale-.2)*100)/100);updateZoom();});
+      inside.addEventListener('click',()=>{scale=Math.min(2,Math.round((scale+.2)*100)/100);updateZoom();});
+      viewer.showModal();resizeViewer();window.addEventListener('resize',resizeViewer);
+    }
     else if(action==='payment-back')resetPaymentSimulation();
     else if(action==='reset-payment')dialog('결제 시연을 초기화할까요?','<p>목업의 결제·초대 상태만 지워요. 저장한 일지와 계획은 유지돼요.</p>','초기화',resetPaymentSimulation);
     else return false;
@@ -2010,6 +2039,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   function showStoredReport(report=reportRecords(recipient).find(item=>item.id==='sample')){
     const tpl=$('#report-document');if(!tpl)return;
     $('.reports-layout').replaceChildren(tpl.content.cloneNode(true));
+    const viewport=$('.configured-report-viewport'),wrap=document.createElement('div'),trigger=document.createElement('button');wrap.className='report-mobile-preview-wrap';trigger.type='button';trigger.className='report-mobile-preview-trigger';trigger.dataset.action='report-preview-open';trigger.setAttribute('aria-label','리포트 문서 미리보기 열기');trigger.innerHTML='<span>문서 미리보기</span>';viewport.before(wrap);wrap.append(viewport,trigger);viewport.setAttribute('aria-label','리포트 문서');requestAnimationFrame(scaleReports);
     $('.configured-report-word-hint').textContent='목업의 Word 파일은 텍스트로 저장돼요.';
     const dateRange=report?`${formatDate(report.from)} ~ ${formatDate(report.to)}`:'2026년 8월 28일 ~ 2026년 9월 3일',generated=report?formatDate(report.generated):'2026년 9월 20일',version=report?.version>1?` · 버전 ${report.version}`:'',name=recipient===0?'산책 샘플':state.recipients[recipient].name;
     $('.configured-report-actions p').textContent=`${name} · ${dateRange}`;
