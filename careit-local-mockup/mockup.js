@@ -936,9 +936,11 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       if(reserved){
         $('.coupon-card-meta span',card).textContent=`적용 예정: ${used.start.replaceAll('-','.')}부터`;
         button.textContent='등록 완료';button.disabled=true;
-      }else if(used||expired){
+      }else if(used){
+        button.textContent='사용 완료';button.disabled=true;
+      }else if(expired){
         const item=card.cloneNode(true);item.classList.add('coupon-card--past');
-        $('.coupon-card-main',item).insertAdjacentHTML('afterbegin',`<span class="coupon-status">${used?'사용 완료':'기간 만료'}</span>`);
+        $('.coupon-card-main',item).insertAdjacentHTML('afterbegin','<span class="coupon-status">기간 만료</span>');
         $('[data-action="coupon-preview"]',item).remove();history.prepend(item);card.remove();
       }
     });
@@ -962,7 +964,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       if(renewing)state.subscription.nextBillingOn=mockupAddDays(period.end,1).replaceAll('-','.');
       if(period.start<=now)mockupRestorePlanRecipients(state,now);
       if(!await persist()){state.couponPlusFrom=previous.from;state.couponPlusUntil=previous.until;state.couponUsed=previous.used;state.recipients=previous.recipients;state.subscription=previous.subscription;return;}
-      render();if(!reserved)$('[data-action="coupon-tab"][data-tab="history"]').click();toast(reserved?'쿠폰이 등록됐어요.':'쿠폰을 사용했어요.');
+      render();toast(reserved?'쿠폰이 등록됐어요.':'쿠폰을 사용했어요.');
     });
   }
   function showRecipientLimit(){

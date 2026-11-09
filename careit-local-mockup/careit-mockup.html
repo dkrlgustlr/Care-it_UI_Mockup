@@ -314,6 +314,7 @@ body[data-theme=dark] .settings-page .settings-card .account-invite-controls .bu
 .coupon-card--past .coupon-card-main h2 { color:var(--muted); }
 .coupon-card-meta { display:flex; justify-content:space-between; align-items:center; gap:var(--space-3); margin-top:var(--space-5); padding-top:var(--space-4); border-top:1px solid var(--line); font-size:var(--fs-body-sm); }
 .coupon-card-meta span { color:var(--muted); }
+.coupons-page .coupon-card-meta .button:disabled { background:var(--neutral-soft); color:var(--muted); opacity:1; }
 .coupon-card-meta strong { font-variant-numeric:tabular-nums; }
 .subscription-card [data-action="team-invite"]:disabled { background:var(--neutral); color:var(--muted); opacity:1; }
 @media(max-width:767px) { .report-recipient-info { align-items:stretch; flex-direction:column; } }
@@ -2264,7 +2265,7 @@ SOFTWARE.
 
   <template id="page-coupons" data-path="/coupons">
     <section class="page coupons-page"><header class="page-header"><div><h1>쿠폰함</h1></div></header>
-      <div class="record-tabs coupon-tabs" role="group" aria-label="쿠폰 목록"><button type="button" data-action="coupon-tab" data-tab="available" aria-pressed="true">사용 가능</button><button type="button" data-action="coupon-tab" data-tab="history" aria-pressed="false">사용 완료·기간 만료</button></div>
+      <div class="record-tabs coupon-tabs" role="group" aria-label="쿠폰 목록"><button type="button" data-action="coupon-tab" data-tab="available" aria-pressed="true">사용 가능</button><button type="button" data-action="coupon-tab" data-tab="history" aria-pressed="false">기간 만료</button></div>
       <div class="coupon-panel" data-coupon-panel="available"><div class="coupon-grid">
         <article class="coupon-card"><div class="coupon-card-main"><h2>케어릿 초대 이벤트 1차 쿠폰</h2><p>플러스 7일 이용권</p></div><div class="coupon-card-meta"><span>사용 기한: 발급일로부터 3개월</span><button type="button" class="button tertiary" data-action="coupon-preview" data-coupon="초대한 분 보상 · 플러스 7일 이용권">사용하기</button></div></article>
         <article class="coupon-card"><div class="coupon-card-main"><h2>케어릿 초대 이벤트 2차 쿠폰</h2><p>플러스 7일 이용권</p></div><div class="coupon-card-meta"><span>사용 기한: 발급일로부터 3개월</span><button type="button" class="button tertiary" data-action="coupon-preview" data-coupon="초대한 분 보상 · 플러스 7일 이용권">사용하기</button></div></article>
@@ -2272,7 +2273,6 @@ SOFTWARE.
         <article class="coupon-card"><div class="coupon-card-main"><h2>플러스 7일 이용권</h2><p>초대받은 분께 드리는 혜택</p></div><div class="coupon-card-meta"><span>사용 기한: 발급일로부터 3개월</span><button type="button" class="button tertiary" data-action="coupon-preview" data-coupon="초대받은 분 보상 · 플러스 7일 이용권">사용하기</button></div></article>
       </div></div>
       <div class="coupon-panel" data-coupon-panel="history" hidden><div class="coupon-grid">
-        <article class="coupon-card coupon-card--past"><div class="coupon-card-main"><span class="coupon-status">사용 완료</span><h2>케어릿 초대 이벤트 3차 쿠폰</h2><p>플러스 14일 이용권</p></div><div class="coupon-card-meta"><span>사용 기한: 발급일로부터 3개월</span></div></article>
         <article class="coupon-card coupon-card--past"><div class="coupon-card-main"><span class="coupon-status">기간 만료</span><h2>플러스 7일 이용권</h2><p>초대받은 분께 드리는 혜택</p></div><div class="coupon-card-meta"><span>사용 기한: 발급일로부터 3개월</span></div></article>
       </div></div>
     </section>
@@ -4568,9 +4568,11 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       if(reserved){
         $('.coupon-card-meta span',card).textContent=`적용 예정: ${used.start.replaceAll('-','.')}부터`;
         button.textContent='등록 완료';button.disabled=true;
-      }else if(used||expired){
+      }else if(used){
+        button.textContent='사용 완료';button.disabled=true;
+      }else if(expired){
         const item=card.cloneNode(true);item.classList.add('coupon-card--past');
-        $('.coupon-card-main',item).insertAdjacentHTML('afterbegin',`<span class="coupon-status">${used?'사용 완료':'기간 만료'}</span>`);
+        $('.coupon-card-main',item).insertAdjacentHTML('afterbegin','<span class="coupon-status">기간 만료</span>');
         $('[data-action="coupon-preview"]',item).remove();history.prepend(item);card.remove();
       }
     });
@@ -4594,7 +4596,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       if(renewing)state.subscription.nextBillingOn=mockupAddDays(period.end,1).replaceAll('-','.');
       if(period.start<=now)mockupRestorePlanRecipients(state,now);
       if(!await persist()){state.couponPlusFrom=previous.from;state.couponPlusUntil=previous.until;state.couponUsed=previous.used;state.recipients=previous.recipients;state.subscription=previous.subscription;return;}
-      render();if(!reserved)$('[data-action="coupon-tab"][data-tab="history"]').click();toast(reserved?'쿠폰이 등록됐어요.':'쿠폰을 사용했어요.');
+      render();toast(reserved?'쿠폰이 등록됐어요.':'쿠폰을 사용했어요.');
     });
   }
   function showRecipientLimit(){

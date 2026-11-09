@@ -256,6 +256,7 @@ body[data-theme=dark] .settings-page .settings-card .account-invite-controls .bu
 .coupon-card--past .coupon-card-main h2 { color:var(--muted); }
 .coupon-card-meta { display:flex; justify-content:space-between; align-items:center; gap:var(--space-3); margin-top:var(--space-5); padding-top:var(--space-4); border-top:1px solid var(--line); font-size:var(--fs-body-sm); }
 .coupon-card-meta span { color:var(--muted); }
+.coupons-page .coupon-card-meta .button:disabled { background:var(--neutral-soft); color:var(--muted); opacity:1; }
 .coupon-card-meta strong { font-variant-numeric:tabular-nums; }
 .subscription-card [data-action="team-invite"]:disabled { background:var(--neutral); color:var(--muted); opacity:1; }
 @media(max-width:767px) { .report-recipient-info { align-items:stretch; flex-direction:column; } }
