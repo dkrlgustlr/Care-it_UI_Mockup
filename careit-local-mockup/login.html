@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data:; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; object-src 'none'; base-uri 'none'">
+  <title>로그인 · 케어릿</title>
+  <link rel="icon" href="assets/logo.webp">
+  <link rel="stylesheet" href="assets/original.css">
+  <link rel="stylesheet" href="assets/live.css">
+  <link rel="stylesheet" href="login.css">
+  <script src="login.js" defer></script>
+</head>
+<body>
+<div class="login-screen">
+  <main class="login-main">
+    <section class="login-card" aria-labelledby="login-title">
+      <img class="brand-mark" width="30" height="30" alt="케어릿" src="assets/logo.webp">
+      <h1 id="login-title">로그인</h1>
+      <form id="login-form" novalidate>
+        <div class="field"><label for="login-email">이메일</label><input id="login-email" type="email" autocomplete="username" placeholder="you@example.com" value="demo@example.com" required></div>
+        <div class="field"><label for="login-password">비밀번호</label><div class="password-field"><input id="login-password" type="password" autocomplete="current-password" placeholder="비밀번호를 입력해 주세요" value="careit-demo-123" required><button type="button" id="show-password" aria-label="비밀번호 보기">보기</button></div></div>
+        <label class="login-remember"><input type="checkbox" id="remember-login" checked>자동 로그인</label>
+        <p class="field-error" id="login-error" role="alert" hidden></p>
+        <button class="button primary login-button" type="submit">로그인</button>
+      </form>
+      <p class="field-help login-links"><a href="#/password-reset">비밀번호를 잊으셨나요?</a><a class="login-signup" href="#/signup/email">회원가입</a></p>
+      <div class="social-sign-in"><p class="social-sign-in-divider"><span>또는</span></p><div class="social-sign-in-buttons">
+        <button type="button" class="social-sign-in-button kakao" data-social="카카오"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="#000" d="M12 3C6.8 3 2.6 6.3 2.6 10.4c0 2.6 1.7 4.9 4.3 6.2l-1.1 4c-.1.4.3.7.6.5l4.7-3.1c.3 0 .6.1.9.1 5.2 0 9.4-3.3 9.4-7.7S17.2 3 12 3Z"/></svg><span>카카오로 계속하기</span></button>
+        <button type="button" class="social-sign-in-button google" data-social="Google"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.3-2.1 3.5-5.2 3.5-8.8Z"/><path fill="#34A853" d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3c-1 .7-2.4 1.1-4 1.1-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0 0 12 24Z"/><path fill="#FBBC05" d="M5.4 14.3a7.2 7.2 0 0 1 0-4.6V6.6H1.4a12 12 0 0 0 0 10.8l4-3.1Z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.4.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.6l4 3.1C6.3 6.9 8.9 4.8 12 4.8Z"/></svg><span>Google로 계속하기</span></button>
+      </div></div>
+      <p class="login-message" id="social-message" role="status" hidden></p>
+    </section>
+    <p class="login-reassurance">기록은 보호자만 볼 수 있고, 원할 때 언제든 지울 수 있어요</p>
+  </main>
+  <footer class="site-footer"><div class="site-footer-row"><a href="careit-mockup.html#/privacy">개인정보 처리방침</a><a href="careit-mockup.html#/terms">이용약관</a><span>케어릿은 의료 서비스가 아니에요</span></div><address class="site-footer-business"><span>케어릿 · 공동대표 김현식 · 김도윤 · 사업자등록번호 447-29-02187 · 통신판매업 신고 2026-수원영통-1232(경기도 수원시 영통구) · <a href="https://www.ftc.go.kr/bizCommPop.do?wrkr_no=4472902187" target="_blank" rel="noreferrer">사업자정보 확인</a></span><span>경기도 수원시 영통구 광교마을로 156, 4007동 1404호(하동, 광교 더 포레스트) · <a href="tel:01056509628">010-5650-9628</a> · <a href="mailto:support@careit.kr">support@careit.kr</a></span></address></footer>
+</div>
+</body>
+</html>

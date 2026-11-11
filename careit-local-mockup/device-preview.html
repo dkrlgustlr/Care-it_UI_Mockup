@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>화면 미리보기 · 케어릿</title>
+  <style>
+    @font-face{font-family:Pretendard;src:url('assets/PretendardVariable.woff2') format('woff2');font-weight:100 900;font-display:swap}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{display:flex;flex-direction:column;background:#eef2f4;color:#16202a;font:500 14px/1.5 Pretendard,'Malgun Gothic',sans-serif}
+    .preview-header{min-height:60px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:8px 20px;background:#fff;border-bottom:1px solid #dce3e6}
+    .preview-heading{display:flex;align-items:baseline;gap:12px;min-width:0}
+    .preview-heading strong{font-size:16px;white-space:nowrap}
+    .preview-size{color:#5f6d7a;font-size:13px;white-space:nowrap}
+    .preview-shortcuts{color:#5f6d7a;font-size:13px;text-align:right}
+    .preview-stage{flex:1;min-height:0;display:grid;place-items:center;overflow:hidden;padding:16px}
+    .preview-frame-wrap{overflow:hidden;border-radius:8px;background:#fff;box-shadow:0 6px 24px #16202a1c;flex:none}
+    iframe{display:block;border:0;transform-origin:top left;background:#fff}
+    @media(max-width:600px){.preview-header{align-items:flex-start;flex-direction:column;gap:6px;padding:8px 12px}.preview-stage{padding:8px}.preview-shortcuts{text-align:left}}
+  </style>
+</head>
+<body>
+  <header class="preview-header">
+    <div class="preview-heading"><strong>화면 미리보기</strong><span class="preview-size" id="preview-size"></span></div>
+    <div class="preview-shortcuts">Alt(Option) + Shift + 1 PC · 2 맥북 · 3 태블릿 · 4 휴대폰</div>
+  </header>
+  <main class="preview-stage" id="preview-stage">
+    <div class="preview-frame-wrap" id="preview-frame-wrap"><iframe id="preview-frame" title="케어릿 목업 화면"></iframe></div>
+  </main>
+  <script>
+    const sizes={mac:{label:'맥북',width:1440,height:900},tablet:{label:'태블릿',width:1024,height:768},phone:{label:'휴대폰',width:390,height:844}};
+    const stage=document.getElementById('preview-stage'),wrap=document.getElementById('preview-frame-wrap'),frame=document.getElementById('preview-frame'),sizeLabel=document.getElementById('preview-size');
+    let device=new URLSearchParams(location.search).get('device');if(!sizes[device])device='mac';
+    let currentHash=location.hash||'#/';
+    const source=new URL('careit-mockup.html',location.href);source.searchParams.set('devicePreview','1');source.hash=currentHash;frame.src=source.href;
+    function layout(){
+      const {width,height,label}=sizes[device],style=getComputedStyle(stage);
+      const availableWidth=stage.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight),availableHeight=stage.clientHeight-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom);
+      const scale=Math.max(0,Math.min(1,availableWidth/width,availableHeight/height));
+      wrap.style.width=`${width*scale}px`;wrap.style.height=`${height*scale}px`;
+      frame.style.width=`${width}px`;frame.style.height=`${height}px`;frame.style.transform=`scale(${scale})`;
+      sizeLabel.textContent=`${label} · ${width} × ${height}`;
+    }
+    function selectDevice(choice){
+      try{currentHash=frame.contentWindow.location.hash||currentHash;}catch{}
+      if(choice==='pc'){const url=new URL('careit-mockup.html',location.href);url.hash=currentHash;location.assign(url.href);return;}
+      if(!sizes[choice]||choice===device)return;
+      device=choice;const url=new URL(location.href);url.searchParams.set('device',device);url.hash=currentHash;history.replaceState(null,'',url);layout();
+    }
+    document.addEventListener('keydown',event=>{
+      if(!event.altKey||!event.shiftKey||event.ctrlKey||event.metaKey||event.isComposing)return;
+      const choice={Digit1:'pc',Digit2:'mac',Digit3:'tablet',Digit4:'phone'}[event.code];
+      if(choice){event.preventDefault();selectDevice(choice);}
+    });
+    window.addEventListener('message',event=>{
+      if(event.source!==frame.contentWindow)return;
+      if(event.data?.type==='careit-device-select'){selectDevice(event.data.device);return;}
+      if(event.data?.type!=='careit-device-route'||typeof event.data.hash!=='string')return;
+      currentHash=event.data.hash||'#/';const url=new URL(location.href);url.hash=currentHash;history.replaceState(null,'',url);
+    });
+    new ResizeObserver(layout).observe(stage);layout();
+  </script>
+</body>
+</html>
