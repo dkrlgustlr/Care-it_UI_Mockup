@@ -247,6 +247,7 @@ SOFTWARE.
 .report-recipient-info .dropdown { width:min(430px,100%); }
 .reports-page .report-generation-field .datefield-trigger { height:42px; min-height:42px; }
 .report-mobile-period-status,.report-mobile-journal-link,.report-mobile-preview-trigger { display:none; }
+.reports-page .report-generation-card .report-mobile-period-status { display:none; }
 .report-mobile-preview-wrap { display:contents; }
 @media screen and (max-width:767px) {
   body .app-layout #main-content:has(.reports-page) { background:var(--surface); }
@@ -296,6 +297,7 @@ SOFTWARE.
 .settings-page .settings-account .button[data-action="cancel-account-name"]:hover { background:var(--line); color:#526575; }
 body[data-theme=dark] .settings-page .settings-account .button[data-action="cancel-account-name"] { color:var(--text); }
 .settings-page .account-invite-row { padding:var(--space-3) 0; }
+.settings-page .settings-card .account-invite-row > dt { align-self:start; padding-top:12px; }
 .settings-page .settings-card .account-invite-value { display:block; min-width:0; width:100%; }
 .settings-page .settings-card dl .account-invite-controls { display:flex; align-items:center; gap:var(--space-2); min-width:0; padding:0; border:0; }
 .settings-page .account-invite-controls input { box-sizing:border-box; flex:1; min-width:0; width:100%; height:44px; min-height:44px; padding:0 var(--space-4); border:0; border-radius:var(--radius-form-control); background:var(--neutral-soft); color:var(--text); font:500 var(--fs-body)/1.5 var(--font-sans); }
@@ -710,6 +712,8 @@ textarea,select,.dropdown-trigger,.datefield-trigger,
 .records-page .record-list .journal-row:hover { transform:none; }
 .records-page .record-list .record-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text); font:650 var(--fs-body)/1.5 var(--font-sans); }
 .records-page .record-list .record-preview { min-width:0; margin:0; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); font:400 var(--fs-body-sm)/1.5 var(--font-sans); }
+.records-page .record-list .record-draft-preview { display:flex; align-items:center; min-width:0; gap:8px; }
+.records-page .record-list .record-draft-badge { flex:none; padding:4px 8px; border-radius:6px; background:var(--mint-soft); color:var(--primary-dark); font:600 var(--fs-body-sm)/1.45 var(--font-sans); }
 .records-page .record-list .record-row time { grid-column:auto; color:var(--muted); white-space:nowrap; font:500 var(--fs-body-sm)/1.5 var(--font-sans); }
 /* 리포트도 기록 화면과 같은 기간 달력과 회색 날짜 선택칸을 사용합니다. */
 .reports-page .report-generation-field .datefield { width:100%; display:flex; }
@@ -730,6 +734,7 @@ textarea,select,.dropdown-trigger,.datefield-trigger,
   .records-page .record-list .record-name { grid-column:1; grid-row:1; font-size:calc(15px * var(--native-text-scale,1)); }
   .records-page .record-list .record-row time { grid-column:2; grid-row:1; font-size:calc(13px * var(--native-text-scale,1)); }
   .records-page .record-list .record-preview { grid-column:1/-1; grid-row:2; font-size:calc(14px * var(--native-text-scale,1)); }
+  .records-page .record-list .record-draft-preview { grid-column:1/-1; grid-row:2; }
   .records-page .record-list .empty-state h2 { font-size:calc(18px * var(--native-text-scale,1)); }
   .records-page .record-list .empty-state p { font-size:calc(14px * var(--native-text-scale,1)); }
   .records-page .record-trash-row .mockup-trash-actions { grid-column:1/-1; gap:12px; margin-top:var(--space-2); }
@@ -940,7 +945,7 @@ body[data-theme=dark] .home-status-link:hover .home-status-value:not(.is-ready):
 @media(max-width:1023px) { .app-layout > .nav-handle { left:auto; right:12px; } }
 .app-layout.mockup-nav-collapsed > .nav-handle { left:var(--space-4); right:auto; }
 .app-layout.mockup-nav-collapsed > .nav-handle svg { transform:scaleX(-1); }
-.app-layout > .mobile-header-brand,.app-layout > .nav-handle .nav-handle-hamburger { display:none; }
+.app-layout > .mobile-header-brand,.app-layout > .nav-handle .nav-handle-hamburger,.app-layout > .nav-handle .nav-handle-close { display:none; }
 @media (max-width:1239px) {
   .app-layout > .nav-handle { top:16px; left:172px; right:auto; width:44px; height:44px; transform:none; background:transparent; box-shadow:none; }
   .app-layout.mockup-nav-collapsed > .nav-handle { top:10px; left:16px; right:auto; }
@@ -952,6 +957,8 @@ body[data-theme=dark] .home-status-link:hover .home-status-value:not(.is-ready):
   .app-layout > .nav-handle,.app-layout.mockup-nav-collapsed > .nav-handle,.app-layout:not(.mockup-nav-collapsed) > .nav-handle { top:10px; left:auto; right:16px; }
   .app-layout > .nav-handle .nav-handle-chevron { display:none; }
   .app-layout > .nav-handle .nav-handle-hamburger { display:block; transform:none; }
+  .app-layout:not(.mockup-nav-collapsed) > .nav-handle .nav-handle-hamburger { display:none; }
+  .app-layout:not(.mockup-nav-collapsed) > .nav-handle .nav-handle-close { display:block; transform:none; }
   .app-layout:not(.mockup-nav-collapsed) > .sidebar { padding-top:18px; }
   .app-layout.mockup-nav-collapsed > .mobile-header-brand { display:flex; position:fixed; z-index:25; top:18px; left:20px; padding:0; }
 }
@@ -1047,6 +1054,8 @@ body.mockup-editing [contenteditable=true]:focus { outline:2px solid #05a66b; ba
 .journal-memo-card .journal-inline-title-field { padding:0; }
 .journal-memo-card .journal-inline-title-heading .journal-inline-title-input { font:700 14px/20px var(--font-sans); pointer-events:none; }
 .journal-memo-fields .field-heading>label { font:700 var(--fs-body)/1.4 var(--font-sans); }
+body .app-content .journal-page .journal-memo-fields > .field { row-gap:0; }
+.journal-memo-fields .field-heading { box-sizing:border-box; min-height:52px; padding-bottom:8px; align-items:center; }
 .report-recipient-change .button.primary:disabled { opacity:1; background:#78c8ae; color:#fff; box-shadow:none; cursor:not-allowed; }
 /* 라이브 팀 요금제 카드의 현재 목록형 정보 레이아웃 */
 .live-plan-card .live-plan-details { gap:48px; margin-top:var(--space-6); }
@@ -1344,9 +1353,18 @@ dialog#quick-type-picker .quick-check-type-footer>p { margin:0; color:var(--text
 .score-area-content { min-width:0; padding:24px 28px 28px; }
 .score-area-panel[hidden] { display:none; }
 .score-area-heading { display:flex; align-items:start; justify-content:space-between; gap:16px; margin-bottom:20px; }
-.score-area-heading>div { min-width:0; }
+.score-area-heading>div { flex:1; min-width:0; }
+.score-area-heading .score-title-editor { width:min(218px,100%); }
+.score-title-input { position:relative; flex:1; min-width:0; }
+.score-title-input:has(input[hidden]) { display:none; }
+.score-editor-page .score-editor-template .score-title-input input,.score-editor-page .score-area-heading .score-title-input input { box-sizing:border-box; width:100%; padding-right:76px; }
+.score-editor-page .score-title-input .field-limit { position:absolute; top:50%; right:12px; display:block; transform:translateY(-50%); pointer-events:none; }
+.score-title-done[hidden] { display:none; }
+.score-area-panel .score-question-list li>div { position:relative; }
+.score-area-panel .score-question-list textarea { box-sizing:border-box; padding-right:82px; }
+.score-area-panel .score-question-list .score-input-limit { position:absolute; top:14px; right:12px; pointer-events:none; }
 .score-area-heading .score-title-text { font:var(--type-card-title); }
-.score-area-heading p { margin:4px 0 0; color:var(--muted); font:var(--type-caption); }
+.score-area-heading p { margin:4px 0 0; color:var(--muted); font:var(--type-caption); text-align:right; }
 .score-area-heading>.button { flex:none; }
 .score-area-panel .score-question-list { gap:12px; }
 .score-area-panel .score-question-list li { grid-template-columns:28px minmax(0,1fr) 56px; align-items:start; }
@@ -1398,6 +1416,8 @@ dialog#quick-type-picker .quick-check-type-footer>p { margin:0; color:var(--text
 .score-area-panel .score-question-list li>.button { min-height:48px; align-self:start; }
 
 .score-editor-heading { position:relative; }
+.score-editor-page .score-editor-template .score-title-edit,.score-editor-page .score-editor-actions [data-action="score-reset"] { background:var(--neutral-soft); color:var(--muted); }
+.score-editor-page .score-editor-template .score-title-edit:hover,.score-editor-page .score-editor-actions [data-action="score-reset"]:hover { background:var(--line); color:var(--muted); }
 .score-editor-heading .score-criteria-save-status { position:absolute; top:100%; right:0; min-height:0; margin-top:4px; }
 
 /* 템플릿 선택과 연결 대상을 같은 높이에 배치합니다. */
@@ -1518,7 +1538,7 @@ dialog#quick-type-picker .quick-check-type-footer>p { margin:0; color:var(--text
   body .app-content .settings-page .settings-card { margin:0 0 24px; padding:0 0 24px; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; box-shadow:none; }
   .settings-page .settings-card h2 { margin-bottom:16px; font-size:calc(18px * var(--native-text-scale,1)); }
   .settings-page .settings-account dl>div { grid-template-columns:64px minmax(0,1fr); gap:8px; }
-  .settings-page .settings-account dl>.account-invite-row { grid-template-columns:minmax(0,1fr); gap:8px; padding:12px 0; }
+  .settings-page .settings-account dl>.account-invite-row { grid-template-columns:64px minmax(0,1fr); gap:8px; padding:12px 0; }
   .settings-page .settings-account #account-name { height:44px; }
   .settings-page .settings-account .account-invite-controls { width:100%; }
   .settings-page .settings-card :is(dt,dd),.settings-page .settings-security-row strong,.settings-page .session-details>summary,.settings-page .session-info strong,.settings-page .settings-consent-status,.settings-page .settings-links small { font-size:calc(14px * var(--native-text-scale,1)); }
@@ -1750,7 +1770,7 @@ dialog#quick-type-picker .quick-check-type-footer>p { margin:0; color:var(--text
 </style>
   <style id="quick-check-styles">/* 퀵체크 입력은 기존 필드의 크기와 선택 색상을 공유합니다. */
 .quick-check-clear { border:0; background:transparent; color:var(--muted); padding:4px 0; font:600 13px/1.4 var(--font-sans); cursor:pointer; }
-.quick-check-clear:hover { color:var(--primary-dark); text-decoration:underline; }
+.quick-check-clear:hover { color:var(--primary-dark); text-decoration:none; }
 .quick-check-time { display:block; min-height:0; }
 .timefield { height:auto; }
 .timefield-parts { display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:8px; }
@@ -1822,6 +1842,11 @@ html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="t
 .journal-ai-controls button { min-height:36px; padding:0 12px; border:0; border-radius:6px; background:transparent; color:var(--muted); font:600 14px/1.4 var(--font-sans); cursor:pointer; }
 .journal-ai-controls button[aria-pressed=true] { background:var(--surface); color:var(--primary-dark); }
 .journal-ai-controls button:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+@media (max-width:767px) {
+  .journal-memo-fields .field-heading:has(.journal-ai-controls) { flex-wrap:nowrap; }
+  .journal-memo-fields .field-heading:has(.journal-ai-controls) > label { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .journal-memo-fields .journal-ai-controls button { padding-inline:6px; font-size:12px; }
+}
 .journal-ai-original { box-sizing:border-box; min-height:96px; padding:16px; border-radius:8px; background:var(--neutral-soft); color:var(--text); font:500 16px/1.6 var(--font-sans); white-space:pre-wrap; overflow-wrap:anywhere; }
 .journal-page > .journal-actions { position:static; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:16px; border:1px solid var(--line); }
 .journal-page > .journal-actions > div:first-child { display:grid; flex:1 1 200px; gap:3px; min-width:0; }
@@ -1840,10 +1865,10 @@ html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="t
 /* App preview: primary navigation stays within reach. */
 .app-bottom-nav { display:none; }
 @media (max-width:767px) {
-  body.mobile-app-preview .app-layout > main { padding-bottom:calc(92px + env(safe-area-inset-bottom)) !important; }
-  body.mobile-app-preview .app-bottom-nav { display:flex; position:fixed; z-index:21; inset:auto 0 0; padding:4px 4px env(safe-area-inset-bottom); background:var(--surface); border-top:1px solid var(--line); }
+  body.mobile-app-preview .app-layout > main { padding-bottom:calc(98px + env(safe-area-inset-bottom)) !important; }
+  body.mobile-app-preview .app-bottom-nav { display:flex; position:fixed; z-index:21; inset:auto 0 0; padding:0; background:var(--surface); border-top:1px solid var(--line); }
   body.mobile-app-preview .app-layout:not(.mockup-nav-collapsed) .app-bottom-nav { display:none; }
-  .app-bottom-nav :is(a,button) { flex:1; min-width:0; min-height:56px; padding:5px 2px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:2px; border:0; background:transparent; color:var(--muted); font:600 11px/1.25 var(--font-sans); text-decoration:none; }
+  .app-bottom-nav :is(a,button) { box-sizing:border-box; flex:1; min-width:0; min-height:calc(66px + env(safe-area-inset-bottom)); padding:5px 2px calc(5px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; justify-content:center; align-items:center; gap:2px; border:0; border-radius:0; background:transparent; color:var(--muted); font:600 11px/1.25 var(--font-sans); text-decoration:none; }
   .app-bottom-nav svg { width:22px; height:22px; flex:none; }
   .app-bottom-nav :is(a,button).active { color:var(--primary-dark); }
   .app-bottom-nav :is(a,button):active { background:var(--neutral); }
@@ -1869,7 +1894,7 @@ html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="t
 /* Mobile back links retain their destinations and provide a larger touch target. */
 .mobile-back-icon { display:none; }
 @media (max-width:767px) {
-  .configuration-page .configuration-mobile-back,.score-editor-page .score-editor-back,.policy-page .policy-back,.licenses-page .back-link { display:inline-flex; align-items:center; gap:6px; min-height:44px; margin:0 0 4px; padding:4px 8px 4px 0; color:var(--text); font:600 15px/1.4 var(--font-sans); text-decoration:none; }
+  .configuration-page .configuration-mobile-back,.score-editor-page .score-editor-back,.policy-page .policy-back,.licenses-page .back-link { display:inline-flex; align-items:center; gap:6px; min-height:44px; margin:0 0 4px; padding:4px 8px 4px 0; color:var(--muted); font:600 15px/1.4 var(--font-sans); text-decoration:none; }
   :is(.configuration-mobile-back,.score-editor-back,.policy-back,.licenses-page .back-link) .mobile-back-icon { display:block; width:20px; height:20px; flex:none; }
   :is(.configuration-mobile-back,.score-editor-back,.policy-back,.licenses-page .back-link) .desktop-back-chevron { display:none; }
   :is(.configuration-mobile-back,.score-editor-back,.policy-back,.licenses-page .back-link):active { color:var(--primary-dark); }
@@ -1903,6 +1928,54 @@ html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="t
       body .home-today .home-status-table .home-status-link .home-status-value:is(.is-action, .is-ready) { color: var(--primary-dark); }
     }
   </style>
+  <style id="recipient-desktop-tabs">
+    @media (min-width: 768px) {
+      .recipients-page > .record-tabs { width:100%; max-width:none; gap:0; padding:0; overflow:visible; border-bottom:1px solid var(--line); border-radius:0; background:transparent; box-shadow:none; }
+      .recipients-page > .record-tabs button { position:relative; min-height:48px; padding:0 20px; border-radius:0; background:transparent; box-shadow:none; color:var(--muted); font-size:15px; }
+      .recipients-page > .record-tabs button[aria-pressed="true"] { background:transparent; box-shadow:none; color:var(--primary-dark); }
+      .recipients-page > .record-tabs button[aria-pressed="true"]::after { content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:var(--primary-dark); }
+      .recipients-page > .record-tabs button:hover { color:var(--primary-dark); }
+    }
+  </style>
+  <style id="mobile-page-header">
+    @media (max-width:767px) {
+      .app-layout.mockup-nav-collapsed::before { background:var(--surface); border-bottom:0; }
+      body[data-mobile-home="false"] .app-layout.mockup-nav-collapsed > .mobile-header-brand { display:none; }
+      .mobile-header-brand strong { max-width:calc(100vw - 120px); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:650; }
+      .app-layout.mockup-nav-collapsed > .mobile-scroll-title:not([hidden]) { display:block; position:fixed; z-index:25; top:32px; left:20px; max-width:calc(100vw - 100px); overflow:hidden; color:var(--text); font:700 calc(20px * var(--native-text-scale,1))/normal var(--font-sans); text-overflow:ellipsis; white-space:nowrap; pointer-events:none; transform:translateY(-50%); }
+    }
+    .mobile-scroll-title { display:none; }
+    .settings-security-heading { display:contents; }
+    .settings-security-logout { display:none; }
+    @media (max-width:767px) {
+      body.mobile-app-preview .app-layout.mockup-nav-collapsed::before,
+      body.mobile-app-preview .app-layout.mockup-nav-collapsed > .mobile-header-brand,
+      body.mobile-app-preview .app-layout.mockup-nav-collapsed > .mobile-scroll-title,
+      body.mobile-app-preview .app-layout.mockup-nav-collapsed > .nav-handle { display:none; }
+      body.mobile-app-preview .app-layout > main { padding-top:calc(32px + env(safe-area-inset-top)); }
+      body.mobile-app-preview .site-footer { display:none; }
+      body.mobile-app-preview #main-content:has(.settings-page) .site-footer { display:flex; margin-top:0; padding-top:0; border-top:0; }
+      body.mobile-app-preview #main-content:has(.settings-page) .site-footer-row { gap:0 12px; }
+      body.mobile-app-preview .app-layout > main:has(.settings-page) { padding-bottom:calc(82px + env(safe-area-inset-bottom)) !important; }
+      body.mobile-app-preview .site-footer-row { font-size:calc(12px * var(--native-text-scale,1)); }
+      body.mobile-app-preview .settings-account .account-actions { display:none; }
+      body.mobile-app-preview .settings-account dl dt { font-weight:600; }
+      body.mobile-app-preview .settings-page .settings-consents > h2 { margin-bottom:24px; }
+      body.mobile-app-preview .settings-page .settings-consents > .consent-row:first-of-type { padding-top:16px; border-top:1px solid var(--line); }
+      body.mobile-app-preview .settings-security-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:24px; }
+      body.mobile-app-preview .settings-page .settings-security-heading h2 { margin:0; }
+      body.mobile-app-preview .settings-security-logout { display:inline-flex; background:var(--neutral-soft); color:#526575; }
+      body.mobile-app-preview[data-theme="dark"] .settings-security-logout { color:var(--text); }
+      body.mobile-app-preview .reports-page:has(.reports-layout > .empty-state) { display:flex; flex-direction:column; min-height:calc(100dvh - 98px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+      body.mobile-app-preview .reports-page:has(.reports-layout > .empty-state) .stored-reports { margin:auto 0; }
+      body.mobile-app-preview .reports-page:not(.report-needs-journals):not(.report-no-period):has(.reports-layout > .empty-state) .stored-reports { margin-bottom:0; }
+      body.mobile-app-preview .reports-page:has(.reports-layout > .empty-state) .empty-state { padding-top:0; }
+      body.mobile-app-preview .reports-page:has(.reports-layout > .empty-state) > .report-recipient-change { margin:16px 0 auto; }
+      body.mobile-app-preview .report-document-modal-controls { display:none; }
+      body.mobile-app-preview .report-document-modal-content { touch-action:pan-x pan-y; }
+      body.mobile-app-preview #screen :is(.page:not(.home-page) > .page-header h1, .score-editor-page .score-editor-heading h1)::before { content:""; display:inline-block; width:24px; height:24px; margin-right:10px; vertical-align:-5px; background:url("assets/logo.webp") center / contain no-repeat; }
+    }
+  </style>
   <style id="design-overrides"></style>
 </head>
 <body data-theme="light">
@@ -1923,8 +1996,9 @@ html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="t
         <div class="sidebar-tools"><button class="icon-button" aria-label="다크 모드로 변경" data-tooltip="다크 모드로 변경" data-action="theme"><svg viewBox="30 -930 900 900" fill="currentColor" aria-hidden="true"><path d="M480-120q-150 0-255-105T120-480q0-150 105-255t255-105q14 0 27.5 1t26.5 3q-41 29-65.5 75.5T444-660q0 90 63 153t153 63q55 0 101-24.5t75-65.5q2 13 3 26.5t1 27.5q0 150-105 255T480-120Zm0-80q88 0 158-48.5T740-375q-20 5-40 8t-40 3q-123 0-209.5-86.5T364-660q0-20 3-40t8-40q-78 32-126.5 102T200-480q0 116 82 198t198 82Zm-10-270Z"/></svg></button><a aria-label="쿠폰함" data-tooltip="쿠폰함" class="icon-button" href="#/coupons" data-route="/coupons"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></a><a aria-label="케어릿 공식 카페 (새 창)" data-tooltip="케어릿 공식 카페" class="icon-button" href="https://cafe.naver.com/careitofficial" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/><path d="M8 12h.01"/><path d="M12 12h.01"/><path d="M16 12h.01"/></svg></a></div>
         <a class="account-summary" href="#/settings" data-route="/settings" aria-label="계정 설정, 합성 QA c9b8b579"><span class="avatar" aria-hidden="true">합</span><div><strong>합성 QA c9b8b579</strong><span>qa1@careit.kr</span></div></a>
       </aside>
-      <a class="brand mobile-header-brand" href="#/" data-route="/"><img class="brand-mark" width="28" height="28" alt="" src="assets/logo.webp"><div><strong>케어릿</strong></div></a>
-      <button class="nav-handle" aria-label="메뉴 접기" title="메뉴 접기" aria-controls="app-sidebar" aria-expanded="true" data-action="sidebar"><svg class="nav-handle-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m11 17-5-5 5-5m7 10-5-5 5-5"/></svg><svg class="nav-handle-hamburger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <a class="brand mobile-header-brand" href="#/" data-route="/" aria-label="케어릿 홈으로"><img class="brand-mark" width="28" height="28" alt="" src="assets/logo.webp"><div><strong>케어릿</strong></div></a>
+      <span class="mobile-scroll-title" aria-hidden="true" hidden></span>
+      <button class="nav-handle" aria-label="메뉴 접기" title="메뉴 접기" aria-controls="app-sidebar" aria-expanded="true" data-action="sidebar"><svg class="nav-handle-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m11 17-5-5 5-5m7 10-5-5 5-5"/></svg><svg class="nav-handle-hamburger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><svg class="nav-handle-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       <main id="main-content" tabindex="-1"><div class="app-content"><div id="screen"></div>
         <footer class="site-footer"><div class="site-footer-row"><a href="#/privacy">개인정보 처리방침</a><a href="#/terms">이용약관</a><a href="#/settings/licenses" data-settings-license hidden>오픈소스 라이선스</a><a href="https://app.careit.kr/billing-guide" data-billing-guide hidden>결제·환불 안내</a><span>케어릿은 의료 서비스가 아니에요</span></div><address id="site-footer-business" class="site-footer-business" hidden><span>케어릿 · 공동대표 김현식 · 김도윤 · 사업자등록번호 447-29-02187 · 통신판매업 신고 2026-수원영통-1232(경기도 수원시 영통구) · <a href="https://www.ftc.go.kr/bizCommPop.do?wrkr_no=4472902187" target="_blank" rel="noreferrer">사업자정보 확인</a></span><span>경기도 수원시 영통구 광교마을로 156, 4007동 1404호(하동, 광교 더 포레스트) · <a href="tel:01056509628">010-5650-9628</a> · <a href="mailto:support@careit.kr" aria-label="문의 이메일 support@careit.kr">support@careit.kr</a></span></address></footer>
       </div></main>
@@ -2102,8 +2176,8 @@ html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="t
   </template>
 
   <template id="page-settings" data-path="/settings">
-    <section class="page settings-page"><header class="page-header"><div><h1>설정</h1></div></header><div class="settings-stack"><section class="settings-card settings-account"><h2>계정</h2><dl><div class="account-profile-row"><dt>이름</dt><dd class="account-value"><span data-account-name>합성 QA c9b8b579</span><button class="button tertiary" type="button" data-action="edit-account-name">수정</button></dd></div><div class="account-profile-row"><dt>이메일</dt><dd class="account-value">qa1@careit.kr</dd></div><div><dt>요금제</dt><dd class="account-value" data-account-plan>팀</dd></div><div class="account-invite-row"><dt><label for="account-invite-url">초대 링크</label></dt><dd class="account-value account-invite-value"><div class="account-invite-controls"><input id="account-invite-url" type="text" readonly><button class="button secondary" type="button" data-action="copy-account-invite">복사</button></div></dd></div></dl><div class="account-actions"><div class="account-main-actions"><button class="button secondary" type="button" data-action="account-preview">로그아웃</button></div></div><p role="status"></p><p role="status"></p></section>
-      <section class="settings-card settings-security" aria-labelledby="sessions-title"><h2 id="sessions-title">로그인 및 보안</h2><div class="settings-security-row"><div><strong>비밀번호</strong></div><button class="button tertiary" type="button" data-action="password-preview">비밀번호 변경</button></div><details class="session-details"><summary><span>로그인한 기기 <span data-session-count>5개</span></span></summary><p>최대 5개 기기에서 동시에 로그인할 수 있어요. 5개를 넘으면 가장 오래 쓰지 않은 기기의 로그인이 자동으로 해제돼요.</p><ul class="session-list">
+    <section class="page settings-page"><header class="page-header"><div><h1>설정</h1></div></header><div class="settings-stack"><section class="settings-card settings-account"><h2>계정</h2><dl><div class="account-profile-row"><dt>이름</dt><dd class="account-value"><span data-account-name>합성 QA c9b8b579</span><button class="button tertiary" type="button" data-action="edit-account-name">수정</button></dd></div><div class="account-profile-row"><dt>이메일</dt><dd class="account-value">qa1@careit.kr</dd></div><div><dt>요금제</dt><dd class="account-value" data-account-plan>팀</dd></div><div class="account-invite-row"><dt><label for="account-invite-url">초대 링크</label></dt><dd class="account-value account-invite-value"><div class="account-invite-controls"><input id="account-invite-url" type="text" readonly><button class="button secondary" type="button" data-action="copy-account-invite">복사</button></div><small>초대 0/3명</small></dd></div></dl><div class="account-actions"><div class="account-main-actions"><button class="button secondary" type="button" data-action="account-preview">로그아웃</button></div></div><p role="status"></p><p role="status"></p></section>
+      <section class="settings-card settings-security" aria-labelledby="sessions-title"><div class="settings-security-heading"><h2 id="sessions-title">로그인 및 보안</h2><button class="button secondary settings-security-logout" type="button" data-action="account-preview">로그아웃</button></div><div class="settings-security-row"><div><strong>비밀번호</strong></div><button class="button tertiary" type="button" data-action="password-preview">비밀번호 변경</button></div><details class="session-details"><summary><span>로그인한 기기 <span data-session-count>5개</span></span></summary><p>최대 5개 기기에서 동시에 로그인할 수 있어요. 5개를 넘으면 가장 오래 쓰지 않은 기기의 로그인이 자동으로 해제돼요.</p><ul class="session-list">
         <li data-session-id="windows-current"><div class="session-info"><div><strong>Chrome · Windows</strong><span class="session-badge">현재 브라우저</span></div><span>로그인 <time>11월 2일 오후 8:06</time></span></div><button class="button secondary" type="button" aria-label="Chrome · Windows 현재 세션 로그아웃" data-action="account-preview">로그아웃</button></li>
         <li data-session-id="mac-1106"><div class="session-info"><div><strong>Chrome · macOS</strong></div><span>로그인 <time>11월 6일 오후 3:01</time></span></div><button class="button secondary" type="button" aria-label="Chrome · macOS 세션 로그아웃" data-action="account-preview">로그아웃</button></li>
         <li data-session-id="android-1103"><div class="session-info"><div><strong>Chrome · Android</strong></div><span>로그인 <time>11월 3일 오후 3:17</time></span></div><button class="button secondary" type="button" aria-label="Chrome · Android 세션 로그아웃" data-action="account-preview">로그아웃</button></li>
@@ -4412,9 +4486,9 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   }
   window.addEventListener('storage',event=>{if(event.storageArea===localStorage&&(event.key===STORAGE||event.key===null))store.check();});
   window.addEventListener('focus',()=>store.check());
-  window.addEventListener('beforeunload',event=>{if(store.pending||journalEditDirty()){event.preventDefault();event.returnValue='';}});
+  window.addEventListener('beforeunload',event=>{if(store.pending||journalEditDirty()||configurationDirty()||scorePageDirty()){event.preventDefault();event.returnValue='';}});
   $('#mockup-storage-dialog').addEventListener('cancel',event=>event.preventDefault());
-  let confirmAction,pendingNavigation=null,pendingClose=null;
+  let confirmAction,pendingNavigation=null,pendingClose=null,navigationApproved=false;
   function dialog(title, html, confirmLabel, onConfirm, danger=false) {
     closePopups();
     const modal=$('#mockup-dialog');modal.classList.remove('is-journal-navigation');
@@ -4424,6 +4498,9 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     confirmAction=onConfirm;
     if(!modal.open)modal.showModal();
   }
+  function cancelPendingNavigation(){pendingNavigation=null;confirmAction=null;$('#mockup-dialog').close();}
+  $('#mockup-dialog').addEventListener('click',event=>{if(!pendingNavigation||event.target!==event.currentTarget)return;const rect=event.currentTarget.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)cancelPendingNavigation();});
+  $('#mockup-dialog').addEventListener('cancel',event=>{if(pendingNavigation){event.preventDefault();cancelPendingNavigation();}});
   function applyDesign() {
     $('#design-overrides').textContent = `${state.color ? `:root{--primary:${state.color};--primary-action:${state.color};--primary-dark:${state.color};}` : ''}\n${state.radius != null ? `:root{--radius-card:${state.radius}px;}` : ''}\n${state.css || ''}`;
     if (state.color) $('#mockup-color').value = state.color;
@@ -4452,7 +4529,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     editing = enabled; document.body.classList.toggle('mockup-editing', editing);
     $('#mockup-edit-mode').checked = editing; registerEdits();
   }
-  function routeTo(hash) { if (location.hash === hash) render(); else location.hash = hash; }
+  function routeTo(hash) { if (location.hash === hash) { navigationApproved=false; render(); } else location.hash = hash; }
   function syncProfileAvatar(avatar) {
     if (!avatar) return;
     const img=document.createElement('img');
@@ -4505,6 +4582,13 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const layout=$('.app-layout');if($('.mobile-menu-scrim',layout))return;
     const scrim=document.createElement('button');scrim.type='button';scrim.className='mobile-menu-scrim';scrim.dataset.action='sidebar';scrim.setAttribute('aria-label','메뉴 닫기');layout.append(scrim);
   }
+  function updateMobileScrollTitle() {
+    const title=$('.mobile-scroll-title'),heading=$('#screen h1');
+    if(!title)return;
+    title.hidden=!matchMedia('(max-width:767px)').matches||route==='/'||!heading||heading.getBoundingClientRect().bottom>64;
+  }
+  window.addEventListener('scroll',updateMobileScrollTitle,{passive:true});
+  window.addEventListener('resize',updateMobileScrollTitle,{passive:true});
   function render() {
     if(location.hash==='#main-content'){ $('#main-content').focus(); return; }
     if(state.couponPlusFrom<=currentDate()&&state.couponPlusUntil>=currentDate()){
@@ -4526,6 +4610,8 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     }
     if(route==='/records'&&!params.has('recipient'))params.set('recipient','all');
     const pageTitles={'/':'홈','/guide':'케어릿 이용 방법','/journals/new':'일지 작성','/reports':'리포트','/records':'기록','/recipients':'대상·템플릿','/plans':'요금제','/settings':'설정','/settings/licenses':'오픈소스 라이선스','/privacy':'개인정보처리방침','/terms':'이용약관','/settings/configuration':'일지 편집','/recipients/scoring':'리포트 템플릿 편집','/notifications':'알림','/notices':'공지사항','/coupons':'쿠폰함','/invite':'친구 초대'};document.title=pageTitles[route]?`${pageTitles[route]} · 케어릿`:'케어릿';
+    document.body.dataset.mobileHome=String(route==='/');
+    const scrollTitle=$('.mobile-scroll-title');if(scrollTitle){scrollTitle.textContent=route==='/journals/new'&&params.has('entry')?'일지 수정':pageTitles[route]||'';scrollTitle.hidden=true;}
     const allRecords=route==='/records'&&params.get('recipient')==='all';
     recipient = allRecords?0:Math.max(0, Math.min(state.recipients.length - 1, Number(params.get('recipient') || 0)));
     const template = $$('template[data-path]').find(x => x.dataset.path === route);
@@ -4572,14 +4658,14 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     syncSidebarButton();
     ensureMobileMenuScrim();
     syncAppNavigation();
-    registerEdits(); window.scrollTo(0,0); requestAnimationFrame(scaleReports);
+    registerEdits(); window.scrollTo(0,0); requestAnimationFrame(()=>{scaleReports();updateMobileScrollTitle();});
     if(inactiveJournalPerson!==null)dialog('비활성화된 관리대상이에요',`<p>${escapeHTML(inactiveJournalPerson)}의 새 일지는 관리대상을 활성화한 뒤 작성할 수 있어요. 기존 일지는 기록에서 확인할 수 있어요.</p>`);
     if (route === '/plans' && !mockupActivePlan(state,currentDate()) && ['starter','team','pro'].includes(params.get('plan'))) openPlanCheckout(params.get('plan'));
   }
   let journalSavedSnapshot=null,journalSavedRecord=null,journalSaving=false,journalAiComparison=null;
   function setDraftStatus(message){$$('[data-draft-status]').forEach(status=>status.textContent=message);}
   function journalSnapshot(){return JSON.stringify({date:$('[data-action="date"]')?.dataset.value,values:Object.fromEntries($$('input[id],textarea[id]',$('#screen')).filter(el=>!el.id.startsWith('journal-field-label-')).map(el=>[el.id,(el.type==='radio'||el.type==='checkbox')?el.checked:el.value]))});}
-  function journalEditDirty(){return route==='/journals/new'&&params.has('entry')&&journalSavedSnapshot!==null&&journalSnapshot()!==journalSavedSnapshot;}
+  function journalEditDirty(){return route==='/journals/new'&&!!$('[data-action="save-journal"]')&&!!state.recipients[recipient]?.active&&(journalSavedSnapshot===null?journalHasContent():journalSnapshot()!==journalSavedSnapshot);}
   function journalHasContent(){return $$('input[id],textarea[id]',$('#screen')).some(el=>!el.id.startsWith('journal-field-label-')&&el.type!=='range'&&((el.type==='radio'||el.type==='checkbox')?el.checked:el.value.trim()!==''));}
   function updateJournalSaveState(){
     if(route!=='/journals/new')return;
@@ -4627,6 +4713,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     $$('.journal-toolbar .dropdown-trigger').forEach(button=>{const value=button.querySelector('span')?.textContent||'';button.setAttribute('aria-description',value);button.title=value;});
     if(editIndex!==null&&journalRows()[Number(editIndex)])journalSavedSnapshot=journalSnapshot();
     if(editIndex!==null&&!state.recipients[recipient]?.active){$('[data-quick-checks]').disabled=true;$$('.journal-memo-fields textarea').forEach(field=>field.readOnly=true);$('[data-action="ai-preview"]').disabled=true;$('[data-options="journal-templates"]').disabled=true;}
+    const aiButton=$('[data-action="ai-preview"]');if(!mockupActivePlan(state,currentDate())&&state.recipients[recipient]?.active){aiButton.disabled=false;aiButton.setAttribute('aria-description','무료 요금제에서는 사용할 수 없어요. 누르면 요금제 안내가 열려요.');}
     updateJournalSaveState();
   }
   function updateCounter(el) {
@@ -4750,7 +4837,13 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if (recordTab==='journals') {
       const rows=recipients.flatMap(index=>journalRows(index).map((row,i)=>({row,i,index})));
       if(all)rows.sort((a,b)=>b.row[0].localeCompare(a.row[0]));
-      list.innerHTML=renderList(rows.map(({row,i,index})=>({date:row[0],html:`<a class="record-row journal-row" data-date="${row[0]}" href="#/journals/new?recipient=${index}&entry=${i}"><strong class="record-name" title="${escapeHTML(state.recipients[index].name)}">${escapeHTML(state.recipients[index].name)}</strong><p class="record-preview">${escapeHTML(row[2])}</p><time datetime="${row[0]}">${recordDate(row[0])}</time></a>`})));
+      const drafts=recipients.flatMap(index=>{
+        const date=state.draftDates?.[index],values=state.drafts?.[index];
+        if(!date||!values||!mockupHomeJournalStatus(state,index,currentDate(),getQuickChecks(index)).draft)return [];
+        const preview=Object.entries(values).find(([id,value])=>(id==='journal-raw'||id.startsWith('journal-final'))&&typeof value==='string'&&value.trim())?.[1]||'퀵체크 작성 중';
+        return [{date,html:`<a class="record-row journal-row" data-date="${escapeHTML(date)}" href="#/journals/new?recipient=${index}"><strong class="record-name" title="${escapeHTML(state.recipients[index].name)}">${escapeHTML(state.recipients[index].name)}</strong><div class="record-draft-preview"><span class="record-draft-badge">임시저장</span><span class="record-preview">${escapeHTML(preview)}</span></div><time datetime="${escapeHTML(date)}">${recordDate(date)}</time></a>`}];
+      });
+      list.innerHTML=renderList([...drafts,...rows.map(({row,i,index})=>({date:row[0],html:`<a class="record-row journal-row" data-date="${row[0]}" href="#/journals/new?recipient=${index}&entry=${i}"><strong class="record-name" title="${escapeHTML(state.recipients[index].name)}">${escapeHTML(state.recipients[index].name)}</strong><p class="record-preview">${escapeHTML(row[2])}</p><time datetime="${row[0]}">${recordDate(row[0])}</time></a>`}))]);
     } else if (recordTab==='reports') {
       const reports=recipients.flatMap(index=>reportRecords(index).map(report=>({report,index})));
       if(all)reports.sort((a,b)=>b.report.generated.localeCompare(a.report.generated));
@@ -5141,9 +5234,8 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       option.addEventListener('click',async()=>{
         closePopups(true);
         if(kind==='recipients') {
-          if(route==='/journals/new')captureDraft();
           const change=()=>{params.set('recipient',choice.value);params.delete('entry');params.delete('report');routeTo('#'+route+'?'+params);};
-          if(journalEditDirty())confirmJournalNavigation(change);else if(configurationDirty())confirmConfigurationNavigation(change);else change();
+          if(route==='/journals/new'&&choice.value!==recipient&&journalEditDirty())confirmJournalNavigation(change);else if(configurationDirty())confirmConfigurationNavigation(change);else change();
         }else if(kind==='record-types'){
           recordTab=choice.value;params.set('recipient',params.get('recipient')==='all'?'all':String(recipient));params.set('tab',recordTab);routeTo('#/records?'+params);
         }else if(kind==='recipient-form-journal'||kind==='recipient-form-report'){
@@ -5390,7 +5482,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     else if(action==='export-html')exportHTML();
     else if(action==='storage-backup')exportHTML({save:false});
     else if(action==='storage-reload')location.reload();
-    else if(action==='close-dialog'){pendingNavigation=null;pendingClose=null;$('#mockup-dialog').close();}
+    else if(action==='close-dialog'){pendingNavigation=null;pendingClose=null;confirmAction=null;$('#mockup-dialog').close();}
     else if(action==='save-journal')saveJournal();
     else if(action==='delete-journal'){const row=journalRows()[Number(params.get('entry'))];if(row)dialog('일지를 삭제할까요?','<p>저장한 일지는 30일 동안 휴지통에서 복원할 수 있어요</p>','삭제',async()=>{const key=JSON.stringify([recipient,row[0],row[2]]);(state.deletedJournalKeys||=[]).push(key);state.trash.push({type:'journal',recipient,date:row[0],title:row[1]+' 일지',key});if(!await persist())return;routeTo('#/records?recipient='+recipient);toast('일지를 휴지통으로 옮겼어요.');},true);}
     else if(action==='home-guide')dialog('케어릿 이용 방법','<ol class="home-guide-steps"><li><strong>관리대상 선택</strong><p>기록할 관리대상과 일지 템플릿을 선택해요.</p></li><li><strong>일지 작성</strong><p>퀵체크와 오늘의 일지를 작성하고 저장해요.</p></li><li><strong>주간 리포트 확인</strong><p>금요일부터 목요일까지 기록한 일지가 3일 이상이면 다음 날부터 리포트를 만들 수 있어요.</p></li></ol>');
@@ -5471,8 +5563,17 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(route==='/journals/new'&&el.closest('#screen')){updateJournalSaveState();if(params.get('entry')===null){captureDraft(false);const saved=await persist();setDraftStatus(saved?'작성 내용은 이 브라우저에 자동 보관돼요.':'자동 보관이 중단됐어요.');updateJournalSaveState();}}
   });
   document.addEventListener('change',e=>{if(e.target.matches('.timefield input[type="number"]'))syncTimeInput(e.target.closest('.timefield'));if(route==='/journals/new'&&e.target.closest('[data-quick-checks]')){captureDraft();updateJournalSaveState();}if(e.target.name==='quick-type-choice')$$('.quick-check-type-card',$('#quick-type-picker')).forEach(card=>card.classList.toggle('is-selected',!!$('input[name="quick-type-choice"]',card)?.checked));});
-  document.addEventListener('focusout',e=>{if(e.target.id!=='score-template-title')return;const input=e.target,editor=input.closest('.score-title-editor'),picker=$('.score-title-text',editor);if(!editor||!picker)return;input.hidden=true;picker.hidden=false;$('.score-title-edit',editor).hidden=false;$('.dropdown-trigger span',picker).textContent=input.value.trim()||'이름을 입력해 주세요';});
-  document.addEventListener('keydown',e=>{if(e.target.id==='score-template-title'&&e.key==='Enter'){e.preventDefault();e.target.blur();}});
+  function finishScoreTitle(input){
+    const editor=input.closest('.score-title-editor'),label=$('.score-title-text',editor),edit=$('.score-title-edit',editor),done=$('.score-title-done',editor);
+    const name=input.value.trim();
+    if(!name){input.focus();$$('[data-score-status]').forEach(status=>status.textContent='이름을 입력해 주세요.');return;}
+    input.value=name;
+    if(input.id==='score-template-title'){input.hidden=true;label.hidden=false;edit.hidden=false;done.hidden=true;$('.dropdown-trigger span',label).textContent=name;}
+    else {const index=Number(input.id.replace('score-domain-title-',''));const option=$(`[data-action="score-select-domain"][data-index="${index}"] span`);if(option)option.textContent=name;const selected=$('.score-area-mobile-select .dropdown-trigger span');if(index===scoreCurrentDomain&&selected)selected.textContent=name;}
+    updateScoreSave();$$('[data-score-status]').forEach(status=>status.textContent=JSON.stringify(scoreDraft)===scoreSnapshot?'':'변경 사항은 저장을 눌러 적용해 주세요.');
+  }
+  document.addEventListener('focusout',e=>{if(!e.target.matches('#score-template-title, [id^="score-domain-title-"]')||e.relatedTarget?.matches('[data-action="score-title-done"]'))return;finishScoreTitle(e.target);});
+  document.addEventListener('keydown',e=>{if(e.target.matches('#score-template-title, [id^="score-domain-title-"]')&&e.key==='Enter'&&!e.isComposing){e.preventDefault();if(e.target.id.startsWith('score-domain-title-'))e.target.blur();else finishScoreTitle(e.target);}});
   document.addEventListener('focusout',e=>{const time=e.target.closest('.timefield');if(!time||time.contains(e.relatedTarget))return;const parts=$$('input[type="number"]',time),hasValue=parts.some(input=>input.value!==''),invalid=hasValue&&parts.some(input=>input.value===''||!input.checkValidity());parts.forEach(input=>{if(invalid&&(input.value===''||!input.checkValidity()))input.setAttribute('aria-invalid','true');else input.removeAttribute('aria-invalid');});$('.timefield-error',time).hidden=!invalid;});
   document.addEventListener('keydown',e=>{if(e.key===' '&&e.target.matches('.journal-choice-chips input[type="radio"]:checked')){e.preventDefault();e.target.checked=false;e.target.dispatchEvent(new Event('change',{bubbles:true}));return;}const handle=e.target.closest('[data-quick-move]');if(handle&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();const index=Number(handle.dataset.quickMove);moveQuick(index,index+(['ArrowUp','ArrowLeft'].includes(e.key)?-1:1));}});
   let draggedQuickIndex=null;
@@ -5500,10 +5601,10 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   $('#mockup-color').addEventListener('input',e=>{state.color=e.target.value;applyDesign();persist();});
   $('#mockup-radius').addEventListener('input',e=>{state.radius=Number(e.target.value);applyDesign();persist();});
   window.addEventListener('hashchange',event=>{
-    if(journalEditDirty()){
-      const next=new URL(event.newURL).hash||'#/';history.replaceState(null,'',new URL(event.oldURL).hash||'#/');
-      confirmJournalNavigation(()=>routeTo(next));return;
-    }
+    if(navigationApproved){navigationApproved=false;render();return;}
+    const next=new URL(event.newURL).hash||'#/',previous=new URL(event.oldURL).hash||'#/';
+    const guard=journalEditDirty()?confirmJournalNavigation:configurationDirty()?confirmConfigurationNavigation:scorePageDirty()?confirmScoreNavigation:null;
+    if(guard&&next!==previous){history.replaceState(null,'',previous);guard(()=>routeTo(next));return;}
     render();
   });window.addEventListener('resize',scaleReports);
   function syncSidebarButton(){const collapsed=$('.app-layout').classList.contains('mockup-nav-collapsed'),button=$('.nav-handle');button.setAttribute('aria-expanded',String(!collapsed));button.setAttribute('aria-label',collapsed?'메뉴 열기':'메뉴 접기');button.title=collapsed?'메뉴 열기':'메뉴 접기';$('.app-bottom-nav button')?.setAttribute('aria-expanded',String(!collapsed));}
@@ -5576,10 +5677,11 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     dialog('변경 내용을 저장할까요?',`<p>저장하지 않으면 변경 내용이 사라져요.${escapeHTML(impact)}</p>`,'저장하고 닫기',save);
     $('#mockup-dialog .dialog-actions [data-action="confirm-dialog"]').insertAdjacentHTML('beforebegin','<button type="button" class="button secondary" data-action="discard-and-close">저장하지 않고 닫기</button>');
   }
-  function confirmNavigation(move,save,impact=''){
+  function confirmNavigation(move,save,impact='',message='저장하지 않으면 변경 내용이 사라져요.'){
     pendingNavigation=move;
-    dialog('변경 내용을 저장할까요?',`<p>저장하지 않으면 변경 내용이 사라져요.${escapeHTML(impact)}</p>`,'저장하고 이동',async()=>{const next=pendingNavigation;pendingNavigation=null;if(await save())next?.();});
-    $('#mockup-dialog .dialog-actions [data-action="confirm-dialog"]').insertAdjacentHTML('beforebegin','<button type="button" class="button secondary" data-action="discard-and-move">저장하지 않고 이동</button>');
+    dialog('변경 내용을 저장할까요?',`<p>${escapeHTML(message+impact)}</p>`,'저장하고 나가기',async()=>{const next=pendingNavigation;pendingNavigation=null;if(await save()){const previous=location.hash;navigationApproved=true;next?.();if(location.hash===previous)navigationApproved=false;}});
+    const modal=$('#mockup-dialog'),close=$('[data-dialog-close]',modal);close.hidden=false;close.dataset.action='close-dialog';$('.dialog-actions [data-action="close-dialog"]',modal).remove();close.focus();
+    $('#mockup-dialog .dialog-actions [data-action="confirm-dialog"]').insertAdjacentHTML('beforebegin','<button type="button" class="button secondary" data-action="discard-and-move">저장하지 않고 나가기</button>');
   }
   async function saveConfigurationForNavigation(){
     const name=$('#template-name').value.trim(),inputs=$$('#configuration-form input'),values=inputs.map(el=>el.value.trim());
@@ -5592,7 +5694,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(!await persist()){state.journalTemplates[index].name=previous.name;state.journalTemplateConfigs=previous.templates;state.journalSchemaSnapshots=previous.schemas;commonJournalDraft=previous.draft;return false;}
     return true;
   }
-  function confirmJournalNavigation(move){confirmNavigation(()=>{journalSavedSnapshot=journalSnapshot();move();},saveJournal);$('#mockup-dialog').classList.add('is-journal-navigation');$('#mockup-dialog [data-action="close-dialog"]').textContent='계속 편집';}
+  function confirmJournalNavigation(move){const message=params.has('entry')?'저장하지 않으면 변경 내용이 사라져요.':'일지는 저장되지 않지만, 임시저장된 내용은 보관돼요.';confirmNavigation(move,saveJournal,'',message);$('#mockup-dialog').classList.add('is-journal-navigation');}
   function confirmConfigurationNavigation(move){
     const index=Math.max(0,Number(params.get('template')||1)-1),labelsChanged=JSON.stringify($$('#configuration-form input').map(el=>el.value))!==configSnapshot;
     const affected=journalTemplateRecipients(index).filter(item=>!item.labels).length;
@@ -5927,8 +6029,8 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const domains=scoreDraft.domains;
     scoreCurrentDomain=Math.max(0,Math.min(scoreCurrentDomain,domains.length-1));
     const domainNav=domains.map((d,i)=>`<button type="button" class="score-area-option" data-action="score-select-domain" data-index="${i}" aria-pressed="${i===scoreCurrentDomain}"><span>${escapeHTML(d.name||'이름 없는 영역')}</span><small>${mockupScoreQuestionCount(d)}</small></button>`).join('');
-    const panels=domains.map((d,i)=>`<section class="score-area-panel" ${i===scoreCurrentDomain?'':'hidden'} aria-label="${escapeHTML(d.name)} 문항"><header class="score-area-heading"><div><div class="score-title-editor"><span class="score-title-text">${escapeHTML(d.name)}</span><label class="sr-only" for="score-domain-title-${i}">${i+1}번째 영역명</label><input id="score-domain-title-${i}" maxlength="40" value="${escapeHTML(d.name)}" aria-describedby="score-domain-title-${i}-limit" hidden><button type="button" class="button secondary score-title-edit" data-action="score-title-edit" data-target="score-domain-title-${i}" aria-label="${escapeHTML(d.name)} 영역명 수정"><span class="score-desktop-label">이름 수정</span><span class="score-mobile-label">영역 이름 수정</span></button></div><small class="field-limit" id="score-domain-title-${i}-limit">${d.name.length}/40자</small><p data-score-count="${i}">문항 ${mockupScoreQuestionCount(d)}개${mockupScoreQuestionCount(d)<5?' · 리포트 생성에는 5개 이상 필요':''}</p></div></header><ol class="score-question-list">${d.questions.map((q,j)=>`<li><span>${j+1}</span><div><label class="sr-only" for="score-question-${i}-${j}">${escapeHTML(d.name)} ${j+1}번 문항</label><textarea id="score-question-${i}-${j}" data-score-question="${i}" maxlength="80" rows="1" aria-describedby="score-question-${i}-${j}-limit score-question-${i}-${j}-error">${escapeHTML(q)}</textarea><small class="field-limit score-input-limit" id="score-question-${i}-${j}-limit">${q.length}/80자</small><p class="field-error" id="score-question-${i}-${j}-error" role="alert" hidden>문항을 입력해 주세요.</p></div><button class="button danger" type="button" data-action="score-delete-question" data-index="${i}" data-question="${j}" aria-label="${escapeHTML(d.name)} ${j+1}번 문항 삭제">삭제</button></li>`).join('')}</ol><button class="score-question-add" type="button" data-action="score-add-question" data-index="${i}" ${d.questions.length>=15?'disabled':''}>+ 문항 추가 (${d.questions.length}/15)</button></section>`).join('');
-    $('.score-editor-page').innerHTML=`<a class="score-editor-back" href="#/recipients?tab=report"><svg class="mobile-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span class="desktop-back-chevron" aria-hidden="true">‹</span> 대상·템플릿</a><form id="score-edit-form"><div class="score-editor-heading"><h1>리포트 템플릿 편집</h1></div><section class="score-editor-top card"><div class="score-editor-template"><div class="score-title-editor"><div class="dropdown score-title-text"><button type="button" class="dropdown-trigger" data-options="score-templates" aria-label="편집할 템플릿 고르기" aria-haspopup="listbox" aria-expanded="false"><span>${escapeHTML(scoreDraft.title)}</span></button></div><label class="sr-only" for="score-template-title">템플릿 이름</label><input id="score-template-title" maxlength="40" value="${escapeHTML(scoreDraft.title)}" aria-describedby="score-template-title-limit" hidden><button type="button" class="button secondary score-title-edit" data-action="score-title-edit" data-target="score-template-title" aria-label="템플릿 이름 수정"><span class="score-desktop-label">이름 수정</span><span class="score-mobile-label">템플릿 이름 수정</span></button></div><small class="field-limit" id="score-template-title-limit">${scoreDraft.title.length}/40자</small></div><div class="score-editor-actions"><button class="button secondary" type="button" data-action="score-reset">초기화</button><button class="button primary" type="submit">저장</button><p class="score-editor-status" role="status" data-score-status></p></div></section><div class="score-editor-workspace card"><aside class="score-area-list"><div class="score-area-list-heading"><h2>영역</h2><span>${domains.length}/5</span></div><div class="score-area-mobile-row"><div class="score-area-mobile-select dropdown"><button type="button" class="dropdown-trigger" data-options="score-domains" aria-label="영역 선택" aria-haspopup="listbox" aria-expanded="false"><span>${escapeHTML(domains[scoreCurrentDomain]?.name||'영역 선택')}</span></button></div><button class="button secondary score-area-mobile-reset" type="button" data-action="score-reset">초기화</button></div><div class="score-area-options">${domainNav}</div></aside><div class="score-area-content">${panels||'<p class="score-area-empty">영역이 없어요. 초기화하면 기본 영역을 불러올 수 있어요.</p>'}</div></div><div class="score-mobile-save"><p class="score-editor-status" role="status" data-score-status></p><button class="button primary" type="submit">저장</button></div></form>`;
+    const panels=domains.map((d,i)=>`<section class="score-area-panel" ${i===scoreCurrentDomain?'':'hidden'} aria-label="${escapeHTML(d.name)} 문항"><header class="score-area-heading"><div><div class="score-title-editor"><label class="sr-only" for="score-domain-title-${i}">${i+1}번째 영역명</label><span class="score-title-input"><input id="score-domain-title-${i}" maxlength="40" value="${escapeHTML(d.name)}" aria-describedby="score-domain-title-${i}-limit"><small class="field-limit" id="score-domain-title-${i}-limit">${d.name.length}/40자</small></span></div><p data-score-count="${i}">문항 ${mockupScoreQuestionCount(d)}개${mockupScoreQuestionCount(d)<5?' · 리포트 생성에는 5개 이상 필요':''}</p></div></header><ol class="score-question-list">${d.questions.map((q,j)=>`<li><span>${j+1}</span><div><label class="sr-only" for="score-question-${i}-${j}">${escapeHTML(d.name)} ${j+1}번 문항</label><textarea id="score-question-${i}-${j}" data-score-question="${i}" maxlength="80" rows="1" aria-describedby="score-question-${i}-${j}-limit score-question-${i}-${j}-error">${escapeHTML(q)}</textarea><small class="field-limit score-input-limit" id="score-question-${i}-${j}-limit">${q.length}/80자</small><p class="field-error" id="score-question-${i}-${j}-error" role="alert" hidden>문항을 입력해 주세요.</p></div><button class="button danger" type="button" data-action="score-delete-question" data-index="${i}" data-question="${j}" aria-label="${escapeHTML(d.name)} ${j+1}번 문항 삭제">삭제</button></li>`).join('')}</ol><button class="score-question-add" type="button" data-action="score-add-question" data-index="${i}" ${d.questions.length>=15?'disabled':''}>+ 문항 추가 (${d.questions.length}/15)</button></section>`).join('');
+    $('.score-editor-page').innerHTML=`<a class="score-editor-back" href="#/recipients?tab=report"><svg class="mobile-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span class="desktop-back-chevron" aria-hidden="true">‹</span> 대상·템플릿</a><form id="score-edit-form"><div class="score-editor-heading"><h1>리포트 템플릿 편집</h1></div><section class="score-editor-top card"><div class="score-editor-template"><div class="score-title-editor"><div class="dropdown score-title-text"><button type="button" class="dropdown-trigger" data-options="score-templates" aria-label="편집할 템플릿 고르기" aria-haspopup="listbox" aria-expanded="false"><span>${escapeHTML(scoreDraft.title)}</span></button></div><label class="sr-only" for="score-template-title">템플릿 이름</label><span class="score-title-input"><input id="score-template-title" maxlength="40" value="${escapeHTML(scoreDraft.title)}" aria-describedby="score-template-title-limit" hidden><small class="field-limit" id="score-template-title-limit">${scoreDraft.title.length}/40자</small></span><button type="button" class="button secondary score-title-done" data-action="score-title-done" hidden>완료</button><button type="button" class="button secondary score-title-edit" data-action="score-title-edit" data-target="score-template-title" aria-label="템플릿 이름 수정">수정</button></div></div><div class="score-editor-actions"><button class="button secondary" type="button" data-action="score-reset">초기화</button><button class="button primary" type="submit">저장</button><p class="score-editor-status" role="status" data-score-status></p></div></section><div class="score-editor-workspace card"><aside class="score-area-list"><div class="score-area-list-heading"><h2>영역</h2><span>${domains.length}/5</span></div><div class="score-area-mobile-row"><div class="score-area-mobile-select dropdown"><button type="button" class="dropdown-trigger" data-options="score-domains" aria-label="영역 선택" aria-haspopup="listbox" aria-expanded="false"><span>${escapeHTML(domains[scoreCurrentDomain]?.name||'영역 선택')}</span></button></div><button class="button secondary score-area-mobile-reset" type="button" data-action="score-reset">초기화</button></div><div class="score-area-options">${domainNav}</div></aside><div class="score-area-content">${panels||'<p class="score-area-empty">영역이 없어요. 초기화하면 기본 영역을 불러올 수 있어요.</p>'}</div></div><div class="score-mobile-save"><p class="score-editor-status" role="status" data-score-status></p><button class="button primary" type="submit">저장</button></div></form>`;
     updateScoreSave();
     const rail=$('.score-area-options'),selected=$('.score-area-option[aria-pressed="true"]');
     if(rail&&selected){const r=rail.getBoundingClientRect(),s=selected.getBoundingClientRect();if(s.right>r.right)rail.scrollLeft+=s.right-r.right;else if(s.left<r.left)rail.scrollLeft-=r.left-s.left;}
@@ -6022,7 +6124,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     else if(action==='common-edit'){if(button.dataset.kind==='journal')routeTo('#/settings/configuration?template=common');else if(button.dataset.kind==='report')openScoring(true);}
     else if(action==='close-modal')closeEditorDialog(button.dataset.modal);
     else if(action==='discard-and-close'){const close=pendingClose;pendingClose=null;confirmAction=null;$('#mockup-dialog').close();close?.();}
-    else if(action==='discard-and-move'){const move=pendingNavigation;pendingNavigation=null;confirmAction=null;$('#mockup-dialog').close();move?.();}
+    else if(action==='discard-and-move'){const move=pendingNavigation;pendingNavigation=null;confirmAction=null;$('#mockup-dialog').close();const previous=location.hash;navigationApproved=true;move?.();if(location.hash===previous)navigationApproved=false;}
     else if(action==='new-quick-check')openQuickEditor();
     else if(action==='edit-quick-check')openQuickEditor(Number(button.dataset.index));
     else if(action==='quick-toggle'){readQuickDraft();quickDraft.active=!quickDraft.active;drawQuickEditor();}
@@ -6040,7 +6142,8 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       readQuickDraft();if(button.dataset.index==='')quickDraft.choices.push({name,active:true});else quickDraft.choices[Number(button.dataset.index)].name=name;drawQuickEditor();
     }
     else if(action==='scoring')openScoring();
-    else if(action==='score-title-edit'){const input=document.getElementById(button.dataset.target),label=button.parentElement.querySelector('.score-title-text');label.hidden=true;input.hidden=false;button.hidden=true;input.focus();input.select();}
+    else if(action==='score-title-edit'){const input=document.getElementById(button.dataset.target),editor=button.closest('.score-title-editor'),label=$('.score-title-text',editor);label.hidden=true;input.hidden=false;button.hidden=true;$('.score-title-done',editor).hidden=false;input.focus();input.select();}
+    else if(action==='score-title-done'){const input=$('input',button.closest('.score-title-editor'));finishScoreTitle(input);}
     else if(action==='score-select-domain'){readScoreDraft();scoreCurrentDomain=Number(button.dataset.index);drawScoring();$(`[data-action="score-select-domain"][data-index="${scoreCurrentDomain}"]`)?.focus();}
     else if(action==='score-help')button.setAttribute('aria-expanded',button.getAttribute('aria-expanded')!=='true');
     else if(action==='score-reset')dialog('관찰 문항을 초기화할까요?','<p>영역명과 문항을 기본 템플릿으로 되돌려요. 저장 전까지 기존 기준은 유지돼요.</p>','초기화',()=>{scoreDraft=scoreSeed(scoreTemplateIndex(scoreDraft));drawScoring();});
@@ -6052,6 +6155,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     }
     else if(action==='accept-consent'){state.aiConsent=true;persist().then(saved=>{if(!saved)return;$('#consent-dialog').close();if(route==='/settings')prepareSettings();toast('AI 기능을 켰어요.');});}
     else if(action==='ai-preview'){
+      if(!mockupActivePlan(state,currentDate())){dialog('플러스 요금제에서 이용할 수 있어요','<p>AI 문장 정리는 플러스와 팀 요금제에서 이용할 수 있어요.</p>','요금제 보기',()=>routeTo('#/plans'));return;}
       if(!state.aiConsent){openConsent();return;}
       if(journalAiComparison){toast('정리된 문장을 확인해 주세요.');$('.journal-memo-card')?.scrollIntoView({behavior:'smooth',block:'start'});return;}
       const fields=$$('.journal-memo-fields textarea').filter(field=>field.value.trim());
@@ -6108,6 +6212,14 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       const previousOverflow=document.body.style.overflow;document.body.style.overflow='hidden';let scale=0,fit=0;
       const updateZoom=()=>{pages.style.setProperty('--configured-report-scale',scale);output.textContent=`${Math.round(scale*100)}%`;out.disabled=scale<=fit;inside.disabled=scale>=2;};
       const resizeViewer=()=>{const wasFit=scale<=fit;fit=Math.min(1,Math.max(0,(content.clientWidth-24)/794));scale=wasFit?fit:Math.max(fit,scale);updateZoom();};
+      if(document.body.classList.contains('mobile-app-preview')){
+        let pinch=null;
+        const distance=touches=>Math.hypot(touches[0].clientX-touches[1].clientX,touches[0].clientY-touches[1].clientY);
+        content.addEventListener('touchstart',event=>{if(event.touches.length!==2)return;const rect=content.getBoundingClientRect(),x=(event.touches[0].clientX+event.touches[1].clientX)/2-rect.left,y=(event.touches[0].clientY+event.touches[1].clientY)/2-rect.top;pinch={distance:distance(event.touches),scale,x,y,left:content.scrollLeft,top:content.scrollTop};},{passive:true});
+        content.addEventListener('touchmove',event=>{if(!pinch||event.touches.length!==2||!pinch.distance)return;event.preventDefault();scale=Math.min(2,Math.max(fit,pinch.scale*distance(event.touches)/pinch.distance));updateZoom();const ratio=scale/pinch.scale;content.scrollLeft=(pinch.left+pinch.x)*ratio-pinch.x;content.scrollTop=(pinch.top+pinch.y)*ratio-pinch.y;},{passive:false});
+        content.addEventListener('touchend',()=>{pinch=null;},{passive:true});
+        content.addEventListener('touchcancel',()=>{pinch=null;},{passive:true});
+      }
       viewer.addEventListener('close',()=>{window.removeEventListener('resize',resizeViewer);document.body.style.overflow=previousOverflow;viewer.remove();if(button.isConnected)button.focus();},{once:true});
       $('.report-document-modal-header button',viewer).addEventListener('click',()=>viewer.close());
       $('[data-zoom="fit"]',viewer).addEventListener('click',()=>{scale=fit;content.scrollLeft=0;updateZoom();});

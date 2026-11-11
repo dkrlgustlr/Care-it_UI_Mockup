@@ -1,6 +1,6 @@
 /* 퀵체크 입력은 기존 필드의 크기와 선택 색상을 공유합니다. */
 .quick-check-clear { border:0; background:transparent; color:var(--muted); padding:4px 0; font:600 13px/1.4 var(--font-sans); cursor:pointer; }
-.quick-check-clear:hover { color:var(--primary-dark); text-decoration:underline; }
+.quick-check-clear:hover { color:var(--primary-dark); text-decoration:none; }
 .quick-check-time { display:block; min-height:0; }
 .timefield { height:auto; }
 .timefield-parts { display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:8px; }

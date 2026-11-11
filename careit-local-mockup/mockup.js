@@ -399,9 +399,9 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   }
   window.addEventListener('storage',event=>{if(event.storageArea===localStorage&&(event.key===STORAGE||event.key===null))store.check();});
   window.addEventListener('focus',()=>store.check());
-  window.addEventListener('beforeunload',event=>{if(store.pending){event.preventDefault();event.returnValue='';}});
+  window.addEventListener('beforeunload',event=>{if(store.pending||journalDirty()||configurationDirty()||scorePageDirty()){event.preventDefault();event.returnValue='';}});
   $('#mockup-storage-dialog').addEventListener('cancel',event=>event.preventDefault());
-  let confirmAction,pendingNavigation=null,pendingClose=null;
+  let confirmAction,pendingNavigation=null,pendingClose=null,navigationApproved=false;
   function dialog(title, html, confirmLabel, onConfirm, danger=false) {
     closePopups();
     const modal=$('#mockup-dialog');
@@ -411,6 +411,9 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     confirmAction=onConfirm;
     if(!modal.open)modal.showModal();
   }
+  function cancelPendingNavigation(){pendingNavigation=null;confirmAction=null;$('#mockup-dialog').close();}
+  $('#mockup-dialog').addEventListener('click',event=>{if(!pendingNavigation||event.target!==event.currentTarget)return;const rect=event.currentTarget.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)cancelPendingNavigation();});
+  $('#mockup-dialog').addEventListener('cancel',event=>{if(pendingNavigation){event.preventDefault();cancelPendingNavigation();}});
   function applyDesign() {
     $('#design-overrides').textContent = `${state.color ? `:root{--primary:${state.color};--primary-action:${state.color};--primary-dark:${state.color};}` : ''}\n${state.radius != null ? `:root{--radius-card:${state.radius}px;}` : ''}\n${state.css || ''}`;
     if (state.color) $('#mockup-color').value = state.color;
@@ -439,7 +442,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     editing = enabled; document.body.classList.toggle('mockup-editing', editing);
     $('#mockup-edit-mode').checked = editing; registerEdits();
   }
-  function routeTo(hash) { if (location.hash === hash) render(); else location.hash = hash; }
+  function routeTo(hash) { if (location.hash === hash) { navigationApproved=false; render(); } else location.hash = hash; }
   function syncProfileAvatar(avatar) {
     if (!avatar) return;
     const img=document.createElement('img');
@@ -492,6 +495,13 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const layout=$('.app-layout');if($('.mobile-menu-scrim',layout))return;
     const scrim=document.createElement('button');scrim.type='button';scrim.className='mobile-menu-scrim';scrim.dataset.action='sidebar';scrim.setAttribute('aria-label','메뉴 닫기');layout.append(scrim);
   }
+  function updateMobileScrollTitle() {
+    const title=$('.mobile-scroll-title'),heading=$('#screen h1');
+    if(!title)return;
+    title.hidden=!matchMedia('(max-width:767px)').matches||route==='/'||!heading||heading.getBoundingClientRect().bottom>64;
+  }
+  window.addEventListener('scroll',updateMobileScrollTitle,{passive:true});
+  window.addEventListener('resize',updateMobileScrollTitle,{passive:true});
   function render() {
     if(location.hash==='#main-content'){ $('#main-content').focus(); return; }
     if(state.couponPlusFrom<=currentDate()&&state.couponPlusUntil>=currentDate()){
@@ -510,6 +520,8 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     }
     if(route==='/records'&&!params.has('recipient'))params.set('recipient','all');
     const pageTitles={'/':'홈','/guide':'케어릿 이용 방법','/journals/new':'일지 작성','/reports':'리포트','/records':'기록','/recipients':'대상·템플릿','/plans':'요금제','/settings':'설정','/settings/licenses':'오픈소스 라이선스','/privacy':'개인정보처리방침','/terms':'이용약관','/settings/configuration':'일지 편집','/recipients/scoring':'리포트 템플릿 편집','/notifications':'알림','/notices':'공지사항','/coupons':'쿠폰함','/invite':'친구 초대'};document.title=pageTitles[route]?`${pageTitles[route]} · 케어릿`:'케어릿';
+    document.body.dataset.mobileHome=String(route==='/');
+    const scrollTitle=$('.mobile-scroll-title');if(scrollTitle){scrollTitle.textContent=route==='/journals/new'&&params.has('entry')?'일지 수정':pageTitles[route]||'';scrollTitle.hidden=true;}
     const allRecords=route==='/records'&&params.get('recipient')==='all';
     recipient = allRecords?0:Math.max(0, Math.min(state.recipients.length - 1, Number(params.get('recipient') || 0)));
     const template = $$('template[data-path]').find(x => x.dataset.path === route);
@@ -556,13 +568,14 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     syncSidebarButton();
     ensureMobileMenuScrim();
     syncAppNavigation();
-    registerEdits(); window.scrollTo(0,0); requestAnimationFrame(scaleReports);
+    registerEdits(); window.scrollTo(0,0); requestAnimationFrame(()=>{scaleReports();updateMobileScrollTitle();});
     if (route === '/plans' && !mockupActivePlan(state,currentDate()) && ['starter','team','pro'].includes(params.get('plan'))) openPlanCheckout(params.get('plan'));
   }
   let journalSavedSnapshot=null,journalSavedRecord=null,journalSaving=false,journalAiComparison=null;
   function setDraftStatus(message){$$('[data-draft-status]').forEach(status=>status.textContent=message);}
   function journalSnapshot(){return JSON.stringify({date:$('[data-action="date"]')?.dataset.value,values:Object.fromEntries($$('input[id],textarea[id]',$('#screen')).filter(el=>!el.id.startsWith('journal-field-label-')).map(el=>[el.id,(el.type==='radio'||el.type==='checkbox')?el.checked:el.value]))});}
   function journalHasContent(){return $$('input[id],textarea[id]',$('#screen')).some(el=>!el.id.startsWith('journal-field-label-')&&el.type!=='range'&&((el.type==='radio'||el.type==='checkbox')?el.checked:el.value.trim()!==''));}
+  function journalDirty(){return route==='/journals/new'&&!!$('[data-action="save-journal"]')&&!!state.recipients[recipient]?.active&&(journalSavedSnapshot===null?journalHasContent():journalSnapshot()!==journalSavedSnapshot);}
   function updateJournalSaveState(){
     if(route!=='/journals/new')return;
     const button=$('[data-action="save-journal"]'),title=$('[data-journal-save-title]');if(!button||!title)return;
@@ -609,6 +622,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     $$('.journal-toolbar .dropdown-trigger').forEach(button=>{const value=button.querySelector('span')?.textContent||'';button.setAttribute('aria-description',value);button.title=value;});
     if(editIndex!==null&&journalRows()[Number(editIndex)])journalSavedSnapshot=journalSnapshot();
     if(editIndex!==null&&!state.recipients[recipient]?.active){$('[data-quick-checks]').disabled=true;$$('.journal-memo-fields textarea').forEach(field=>field.readOnly=true);$('[data-action="ai-preview"]').disabled=true;$('[data-options="journal-templates"]').disabled=true;}
+    const aiButton=$('[data-action="ai-preview"]');if(!mockupActivePlan(state,currentDate())&&state.recipients[recipient]?.active){aiButton.disabled=false;aiButton.setAttribute('aria-description','무료 요금제에서는 사용할 수 없어요. 누르면 요금제 안내가 열려요.');}
     updateJournalSaveState();
   }
   function updateCounter(el) {
@@ -732,7 +746,13 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if (recordTab==='journals') {
       const rows=recipients.flatMap(index=>journalRows(index).map((row,i)=>({row,i,index})));
       if(all)rows.sort((a,b)=>b.row[0].localeCompare(a.row[0]));
-      list.innerHTML=renderList(rows.map(({row,i,index})=>({date:row[0],html:`<a class="record-row journal-row" data-date="${row[0]}" href="#/journals/new?recipient=${index}&entry=${i}"><strong class="record-name" title="${escapeHTML(state.recipients[index].name)}">${escapeHTML(state.recipients[index].name)}</strong><p class="record-preview">${escapeHTML(row[2])}</p><time datetime="${row[0]}">${recordDate(row[0])}</time></a>`})));
+      const drafts=recipients.flatMap(index=>{
+        const date=state.draftDates?.[index],values=state.drafts?.[index];
+        if(!date||!values||!mockupHomeJournalStatus(state,index,currentDate(),getQuickChecks(index)).draft)return [];
+        const preview=Object.entries(values).find(([id,value])=>(id==='journal-raw'||id.startsWith('journal-final'))&&typeof value==='string'&&value.trim())?.[1]||'퀵체크 작성 중';
+        return [{date,html:`<a class="record-row journal-row" data-date="${escapeHTML(date)}" href="#/journals/new?recipient=${index}"><strong class="record-name" title="${escapeHTML(state.recipients[index].name)}">${escapeHTML(state.recipients[index].name)}</strong><div class="record-draft-preview"><span class="record-draft-badge">임시저장</span><span class="record-preview">${escapeHTML(preview)}</span></div><time datetime="${escapeHTML(date)}">${recordDate(date)}</time></a>`}];
+      });
+      list.innerHTML=renderList([...drafts,...rows.map(({row,i,index})=>({date:row[0],html:`<a class="record-row journal-row" data-date="${row[0]}" href="#/journals/new?recipient=${index}&entry=${i}"><strong class="record-name" title="${escapeHTML(state.recipients[index].name)}">${escapeHTML(state.recipients[index].name)}</strong><p class="record-preview">${escapeHTML(row[2])}</p><time datetime="${row[0]}">${recordDate(row[0])}</time></a>`}))]);
     } else if (recordTab==='reports') {
       const reports=recipients.flatMap(index=>reportRecords(index).map(report=>({report,index})));
       if(all)reports.sort((a,b)=>b.report.generated.localeCompare(a.report.generated));
@@ -1117,9 +1137,8 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       option.addEventListener('click',async()=>{
         closePopups(true);
         if(kind==='recipients') {
-          if(route==='/journals/new')captureDraft();
           const change=()=>{params.set('recipient',choice.value);params.delete('entry');params.delete('report');routeTo('#'+route+'?'+params);};
-          if(configurationDirty())confirmConfigurationNavigation(change);else change();
+          if(route==='/journals/new'&&choice.value!==recipient&&journalDirty())confirmJournalNavigation(change);else if(configurationDirty())confirmConfigurationNavigation(change);else change();
         }else if(kind==='record-types'){
           recordTab=choice.value;params.set('recipient',params.get('recipient')==='all'?'all':String(recipient));params.set('tab',recordTab);routeTo('#/records?'+params);
         }else if(kind==='recipient-form-journal'||kind==='recipient-form-report'){
@@ -1136,8 +1155,9 @@ function mockupHomeJournalStatus(state, index, today, checks) {
         }else if(kind==='journal-templates'){
           const changed=(state.recipients[recipient].templateIndex||0)!==choice.value;
           const apply=async()=>{if(changed){preserveJournalSchemas(state.recipients[recipient].templateIndex||0);delete state.quickChecks[recipient];delete state.configuration[recipient];}state.recipients[recipient].templateIndex=choice.value;if(!await persist())return;prepareJournal();toast(`「${choice.label}」을 선택했어요.`);};
-          if(changed&&(state.quickChecks[recipient]||state.configuration[recipient]))dialog('일지 템플릿을 변경할까요?','<p>이 대상의 개별 설정이 선택한 공통 템플릿으로 바뀌어요. 기존에 저장한 일지는 보관돼요.</p>','변경',apply);else await apply();
-        }else if(kind==='saved-journals')routeTo(`#/journals/new?recipient=${recipient}&entry=${choice.value}`);
+          const change=()=>{if(changed&&(state.quickChecks[recipient]||state.configuration[recipient]))dialog('일지 템플릿을 변경할까요?','<p>이 대상의 개별 설정이 선택한 공통 템플릿으로 바뀌어요. 기존에 저장한 일지는 보관돼요.</p>','변경',apply);else apply();};
+          if(changed&&journalDirty())confirmJournalNavigation(change);else change();
+        }else if(kind==='saved-journals'){const change=()=>routeTo(`#/journals/new?recipient=${recipient}&entry=${choice.value}`);if(journalDirty())confirmJournalNavigation(change);else change();}
         else if(kind==='report-templates')dialog('관찰 기준을 바꿀까요?',`<p>선택한 공통 템플릿을 새 리포트에 적용해요. 기존 리포트는 바뀌지 않아요.${state.scoring[recipient]?' 현재 대상의 개별 기준은 선택한 공통 기준으로 바뀌어요.':''}</p>`,'저장하고 적용',async()=>{const previous=state.scoring[recipient],oldTitle=state.reportTemplates[recipient];delete state.scoring[recipient];state.reportTemplates[recipient]=choice.label;if(!await persist()){if(previous)state.scoring[recipient]=previous;state.reportTemplates[recipient]=oldTitle;return;}button.querySelector('span').textContent=choice.label;const summary=$('.report-template-summary');if(summary)summary.textContent=`영역 ${currentScoring().domains.length}개 · 문항 ${currentScoring().domains.reduce((total,domain)=>total+domain.questions.length,0)}개`;updateReportPeriod();});
         else if(kind==='quick-type'){readQuickDraft();quickDraft.type=choice.label;drawQuickEditor();}
         else if(kind==='score-domains'){readScoreDraft();scoreCurrentDomain=Number(choice.value);drawScoring();$('.score-area-mobile-select .dropdown-trigger')?.focus();}
@@ -1306,7 +1326,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const previousDraft=state.drafts[recipient],previousDraftDate=state.draftDates[recipient];if(!row){delete state.drafts[recipient];delete state.draftDates[recipient];}
     const savedSnapshot=journalSnapshot();journalSaving=true;updateJournalSaveState();
     if(!await persist()){if(previousRecord)Object.assign(existing,previousRecord);else state.savedJournals=state.savedJournals.filter(item=>item!==existing);state.recipients[recipient].count=previousCount;if(!row&&!state.drafts[recipient]){state.drafts[recipient]=previousDraft;state.draftDates[recipient]=previousDraftDate;}journalSaving=false;setDraftStatus('저장하지 못했어요. 다시 시도해 주세요.');updateJournalSaveState();return;}
-    journalSavedRecord=existing;journalSavedSnapshot=savedSnapshot;journalSaving=false;updateJournalSaveState();toast('일지를 저장했어요.');
+    journalSavedRecord=existing;journalSavedSnapshot=savedSnapshot;journalSaving=false;updateJournalSaveState();toast('일지를 저장했어요.');return true;
   }
   async function exportHTML({save=true}={}) {
     if(document.querySelector('script[src]')){
@@ -1338,6 +1358,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const tick=e.target.closest('.quick-check-slider-ticks button');
     if(tick){const slider=tick.closest('.quick-check-slider'),input=$('input[type="range"]',slider),selected=$('input[type="hidden"]',slider);slider.classList.add('is-selected');selected.value='true';input.value=tick.textContent.trim();$$('.quick-check-slider-ticks button',slider).forEach(b=>b.setAttribute('aria-pressed',String(b===tick)));input.dispatchEvent(new Event('change',{bubbles:true}));return;}
     const navigation=e.target.closest('a[href^="#/"]');
+    if(navigation&&journalDirty()){e.preventDefault();const href=navigation.getAttribute('href');confirmJournalNavigation(()=>routeTo(href));return;}
     if(navigation&&configurationDirty()){e.preventDefault();const href=navigation.getAttribute('href');confirmConfigurationNavigation(()=>routeTo(href));return;}
     if(navigation&&scorePageDirty()){e.preventDefault();const href=navigation.getAttribute('href');confirmScoreNavigation(()=>routeTo(href));return;}
     if(navigation?.closest('.sidebar')&&matchMedia('(max-width:767px)').matches){$('.app-layout').classList.add('mockup-nav-collapsed');syncSidebarButton();}
@@ -1364,7 +1385,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     else if(action==='export-html')exportHTML();
     else if(action==='storage-backup')exportHTML({save:false});
     else if(action==='storage-reload')location.reload();
-    else if(action==='close-dialog'){pendingNavigation=null;pendingClose=null;$('#mockup-dialog').close();}
+    else if(action==='close-dialog'){pendingNavigation=null;pendingClose=null;confirmAction=null;$('#mockup-dialog').close();}
     else if(action==='save-journal')saveJournal();
     else if(action==='delete-journal'){const row=journalRows()[Number(params.get('entry'))];if(row)dialog('일지를 삭제할까요?','<p>저장한 일지는 30일 동안 휴지통에서 복원할 수 있어요</p>','삭제',async()=>{const key=JSON.stringify([recipient,row[0],row[2]]);(state.deletedJournalKeys||=[]).push(key);state.trash.push({type:'journal',recipient,date:row[0],title:row[1]+' 일지',key});if(!await persist())return;routeTo('#/records?recipient='+recipient);toast('일지를 휴지통으로 옮겼어요.');},true);}
     else if(action==='home-guide')dialog('케어릿 이용 방법','<ol class="home-guide-steps"><li><strong>관리대상 선택</strong><p>기록할 관리대상과 일지 템플릿을 선택해요.</p></li><li><strong>일지 작성</strong><p>퀵체크와 오늘의 일지를 작성하고 저장해요.</p></li><li><strong>주간 리포트 확인</strong><p>금요일부터 목요일까지 기록한 일지가 3일 이상이면 다음 날부터 리포트를 만들 수 있어요.</p></li></ol>');
@@ -1445,8 +1466,17 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(route==='/journals/new'&&el.closest('#screen')){updateJournalSaveState();if(params.get('entry')===null){captureDraft(false);const saved=await persist();setDraftStatus(saved?'작성 내용은 이 브라우저에 자동 보관돼요.':'자동 보관이 중단됐어요.');updateJournalSaveState();}}
   });
   document.addEventListener('change',e=>{if(e.target.matches('.timefield input[type="number"]'))syncTimeInput(e.target.closest('.timefield'));if(route==='/journals/new'&&e.target.closest('[data-quick-checks]')){captureDraft();updateJournalSaveState();}if(e.target.name==='quick-type-choice')$$('.quick-check-type-card',$('#quick-type-picker')).forEach(card=>card.classList.toggle('is-selected',!!$('input[name="quick-type-choice"]',card)?.checked));});
-  document.addEventListener('focusout',e=>{if(e.target.id!=='score-template-title')return;const input=e.target,editor=input.closest('.score-title-editor'),picker=$('.score-title-text',editor);if(!editor||!picker)return;input.hidden=true;picker.hidden=false;$('.score-title-edit',editor).hidden=false;$('.dropdown-trigger span',picker).textContent=input.value.trim()||'이름을 입력해 주세요';});
-  document.addEventListener('keydown',e=>{if(e.target.id==='score-template-title'&&e.key==='Enter'){e.preventDefault();e.target.blur();}});
+  function finishScoreTitle(input){
+    const editor=input.closest('.score-title-editor'),label=$('.score-title-text',editor),edit=$('.score-title-edit',editor),done=$('.score-title-done',editor);
+    const name=input.value.trim();
+    if(!name){input.focus();$$('[data-score-status]').forEach(status=>status.textContent='이름을 입력해 주세요.');return;}
+    input.value=name;
+    if(input.id==='score-template-title'){input.hidden=true;label.hidden=false;edit.hidden=false;done.hidden=true;$('.dropdown-trigger span',label).textContent=name;}
+    else {const index=Number(input.id.replace('score-domain-title-',''));const option=$(`[data-action="score-select-domain"][data-index="${index}"] span`);if(option)option.textContent=name;const selected=$('.score-area-mobile-select .dropdown-trigger span');if(index===scoreCurrentDomain&&selected)selected.textContent=name;}
+    updateScoreSave();$$('[data-score-status]').forEach(status=>status.textContent=JSON.stringify(scoreDraft)===scoreSnapshot?'':'변경 사항은 저장을 눌러 적용해 주세요.');
+  }
+  document.addEventListener('focusout',e=>{if(!e.target.matches('#score-template-title, [id^="score-domain-title-"]')||e.relatedTarget?.matches('[data-action="score-title-done"]'))return;finishScoreTitle(e.target);});
+  document.addEventListener('keydown',e=>{if(e.target.matches('#score-template-title, [id^="score-domain-title-"]')&&e.key==='Enter'&&!e.isComposing){e.preventDefault();if(e.target.id.startsWith('score-domain-title-'))e.target.blur();else finishScoreTitle(e.target);}});
   document.addEventListener('focusout',e=>{const time=e.target.closest('.timefield');if(!time||time.contains(e.relatedTarget))return;const parts=$$('input[type="number"]',time),hasValue=parts.some(input=>input.value!==''),invalid=hasValue&&parts.some(input=>input.value===''||!input.checkValidity());parts.forEach(input=>{if(invalid&&(input.value===''||!input.checkValidity()))input.setAttribute('aria-invalid','true');else input.removeAttribute('aria-invalid');});$('.timefield-error',time).hidden=!invalid;});
   document.addEventListener('keydown',e=>{if(e.key===' '&&e.target.matches('.journal-choice-chips input[type="radio"]:checked')){e.preventDefault();e.target.checked=false;e.target.dispatchEvent(new Event('change',{bubbles:true}));return;}const handle=e.target.closest('[data-quick-move]');if(handle&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();const index=Number(handle.dataset.quickMove);moveQuick(index,index+(['ArrowUp','ArrowLeft'].includes(e.key)?-1:1));}});
   let draggedQuickIndex=null;
@@ -1473,7 +1503,13 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   $('#mockup-edit-mode').addEventListener('change',e=>setEditMode(e.target.checked));
   $('#mockup-color').addEventListener('input',e=>{state.color=e.target.value;applyDesign();persist();});
   $('#mockup-radius').addEventListener('input',e=>{state.radius=Number(e.target.value);applyDesign();persist();});
-  window.addEventListener('hashchange',render);window.addEventListener('resize',scaleReports);
+  window.addEventListener('hashchange',event=>{
+    if(navigationApproved){navigationApproved=false;render();return;}
+    const next=new URL(event.newURL).hash||'#/',previous=new URL(event.oldURL).hash||'#/';
+    const guard=journalDirty()?confirmJournalNavigation:configurationDirty()?confirmConfigurationNavigation:scorePageDirty()?confirmScoreNavigation:null;
+    if(guard&&next!==previous){history.replaceState(null,'',previous);guard(()=>routeTo(next));return;}
+    render();
+  });window.addEventListener('resize',scaleReports);
   function syncSidebarButton(){const collapsed=$('.app-layout').classList.contains('mockup-nav-collapsed'),button=$('.nav-handle');button.setAttribute('aria-expanded',String(!collapsed));button.setAttribute('aria-label',collapsed?'메뉴 열기':'메뉴 접기');button.title=collapsed?'메뉴 열기':'메뉴 접기';$('.app-bottom-nav button')?.setAttribute('aria-expanded',String(!collapsed));}
   matchMedia('(max-width:1023px)').addEventListener('change', e => { $('.app-layout').classList.toggle('mockup-nav-collapsed',e.matches);syncSidebarButton(); });
   function scaleReports(){ const viewport=$('.configured-report-viewport');if(!viewport)return;const pages=$('.configured-report-pages'),style=getComputedStyle(viewport),width=viewport.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight);const scale=Math.min(1,Math.max(0,width)/794);pages.style.setProperty('--configured-report-scale',scale); }
@@ -1544,10 +1580,15 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     dialog('변경 내용을 저장할까요?',`<p>저장하지 않으면 변경 내용이 사라져요.${escapeHTML(impact)}</p>`,'저장하고 닫기',save);
     $('#mockup-dialog .dialog-actions [data-action="confirm-dialog"]').insertAdjacentHTML('beforebegin','<button type="button" class="button secondary" data-action="discard-and-close">저장하지 않고 닫기</button>');
   }
-  function confirmNavigation(move,save,impact=''){
+  function confirmNavigation(move,save,impact='',message='저장하지 않으면 변경 내용이 사라져요.'){
     pendingNavigation=move;
-    dialog('변경 내용을 저장할까요?',`<p>저장하지 않으면 변경 내용이 사라져요.${escapeHTML(impact)}</p>`,'저장하고 이동',async()=>{const next=pendingNavigation;pendingNavigation=null;if(await save())next?.();});
-    $('#mockup-dialog .dialog-actions [data-action="confirm-dialog"]').insertAdjacentHTML('beforebegin','<button type="button" class="button secondary" data-action="discard-and-move">저장하지 않고 이동</button>');
+    dialog('변경 내용을 저장할까요?',`<p>${escapeHTML(message+impact)}</p>`,'저장하고 나가기',async()=>{const next=pendingNavigation;pendingNavigation=null;if(await save()){const previous=location.hash;navigationApproved=true;next?.();if(location.hash===previous)navigationApproved=false;}});
+    const modal=$('#mockup-dialog'),close=$('[data-dialog-close]',modal);close.hidden=false;close.dataset.action='close-dialog';$('.dialog-actions [data-action="close-dialog"]',modal).remove();close.focus();
+    $('#mockup-dialog .dialog-actions [data-action="confirm-dialog"]').insertAdjacentHTML('beforebegin','<button type="button" class="button secondary" data-action="discard-and-move">저장하지 않고 나가기</button>');
+  }
+  function confirmJournalNavigation(move){
+    const message=params.has('entry')?'저장하지 않으면 변경 내용이 사라져요.':'일지는 저장되지 않지만, 임시저장된 내용은 보관돼요.';
+    confirmNavigation(move,saveJournal,'',message);
   }
   async function saveConfigurationForNavigation(){
     const name=$('#template-name').value.trim(),inputs=$$('#configuration-form input'),values=inputs.map(el=>el.value.trim());
@@ -1893,8 +1934,8 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const domains=scoreDraft.domains;
     scoreCurrentDomain=Math.max(0,Math.min(scoreCurrentDomain,domains.length-1));
     const domainNav=domains.map((d,i)=>`<button type="button" class="score-area-option" data-action="score-select-domain" data-index="${i}" aria-pressed="${i===scoreCurrentDomain}"><span>${escapeHTML(d.name||'이름 없는 영역')}</span><small>${d.questions.length}</small></button>`).join('');
-    const panels=domains.map((d,i)=>`<section class="score-area-panel" ${i===scoreCurrentDomain?'':'hidden'} aria-label="${escapeHTML(d.name)} 문항"><header class="score-area-heading"><div><div class="score-title-editor"><span class="score-title-text">${escapeHTML(d.name)}</span><label class="sr-only" for="score-domain-title-${i}">${i+1}번째 영역명</label><input id="score-domain-title-${i}" maxlength="40" value="${escapeHTML(d.name)}" aria-describedby="score-domain-title-${i}-limit" hidden><button type="button" class="button secondary score-title-edit" data-action="score-title-edit" data-target="score-domain-title-${i}" aria-label="${escapeHTML(d.name)} 영역명 수정"><span class="score-desktop-label">이름 수정</span><span class="score-mobile-label">영역 이름 수정</span></button></div><small class="field-limit" id="score-domain-title-${i}-limit">${d.name.length}/40자</small><p>문항 ${d.questions.length}개${d.questions.length<5?' · 리포트 생성에는 5개 이상 필요':''}</p></div></header><ol class="score-question-list">${d.questions.map((q,j)=>`<li><span>${j+1}</span><div><label class="sr-only" for="score-question-${i}-${j}">${escapeHTML(d.name)} ${j+1}번 문항</label><textarea id="score-question-${i}-${j}" data-score-question="${i}" maxlength="80" rows="1" aria-describedby="score-question-${i}-${j}-limit">${escapeHTML(q)}</textarea><small class="field-limit score-input-limit" id="score-question-${i}-${j}-limit">${q.length}/80자</small></div><button class="button danger" type="button" data-action="score-delete-question" data-index="${i}" data-question="${j}" aria-label="${escapeHTML(d.name)} ${j+1}번 문항 삭제">삭제</button></li>`).join('')}</ol><button class="score-question-add" type="button" data-action="score-add-question" data-index="${i}" ${d.questions.length>=15?'disabled':''}>+ 문항 추가 (${d.questions.length}/15)</button></section>`).join('');
-    $('.score-editor-page').innerHTML=`<a class="score-editor-back" href="#/recipients?tab=report"><svg class="mobile-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span class="desktop-back-chevron" aria-hidden="true">‹</span> 대상·템플릿</a><form id="score-edit-form"><div class="score-editor-heading"><h1>리포트 템플릿 편집</h1></div><section class="score-editor-top card"><div class="score-editor-template"><div class="score-title-editor"><div class="dropdown score-title-text"><button type="button" class="dropdown-trigger" data-options="score-templates" aria-label="편집할 템플릿 고르기" aria-haspopup="listbox" aria-expanded="false"><span>${escapeHTML(scoreDraft.title)}</span></button></div><label class="sr-only" for="score-template-title">템플릿 이름</label><input id="score-template-title" maxlength="40" value="${escapeHTML(scoreDraft.title)}" aria-describedby="score-template-title-limit" hidden><button type="button" class="button secondary score-title-edit" data-action="score-title-edit" data-target="score-template-title" aria-label="템플릿 이름 수정"><span class="score-desktop-label">이름 수정</span><span class="score-mobile-label">템플릿 이름 수정</span></button></div><small class="field-limit" id="score-template-title-limit">${scoreDraft.title.length}/40자</small></div><div class="score-editor-actions"><button class="button secondary" type="button" data-action="score-reset">초기화</button><button class="button primary" type="submit">저장</button><p class="score-editor-status" role="status" data-score-status></p></div></section><div class="score-editor-workspace card"><aside class="score-area-list"><div class="score-area-list-heading"><h2>영역</h2><span>${domains.length}/5</span></div><div class="score-area-mobile-row"><div class="score-area-mobile-select dropdown"><button type="button" class="dropdown-trigger" data-options="score-domains" aria-label="영역 선택" aria-haspopup="listbox" aria-expanded="false"><span>${escapeHTML(domains[scoreCurrentDomain]?.name||'영역 선택')}</span></button></div><button class="button secondary score-area-mobile-reset" type="button" data-action="score-reset">초기화</button></div><div class="score-area-options">${domainNav}</div></aside><div class="score-area-content">${panels||'<p class="score-area-empty">영역이 없어요. 초기화하면 기본 영역을 불러올 수 있어요.</p>'}</div></div><div class="score-mobile-save"><p class="score-editor-status" role="status" data-score-status></p><button class="button primary" type="submit">저장</button></div></form>`;
+    const panels=domains.map((d,i)=>`<section class="score-area-panel" ${i===scoreCurrentDomain?'':'hidden'} aria-label="${escapeHTML(d.name)} 문항"><header class="score-area-heading"><div><div class="score-title-editor"><label class="sr-only" for="score-domain-title-${i}">${i+1}번째 영역명</label><span class="score-title-input"><input id="score-domain-title-${i}" maxlength="40" value="${escapeHTML(d.name)}" aria-describedby="score-domain-title-${i}-limit"><small class="field-limit" id="score-domain-title-${i}-limit">${d.name.length}/40자</small></span></div><p>문항 ${d.questions.length}개${d.questions.length<5?' · 리포트 생성에는 5개 이상 필요':''}</p></div></header><ol class="score-question-list">${d.questions.map((q,j)=>`<li><span>${j+1}</span><div><label class="sr-only" for="score-question-${i}-${j}">${escapeHTML(d.name)} ${j+1}번 문항</label><textarea id="score-question-${i}-${j}" data-score-question="${i}" maxlength="80" rows="1" aria-describedby="score-question-${i}-${j}-limit">${escapeHTML(q)}</textarea><small class="field-limit score-input-limit" id="score-question-${i}-${j}-limit">${q.length}/80자</small></div><button class="button danger" type="button" data-action="score-delete-question" data-index="${i}" data-question="${j}" aria-label="${escapeHTML(d.name)} ${j+1}번 문항 삭제">삭제</button></li>`).join('')}</ol><button class="score-question-add" type="button" data-action="score-add-question" data-index="${i}" ${d.questions.length>=15?'disabled':''}>+ 문항 추가 (${d.questions.length}/15)</button></section>`).join('');
+    $('.score-editor-page').innerHTML=`<a class="score-editor-back" href="#/recipients?tab=report"><svg class="mobile-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span class="desktop-back-chevron" aria-hidden="true">‹</span> 대상·템플릿</a><form id="score-edit-form"><div class="score-editor-heading"><h1>리포트 템플릿 편집</h1></div><section class="score-editor-top card"><div class="score-editor-template"><div class="score-title-editor"><div class="dropdown score-title-text"><button type="button" class="dropdown-trigger" data-options="score-templates" aria-label="편집할 템플릿 고르기" aria-haspopup="listbox" aria-expanded="false"><span>${escapeHTML(scoreDraft.title)}</span></button></div><label class="sr-only" for="score-template-title">템플릿 이름</label><span class="score-title-input"><input id="score-template-title" maxlength="40" value="${escapeHTML(scoreDraft.title)}" aria-describedby="score-template-title-limit" hidden><small class="field-limit" id="score-template-title-limit">${scoreDraft.title.length}/40자</small></span><button type="button" class="button secondary score-title-done" data-action="score-title-done" hidden>완료</button><button type="button" class="button secondary score-title-edit" data-action="score-title-edit" data-target="score-template-title" aria-label="템플릿 이름 수정">수정</button></div></div><div class="score-editor-actions"><button class="button secondary" type="button" data-action="score-reset">초기화</button><button class="button primary" type="submit">저장</button><p class="score-editor-status" role="status" data-score-status></p></div></section><div class="score-editor-workspace card"><aside class="score-area-list"><div class="score-area-list-heading"><h2>영역</h2><span>${domains.length}/5</span></div><div class="score-area-mobile-row"><div class="score-area-mobile-select dropdown"><button type="button" class="dropdown-trigger" data-options="score-domains" aria-label="영역 선택" aria-haspopup="listbox" aria-expanded="false"><span>${escapeHTML(domains[scoreCurrentDomain]?.name||'영역 선택')}</span></button></div><button class="button secondary score-area-mobile-reset" type="button" data-action="score-reset">초기화</button></div><div class="score-area-options">${domainNav}</div></aside><div class="score-area-content">${panels||'<p class="score-area-empty">영역이 없어요. 초기화하면 기본 영역을 불러올 수 있어요.</p>'}</div></div><div class="score-mobile-save"><p class="score-editor-status" role="status" data-score-status></p><button class="button primary" type="submit">저장</button></div></form>`;
     updateScoreSave();
     const rail=$('.score-area-options'),selected=$('.score-area-option[aria-pressed="true"]');
     if(rail&&selected){const r=rail.getBoundingClientRect(),s=selected.getBoundingClientRect();if(s.right>r.right)rail.scrollLeft+=s.right-r.right;else if(s.left<r.left)rail.scrollLeft-=r.left-s.left;}
@@ -1983,7 +2024,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     else if(action==='common-edit'){if(button.dataset.kind==='journal')routeTo('#/settings/configuration?template=common');else if(button.dataset.kind==='report')openScoring(true);}
     else if(action==='close-modal')closeEditorDialog(button.dataset.modal);
     else if(action==='discard-and-close'){const close=pendingClose;pendingClose=null;confirmAction=null;$('#mockup-dialog').close();close?.();}
-    else if(action==='discard-and-move'){const move=pendingNavigation;pendingNavigation=null;confirmAction=null;$('#mockup-dialog').close();move?.();}
+    else if(action==='discard-and-move'){const move=pendingNavigation;pendingNavigation=null;confirmAction=null;$('#mockup-dialog').close();const previous=location.hash;navigationApproved=true;move?.();if(location.hash===previous)navigationApproved=false;}
     else if(action==='new-quick-check')openQuickEditor();
     else if(action==='edit-quick-check')openQuickEditor(Number(button.dataset.index));
     else if(action==='quick-toggle'){readQuickDraft();quickDraft.active=!quickDraft.active;drawQuickEditor();}
@@ -2001,7 +2042,8 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       readQuickDraft();if(button.dataset.index==='')quickDraft.choices.push({name,active:true});else quickDraft.choices[Number(button.dataset.index)].name=name;drawQuickEditor();
     }
     else if(action==='scoring')openScoring();
-    else if(action==='score-title-edit'){const input=document.getElementById(button.dataset.target),label=button.parentElement.querySelector('.score-title-text');label.hidden=true;input.hidden=false;button.hidden=true;input.focus();input.select();}
+    else if(action==='score-title-edit'){const input=document.getElementById(button.dataset.target),editor=button.closest('.score-title-editor'),label=$('.score-title-text',editor);label.hidden=true;input.hidden=false;button.hidden=true;$('.score-title-done',editor).hidden=false;input.focus();input.select();}
+    else if(action==='score-title-done'){const input=$('input',button.closest('.score-title-editor'));finishScoreTitle(input);}
     else if(action==='score-select-domain'){readScoreDraft();scoreCurrentDomain=Number(button.dataset.index);drawScoring();$(`[data-action="score-select-domain"][data-index="${scoreCurrentDomain}"]`)?.focus();}
     else if(action==='score-help')button.setAttribute('aria-expanded',button.getAttribute('aria-expanded')!=='true');
     else if(action==='score-reset')dialog('관찰 문항을 초기화할까요?','<p>영역명과 문항을 기본 템플릿으로 되돌려요. 저장 전까지 기존 기준은 유지돼요.</p>','초기화',()=>{scoreDraft=scoreSeed(scoreTemplateIndex(scoreDraft));drawScoring();});
@@ -2013,6 +2055,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     }
     else if(action==='accept-consent'){state.aiConsent=true;persist().then(saved=>{if(!saved)return;$('#consent-dialog').close();if(route==='/settings')prepareSettings();toast('AI 기능을 켰어요.');});}
     else if(action==='ai-preview'){
+      if(!mockupActivePlan(state,currentDate())){dialog('플러스 요금제에서 이용할 수 있어요','<p>AI 문장 정리는 플러스와 팀 요금제에서 이용할 수 있어요.</p>','요금제 보기',()=>routeTo('#/plans'));return;}
       if(!state.aiConsent){openConsent();return;}
       if(journalAiComparison){toast('정리된 문장을 확인해 주세요.');$('.journal-memo-card')?.scrollIntoView({behavior:'smooth',block:'start'});return;}
       const fields=$$('.journal-memo-fields textarea').filter(field=>field.value.trim());
@@ -2069,6 +2112,14 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       const previousOverflow=document.body.style.overflow;document.body.style.overflow='hidden';let scale=0,fit=0;
       const updateZoom=()=>{pages.style.setProperty('--configured-report-scale',scale);output.textContent=`${Math.round(scale*100)}%`;out.disabled=scale<=fit;inside.disabled=scale>=2;};
       const resizeViewer=()=>{const wasFit=scale<=fit;fit=Math.min(1,Math.max(0,(content.clientWidth-24)/794));scale=wasFit?fit:Math.max(fit,scale);updateZoom();};
+      if(document.body.classList.contains('mobile-app-preview')){
+        let pinch=null;
+        const distance=touches=>Math.hypot(touches[0].clientX-touches[1].clientX,touches[0].clientY-touches[1].clientY);
+        content.addEventListener('touchstart',event=>{if(event.touches.length!==2)return;const rect=content.getBoundingClientRect(),x=(event.touches[0].clientX+event.touches[1].clientX)/2-rect.left,y=(event.touches[0].clientY+event.touches[1].clientY)/2-rect.top;pinch={distance:distance(event.touches),scale,x,y,left:content.scrollLeft,top:content.scrollTop};},{passive:true});
+        content.addEventListener('touchmove',event=>{if(!pinch||event.touches.length!==2||!pinch.distance)return;event.preventDefault();scale=Math.min(2,Math.max(fit,pinch.scale*distance(event.touches)/pinch.distance));updateZoom();const ratio=scale/pinch.scale;content.scrollLeft=(pinch.left+pinch.x)*ratio-pinch.x;content.scrollTop=(pinch.top+pinch.y)*ratio-pinch.y;},{passive:false});
+        content.addEventListener('touchend',()=>{pinch=null;},{passive:true});
+        content.addEventListener('touchcancel',()=>{pinch=null;},{passive:true});
+      }
       viewer.addEventListener('close',()=>{window.removeEventListener('resize',resizeViewer);document.body.style.overflow=previousOverflow;viewer.remove();if(button.isConnected)button.focus();},{once:true});
       $('.report-document-modal-header button',viewer).addEventListener('click',()=>viewer.close());
       $('[data-zoom="fit"]',viewer).addEventListener('click',()=>{scale=fit;content.scrollLeft=0;updateZoom();});
