@@ -23,17 +23,18 @@
 <body>
   <header class="preview-header">
     <div class="preview-heading"><strong>화면 미리보기</strong><span class="preview-size" id="preview-size"></span></div>
-    <div class="preview-shortcuts">Alt(Option) + Shift + 1 PC · 2 맥북 · 3 태블릿 · 4 휴대폰</div>
+    <div class="preview-shortcuts">Alt(Option) + Shift + 1 PC · 2 맥북 · 3 태블릿 · 4 모바일 웹 · 5 모바일 앱</div>
   </header>
   <main class="preview-stage" id="preview-stage">
     <div class="preview-frame-wrap" id="preview-frame-wrap"><iframe id="preview-frame" title="케어릿 목업 화면"></iframe></div>
   </main>
   <script>
-    const sizes={mac:{label:'맥북',width:1440,height:900},tablet:{label:'태블릿',width:1024,height:768},phone:{label:'휴대폰',width:390,height:844}};
+    const sizes={mac:{label:'맥북',width:1440,height:900},tablet:{label:'태블릿',width:1024,height:768},phone:{label:'모바일 웹',width:390,height:844},app:{label:'모바일 앱',width:390,height:844}};
     const stage=document.getElementById('preview-stage'),wrap=document.getElementById('preview-frame-wrap'),frame=document.getElementById('preview-frame'),sizeLabel=document.getElementById('preview-size');
     let device=new URLSearchParams(location.search).get('device');if(!sizes[device])device='mac';
     let currentHash=location.hash||'#/';
-    const source=new URL('careit-mockup.html',location.href);source.searchParams.set('devicePreview','1');source.hash=currentHash;frame.src=source.href;
+    function loadFrame(){const source=new URL('careit-mockup.html',location.href);source.searchParams.set('devicePreview','1');source.searchParams.set('previewVersion',Date.now());if(device==='app')source.searchParams.set('previewMode','app');source.hash=currentHash;frame.src=source.href;}
+    loadFrame();
     function layout(){
       const {width,height,label}=sizes[device],style=getComputedStyle(stage);
       const availableWidth=stage.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight),availableHeight=stage.clientHeight-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom);
@@ -46,11 +47,12 @@
       try{currentHash=frame.contentWindow.location.hash||currentHash;}catch{}
       if(choice==='pc'){const url=new URL('careit-mockup.html',location.href);url.hash=currentHash;location.assign(url.href);return;}
       if(!sizes[choice]||choice===device)return;
-      device=choice;const url=new URL(location.href);url.searchParams.set('device',device);url.hash=currentHash;history.replaceState(null,'',url);layout();
+      const appModeChanged=(device==='app')!==(choice==='app');
+      device=choice;const url=new URL(location.href);url.searchParams.set('device',device);url.hash=currentHash;history.replaceState(null,'',url);if(appModeChanged)loadFrame();layout();
     }
     document.addEventListener('keydown',event=>{
       if(!event.altKey||!event.shiftKey||event.ctrlKey||event.metaKey||event.isComposing)return;
-      const choice={Digit1:'pc',Digit2:'mac',Digit3:'tablet',Digit4:'phone'}[event.code];
+      const choice={Digit1:'pc',Digit2:'mac',Digit3:'tablet',Digit4:'phone',Digit5:'app'}[event.code];
       if(choice){event.preventDefault();selectDevice(choice);}
     });
     window.addEventListener('message',event=>{

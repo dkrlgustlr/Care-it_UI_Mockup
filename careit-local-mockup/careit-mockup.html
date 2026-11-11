@@ -1836,6 +1836,73 @@ html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="t
 }
 </style>
   <!-- 디자인 수정은 이 CSS 또는 mockup.css에서 합니다. 원본 CSS는 보존합니다. -->
+  <style id="app-preview-nav-styles">
+/* App preview: primary navigation stays within reach. */
+.app-bottom-nav { display:none; }
+@media (max-width:767px) {
+  body.mobile-app-preview .app-layout > main { padding-bottom:calc(92px + env(safe-area-inset-bottom)) !important; }
+  body.mobile-app-preview .app-bottom-nav { display:flex; position:fixed; z-index:21; inset:auto 0 0; padding:4px 4px env(safe-area-inset-bottom); background:var(--surface); border-top:1px solid var(--line); }
+  body.mobile-app-preview .app-layout:not(.mockup-nav-collapsed) .app-bottom-nav { display:none; }
+  .app-bottom-nav :is(a,button) { flex:1; min-width:0; min-height:56px; padding:5px 2px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:2px; border:0; background:transparent; color:var(--muted); font:600 11px/1.25 var(--font-sans); text-decoration:none; }
+  .app-bottom-nav svg { width:22px; height:22px; flex:none; }
+  .app-bottom-nav :is(a,button).active { color:var(--primary-dark); }
+  .app-bottom-nav :is(a,button):active { background:var(--neutral); }
+}
+@media print { .app-bottom-nav { display:none!important; } }
+</style>
+  <style id="mobile-touch-styles">
+/* Mobile touch layouts. */
+.mobile-menu-scrim,.mobile-report-calendar-close { display:none; }
+@media (max-width:767px) {
+  .home-status-table .home-status-link:active,.records-page .record-list .journal-row:active { background:var(--neutral); }
+  .app-layout:not(.mockup-nav-collapsed) > .mobile-menu-scrim { display:block; position:fixed; z-index:25; inset:0; width:100%; height:100%; border:0; background:rgba(14,24,29,.42); }
+  .app-layout:not(.mockup-nav-collapsed) > .sidebar { left:auto; right:0; top:0; width:80%; max-width:360px; height:100dvh; z-index:26; box-sizing:border-box; box-shadow:-8px 0 28px rgba(0,0,0,.12); }
+  .app-layout:not(.mockup-nav-collapsed) > .nav-handle { z-index:27; }
+  .mockup-report-weeks[popover] { position:fixed; left:0!important; top:auto!important; right:0; bottom:0; width:100%; max-width:none; max-height:calc(100dvh - 24px)!important; padding:20px 20px calc(20px + env(safe-area-inset-bottom)); border-radius:16px 16px 0 0; box-shadow:0 -8px 32px rgba(0,0,0,.18); }
+  .mockup-report-weeks .mobile-report-calendar-close { display:grid; place-items:center; position:absolute; right:12px; top:8px; width:44px; height:44px; border:0; background:transparent; color:var(--muted); font-size:24px; }
+  .mockup-report-weeks .date-range-prompt { padding-right:44px; }
+  .mockup-report-weeks .datefield-day { min-height:44px; }
+}
+@media print { .mobile-menu-scrim { display:none!important; } }
+</style>
+  <style id="mobile-back-styles">
+/* Mobile back links retain their destinations and provide a larger touch target. */
+.mobile-back-icon { display:none; }
+@media (max-width:767px) {
+  .configuration-page .configuration-mobile-back,.score-editor-page .score-editor-back,.policy-page .policy-back,.licenses-page .back-link { display:inline-flex; align-items:center; gap:6px; min-height:44px; margin:0 0 4px; padding:4px 8px 4px 0; color:var(--text); font:600 15px/1.4 var(--font-sans); text-decoration:none; }
+  :is(.configuration-mobile-back,.score-editor-back,.policy-back,.licenses-page .back-link) .mobile-back-icon { display:block; width:20px; height:20px; flex:none; }
+  :is(.configuration-mobile-back,.score-editor-back,.policy-back,.licenses-page .back-link) .desktop-back-chevron { display:none; }
+  :is(.configuration-mobile-back,.score-editor-back,.policy-back,.licenses-page .back-link):active { color:var(--primary-dark); }
+}
+</style>
+  <style id="recipient-swipe-styles">
+@media (max-width:767px) {
+  .recipients-page { touch-action:pan-y pinch-zoom; }
+}
+</style>
+  <style id="mobile-home-container-styles">
+    @media (max-width: 767px) {
+      body .app-layout #main-content:has(.home-page) { background: var(--surface); }
+      body .app-content .home-page .home-today {
+        padding: 0;
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      .home-page .home-status-table .home-status-link {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto auto;
+        gap: 3px;
+        align-content: start;
+        padding: 8px 0 12px;
+      }
+      .home-page .home-status-table .home-status-label { grid-column: 1; grid-row: 1; font-size: calc(13px * var(--native-text-scale, 1)); }
+      body .home-today .home-status-table .home-status-link .home-status-value { grid-column: 1; grid-row: 2; color: var(--text); overflow-wrap: anywhere; }
+      body .home-today .home-status-table .home-status-link .home-status-value:is(.is-action, .is-ready) { color: var(--primary-dark); }
+    }
+  </style>
   <style id="design-overrides"></style>
 </head>
 <body data-theme="light">
@@ -2096,7 +2163,7 @@ html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="t
 
   <template id="page-licenses" data-path="/settings/licenses">
     <section class="page licenses-page">
-      <a class="back-link" href="#/settings">‹ 설정</a>
+      <a class="back-link" href="#/settings"><svg class="mobile-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span class="desktop-back-chevron" aria-hidden="true">‹</span> 설정</a>
       <header class="page-header"><div><h1>오픈소스 라이선스</h1><p>사용한 오픈소스와 라이선스 전문을 확인할 수 있어요.</p></div></header>
       <div class="licenses-list">
         <article class="license-item"><h2>Material Symbols</h2><p>아이콘 · Apache License 2.0 · Google LLC</p><a href="https://github.com/google/material-design-icons" target="_blank" rel="noopener noreferrer">프로젝트 보기</a><details><summary>라이선스 전문 보기</summary><pre data-license-text="material" tabindex="0">Material Symbols (Outlined)
@@ -2525,7 +2592,7 @@ SOFTWARE.
     </section>
   </template>
 
-  <template id="page-privacy" data-path="/privacy"><section class="page policy-page"><a class="policy-back" href="#/settings">‹ 설정</a><article class="policy-article" data-policy-content="privacy"><h1>개인정보처리방침</h1>
+  <template id="page-privacy" data-path="/privacy"><section class="page policy-page"><a class="policy-back" href="#/settings"><svg class="mobile-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span class="desktop-back-chevron" aria-hidden="true">‹</span> 설정</a><article class="policy-article" data-policy-content="privacy"><h1>개인정보처리방침</h1>
 <p class="policy-meta">시행일: 2026년 10월 25일<br>버전: 2026-10-25-social-login</p>
 <p>케어릿(대표자: 김현식, 김도윤, 이하 "회사")은 케어릿 서비스 제공을 위해 필요한 범위에서 개인정보를 처리합니다. 이 방침은 회사가 어떤 정보를 왜 처리하고, 이용자가 어떤 권리를 행사할 수 있는지 설명합니다.</p>
 <section><h2>1. 개인정보처리자와 문의처</h2><div class="policy-table-scroll" tabindex="0"><table><thead><tr><th scope="col">구분</th><th scope="col">내용</th></tr></thead><tbody><tr><td>상호</td><td>케어릿</td></tr><tr><td>대표자</td><td>김현식, 김도윤</td></tr><tr><td>사업자등록번호</td><td>447-29-02187</td></tr><tr><td>사업장 주소</td><td>경기도 수원시 영통구 광교마을로 156, 4007동 1404호(하동, 광교 더 포레스트)</td></tr><tr><td>개인정보 보호책임자</td><td>김현식</td></tr><tr><td>개인정보 문의</td><td>support@careit.kr / 010-5650-9628</td></tr></tbody></table></div></section>
@@ -2549,7 +2616,7 @@ SOFTWARE.
 <section><h2>11. 처리방침의 변경</h2><p>이 방침을 변경하는 경우 시행일과 변경 내용을 서비스 안에 알립니다. 민감정보 처리, AI 전송, 국외 이전 등 이용자의 별도 동의가 필요한 변경은 필요한 절차를 거쳐 적용합니다.</p></section>
 <section><h2>12. 개인정보 침해 상담·신고</h2><p>개인정보 침해에 관한 상담·신고는 다음 기관을 이용할 수 있습니다.</p><ul><li>개인정보침해 신고센터: privacy.kisa.or.kr / 국번 없이 118</li><li>개인정보 분쟁조정위원회: kopico.go.kr / 1833-6972</li><li>대검찰청: spo.go.kr / 국번 없이 1301</li><li>경찰청: ecrm.police.go.kr / 국번 없이 182</li></ul></section>
 </article></section></template>
-  <template id="page-terms" data-path="/terms"><section class="page policy-page"><a class="policy-back" href="#/settings">‹ 설정</a><article class="policy-article" data-policy-content="terms"><h1>이용약관</h1>
+  <template id="page-terms" data-path="/terms"><section class="page policy-page"><a class="policy-back" href="#/settings"><svg class="mobile-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span class="desktop-back-chevron" aria-hidden="true">‹</span> 설정</a><article class="policy-article" data-policy-content="terms"><h1>이용약관</h1>
 <section><h2>제1조 목적</h2><p>이 약관은 케어릿(이하 "회사")이 제공하는 케어릿 서비스의 이용 조건과 회사 및 이용자의 권리·의무를 정합니다.</p></section>
 <section><h2>제2조 서비스</h2><p>케어릿은 관리대상별 돌봄 기록 작성·조회, 요약, 리포트 및 이에 부수하는 기능을 제공합니다. 회사는 서비스 화면이나 별도 안내를 통해 기능별 이용 조건을 알릴 수 있습니다.</p></section>
 <section><h2>제3조 비의료 서비스와 AI 기능</h2><p>케어릿은 의료기관이 아니며 의료적 진단, 처방, 치료 판단 또는 공식 의료기록을 제공하거나 대신하지 않습니다. AI 기능은 이용자가 작성한 기록을 정리하거나 요약하는 보조 기능입니다. 이용자는 AI 결과를 의료적 판단의 근거로 사용해서는 안 되며, 저장하거나 활용하기 전에 원문과 함께 확인해야 합니다.</p></section>
@@ -2607,7 +2674,7 @@ SOFTWARE.
   </template>
 
   <template id="page-configuration" data-path="/settings/configuration">
-    <section class="page quick-check-page configuration-page"><a class="configuration-back configuration-mobile-back" href="#/recipients?tab=journal">‹ 일지 템플릿</a><header class="page-header"><div><h1>일지 편집</h1></div></header><section class="quick-check-recipient configuration-template-card" aria-label="일지 템플릿 선택"><form class="configuration-template-name" id="configuration-template-name"><div class="configuration-template-row"><div class="field"><label for="template-name">템플릿 이름</label><input id="template-name" maxlength="30"></div><button class="button primary configuration-template-save" type="submit" disabled>템플릿 이름 저장</button><div class="configuration-template-picker"><span class="configuration-picker-label">편집할 템플릿</span><div class="dropdown"><button id="configuration-template-select" type="button" class="dropdown-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="일지 템플릿 선택" data-options="configuration-templates"><span></span></button></div><button type="button" class="button secondary configuration-mobile-rename" data-action="toggle-template-name" aria-expanded="false" aria-controls="template-name">이름 수정</button></div></div></form></section><section class="configuration-quick-check"><header><div><h2>퀵체크</h2><p>일지에 보이는 실제 입력 방식 미리보기예요</p></div></header><div class="configuration-grid" data-config-quick></div></section><section class="configuration-quick-check"><header><div><h2>일지 기록</h2><p>이미 저장된 일지는 그때 이름 그대로 남아요</p></div></header><div class="quick-check-form"><form id="configuration-form"><div class="quick-check-form-grid" data-config-labels></div><div class="quick-check-form-actions"><button class="button primary" type="submit" disabled>일지 기록 항목 저장</button></div></form></div></section></section>
+    <section class="page quick-check-page configuration-page"><a class="configuration-back configuration-mobile-back" href="#/recipients?tab=journal"><svg class="mobile-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span class="desktop-back-chevron" aria-hidden="true">‹</span> 일지 템플릿</a><header class="page-header"><div><h1>일지 편집</h1></div></header><section class="quick-check-recipient configuration-template-card" aria-label="일지 템플릿 선택"><form class="configuration-template-name" id="configuration-template-name"><div class="configuration-template-row"><div class="field"><label for="template-name">템플릿 이름</label><input id="template-name" maxlength="30"></div><button class="button primary configuration-template-save" type="submit" disabled>템플릿 이름 저장</button><div class="configuration-template-picker"><span class="configuration-picker-label">편집할 템플릿</span><div class="dropdown"><button id="configuration-template-select" type="button" class="dropdown-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="일지 템플릿 선택" data-options="configuration-templates"><span></span></button></div><button type="button" class="button secondary configuration-mobile-rename" data-action="toggle-template-name" aria-expanded="false" aria-controls="template-name">이름 수정</button></div></div></form></section><section class="configuration-quick-check"><header><div><h2>퀵체크</h2><p>일지에 보이는 실제 입력 방식 미리보기예요</p></div></header><div class="configuration-grid" data-config-quick></div></section><section class="configuration-quick-check"><header><div><h2>일지 기록</h2><p>이미 저장된 일지는 그때 이름 그대로 남아요</p></div></header><div class="quick-check-form"><form id="configuration-form"><div class="quick-check-form-grid" data-config-labels></div><div class="quick-check-form-actions"><button class="button primary" type="submit" disabled>일지 기록 항목 저장</button></div></form></div></section></section>
   </template>
 
   <template data-path="/recipients/scoring"><section class="page score-editor-page" aria-label="리포트 템플릿 편집"></section></template>
@@ -4422,6 +4489,22 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const label=dark?'라이트 모드로 변경':'다크 모드로 변경';
     button.setAttribute('aria-label',label);button.dataset.tooltip=label;
   }
+  function syncAppNavigation() {
+    if(new URLSearchParams(location.search).get('previewMode')!=='app')return;
+    document.body.classList.add('mobile-app-preview');
+    const layout=$('.app-layout');let nav=$('.app-bottom-nav',layout);
+    if(!nav){
+      nav=document.createElement('nav');nav.className='app-bottom-nav';nav.setAttribute('aria-label','주요 메뉴');
+      ['/','/journals/new','/reports','/records'].forEach(path=>nav.append($('.sidebar nav a[data-route="'+path+'"]',layout).cloneNode(true)));
+      const more=document.createElement('button');more.type='button';more.dataset.action='sidebar';more.setAttribute('aria-controls','app-sidebar');more.setAttribute('aria-expanded','false');more.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg><span>더보기</span>';nav.append(more);layout.append(nav);
+    }
+    $$('.app-bottom-nav a',layout).forEach(a=>{const source=$('.sidebar nav a[data-route="'+a.dataset.route+'"]',layout);a.setAttribute('href',source.getAttribute('href'));const active=a.dataset.route===route;a.classList.toggle('active',active);if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+    $('.app-bottom-nav button',layout).classList.toggle('active',!['/','/journals/new','/reports','/records'].includes(route));
+  }
+  function ensureMobileMenuScrim() {
+    const layout=$('.app-layout');if($('.mobile-menu-scrim',layout))return;
+    const scrim=document.createElement('button');scrim.type='button';scrim.className='mobile-menu-scrim';scrim.dataset.action='sidebar';scrim.setAttribute('aria-label','메뉴 닫기');layout.append(scrim);
+  }
   function render() {
     if(location.hash==='#main-content'){ $('#main-content').focus(); return; }
     if(state.couponPlusFrom<=currentDate()&&state.couponPlusUntil>=currentDate()){
@@ -4487,6 +4570,8 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     $('.site-footer-business-toggle')?.setAttribute('aria-expanded',String(footerBusinessOpen));
     if (matchMedia('(max-width:1023px)').matches) $('.app-layout').classList.add('mockup-nav-collapsed');
     syncSidebarButton();
+    ensureMobileMenuScrim();
+    syncAppNavigation();
     registerEdits(); window.scrollTo(0,0); requestAnimationFrame(scaleReports);
     if(inactiveJournalPerson!==null)dialog('비활성화된 관리대상이에요',`<p>${escapeHTML(inactiveJournalPerson)}의 새 일지는 관리대상을 활성화한 뒤 작성할 수 있어요. 기존 일지는 기록에서 확인할 수 있어요.</p>`);
     if (route === '/plans' && !mockupActivePlan(state,currentDate()) && ['starter','team','pro'].includes(params.get('plan'))) openPlanCheckout(params.get('plan'));
@@ -4941,7 +5026,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   }
   function showRecipientLimit(){
     const limit=mockupRecipientCapacity(state,currentDate());
-    dialog('관리대상 한도에 도달했어요',`<p>현재 요금제에서 활성 관리대상은 ${limit}명까지 이용할 수 있어요. 다른 대상을 비활성화하면 기록을 보관하면서 자리를 만들 수 있어요.</p>`,limit===1?'요금제 보기':'관리대상 관리',()=>routeTo(limit===1?'#/plans':'#/recipients'));
+    dialog('관리대상 한도에 도달했어요',`<p>현재 요금제에서 관리대상은 ${limit}명까지 이용할 수 있어요.</p>`,limit===1?'요금제 보기':'관리대상 관리',()=>routeTo(limit===1?'#/plans':'#/recipients'));
   }
   function chooseActiveRecipients(){
     const limit=mockupRecipientCapacity(state,currentDate());
@@ -4964,7 +5049,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     reportButton.dataset.value=state.reportTemplates[index]||'누리과정';$('span',reportButton).textContent=reportButton.dataset.value;
     journalButton.setAttribute('aria-label',index===null?'새 대상 일지 템플릿':'일지 템플릿');reportButton.setAttribute('aria-label',index===null?'새 대상 리포트 템플릿':'리포트 템플릿');
     $('[data-recipient-cancel]').hidden=index!==null;$('[data-action="delete-recipient"]').hidden=index===null;
-    const toggle=$('[data-action="form-toggle-recipient"]');toggle.hidden=index===null;if(index!==null)toggle.textContent=r.active?'비활성화':'활성화';
+    const toggle=$('[data-action="form-toggle-recipient"]');toggle.hidden=index===null||r.active;toggle.textContent='활성화';
     recipientFormSnapshot=recipientFormValues();updateRecipientFormSave();
     const modal=$('.recipient-form-dialog');modal.oncancel=e=>{e.preventDefault();closeRecipientForm();};modal.showModal();$('#recipient-name').focus();
   }
@@ -4977,7 +5062,8 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     $$('.recipient-detail-overview-stats dd')[1].textContent=getQuickChecks(index).filter(q=>q.active).length+'개';
     $('[data-detail-active]').textContent = r.active?'활성화':'비활성화';
     $('[data-detail-age]').textContent = r.ageBand || '미설정';
-    $('[data-action="toggle-recipient"]').textContent = r.active?'비활성화':'활성화';
+    $('[data-action="toggle-recipient"]').textContent = '활성화';
+    $('.recipient-detail-activity').hidden = r.active;
     $('#recipient-dialog a').href = '#/settings/configuration?recipient='+index;
     $('#recipient-dialog').showModal(); registerEdits();
   }
@@ -5179,7 +5265,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       const days=new Date(year,month+1,0).getDate(),offset=isReportRange?0:new Date(year,month,1).getDay();
       const dates=isReportRange?mockupReportCalendarDates(year,month):Array.from({length:days},(_,i)=>dateKey(year,month,i+1));
       const nextFirst=dateKey(new Date(year,month+1,1).getFullYear(),new Date(year,month+1,1).getMonth(),1);
-      const rangeHeader=isReportRange?'<p class="date-range-prompt" role="status">리포트 주간을 선택해 주세요.</p><p class="date-range-summary" data-report-week-summary></p>':isRange?`<p class="date-range-prompt" role="status">${selectingEnd?'종료 날짜를 선택해 주세요.':'시작 날짜를 선택해 주세요.'}</p><p class="date-range-summary">${rangeFrom?`${formatDate(rangeFrom)} → ${rangeTo?formatDate(rangeTo):'종료일 선택'}`:'시작일 → 종료일 순서로 선택해 주세요.'}</p>`:isJournalDate?'<p class="date-range-summary">오늘부터 3일 전까지 작성할 수 있어요</p>':'';
+      const rangeHeader=isReportRange?'<button type="button" class="mobile-report-calendar-close" aria-label="닫기">×</button><p class="date-range-prompt" role="status">리포트 주간을 선택해 주세요.</p><p class="date-range-summary" data-report-week-summary></p>':isRange?`<p class="date-range-prompt" role="status">${selectingEnd?'종료 날짜를 선택해 주세요.':'시작 날짜를 선택해 주세요.'}</p><p class="date-range-summary">${rangeFrom?`${formatDate(rangeFrom)} → ${rangeTo?formatDate(rangeTo):'종료일 선택'}`:'시작일 → 종료일 순서로 선택해 주세요.'}</p>`:isJournalDate?'<p class="date-range-summary">오늘부터 3일 전까지 작성할 수 있어요</p>':'';
       popup.innerHTML=`${rangeHeader}<div class="datefield-head"><button type="button" aria-label="이전 달" ${min&&dateKey(year,month,1)<=min?'disabled':''}>${iconPrev}</button><strong aria-live="polite">${year}년 ${month+1}월</strong><button type="button" aria-label="다음 달" ${nextFirst>max?'disabled':''}>${iconNext}</button></div><div class="datefield-grid" role="group" aria-label="${year}년 ${month+1}월">${[...'일월화수목금토'].map(x=>`<span class="datefield-weekday" aria-hidden="true">${x}</span>`).join('')}${'<span aria-hidden="true"></span>'.repeat(offset)}${dates.map(date=>{
         const [,dateMonth,dateDay]=date.split('-').map(Number),adjacent=dateMonth!==month+1;
         const week=isReportRange?mockupReportWeek(date):null;
@@ -5191,6 +5277,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       $('.datefield-head [aria-label="이전 달"]',popup).onclick=()=>{month--;if(month<0){month=11;year--;}draw();};
       $('.datefield-head [aria-label="다음 달"]',popup).onclick=()=>{month++;if(month>11){month=0;year++;}draw();};
       $$('[data-date]',popup).forEach(b=>b.onclick=()=>pick(b.dataset.date));
+      $('.mobile-report-calendar-close',popup)?.addEventListener('click',()=>closePopups(true));
       $('.datefield-today',popup)?.addEventListener('click',()=>pick(today));
       $('[data-clear-date]',popup)?.addEventListener('click',()=>commitRange('',''));
       paintRange(focusDate||(isReportRange?rangeFrom:''));
@@ -5279,6 +5366,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(navigation&&journalEditDirty()){e.preventDefault();const href=navigation.getAttribute('href');confirmJournalNavigation(()=>routeTo(href));return;}
     if(navigation&&configurationDirty()){e.preventDefault();const href=navigation.getAttribute('href');confirmConfigurationNavigation(()=>routeTo(href));return;}
     if(navigation&&scorePageDirty()){e.preventDefault();const href=navigation.getAttribute('href');confirmScoreNavigation(()=>routeTo(href));return;}
+    if(navigation?.closest('.sidebar')&&matchMedia('(max-width:767px)').matches){$('.app-layout').classList.add('mockup-nav-collapsed');syncSidebarButton();}
     const option=e.target.closest('[data-options]');if(option){dropdown(option);return;}
     if(!e.target.closest('.dropdown,.datefield,.mockup-popup'))closePopups();
     const detail=e.target.closest('[data-detail]');if(detail){showRecipient(Number(detail.dataset.detail));return;}
@@ -5310,7 +5398,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     else if(action==='cancel-recipient')closeRecipientForm();
     else if(action==='choose-active-recipients')chooseActiveRecipients();
     else if(action==='save-active-recipients'){const modal=$('#recipient-choose-dialog'),selected=$$('input:checked',modal).map(el=>Number(el.value)),limit=mockupRecipientCapacity(state,currentDate());if(selected.length!==limit)return;const previous=copy(state.recipients);state.recipients.forEach((r,i)=>{if(r.active&&!r.deleted&&!selected.includes(i)){r.active=false;r.pausedByPlanLimit=true;}});if(!await persist()){state.recipients=previous;return;}modal.close();renderRecipients();toast('관리대상을 선택했어요.');}
-    else if(action==='form-toggle-recipient'){const r=state.recipients[editingRecipient];if(!r.active&&!recipientHasCapacity()){showRecipientLimit();return;}dialog(r.active?'관리대상을 비활성화할까요?':'관리대상을 활성화할까요?',`<p>${r.active?'홈과 기록 작성 목록에서 제외되며, 기존 기록은 보관돼요.':'홈과 기록 작성 목록에 다시 표시돼요.'}${recipientFormValues()!==recipientFormSnapshot?' 입력한 변경 사항은 저장되지 않아요.':''}</p>`,r.active?'비활성화':'활성화',async()=>{if(!r.active&&!recipientHasCapacity()){showRecipientLimit();return;}const previous=copy(r);r.active=!r.active;delete r.pausedByPlanLimit;if(!await persist()){Object.assign(r,previous);return;}$('.recipient-form-dialog').close();renderRecipients();});}
+    else if(action==='form-toggle-recipient'){const r=state.recipients[editingRecipient];if(r.active)return;if(!r.active&&!recipientHasCapacity()){showRecipientLimit();return;}dialog(r.active?'관리대상을 비활성화할까요?':'관리대상을 활성화할까요?',`<p>${r.active?'홈과 기록 작성 목록에서 제외되며, 기존 기록은 보관돼요.':'홈과 기록 작성 목록에 다시 표시돼요.'}${recipientFormValues()!==recipientFormSnapshot?' 입력한 변경 사항은 저장되지 않아요.':''}</p>`,r.active?'비활성화':'활성화',async()=>{if(!r.active&&!recipientHasCapacity()){showRecipientLimit();return;}const previous=copy(r);r.active=!r.active;delete r.pausedByPlanLimit;if(!await persist()){Object.assign(r,previous);return;}$('.recipient-form-dialog').close();renderRecipients();});}
     else if(action==='delete-recipient'){const index=editingRecipient,r=state.recipients[index];dialog(`${r.name}을 삭제하시겠습니까?`,'<p>이 관리대상의 일지·리포트·IEP 계획과 개별 설정이 함께 삭제되며 복원할 수 없어요. 공통 템플릿은 유지돼요.</p>','삭제',async()=>{if(!await deleteRecipientPermanently(index))return;$('.recipient-form-dialog').close();renderRecipients();toast('관리대상을 삭제했어요.');},true);}
     else if(action==='close-recipient')$('#recipient-dialog').close();
     else if(action==='edit-recipient'){$('#recipient-dialog').close();openRecipientForm(detailRecipient);}
@@ -5392,7 +5480,21 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   document.addEventListener('dragover',e=>{if(draggedQuickIndex!==null&&e.target.closest('[data-quick-order]'))e.preventDefault();});
   document.addEventListener('drop',e=>{const card=e.target.closest('[data-quick-order]');if(card&&draggedQuickIndex!==null){e.preventDefault();moveQuick(draggedQuickIndex,Number(card.dataset.quickOrder));}draggedQuickIndex=null;});
   document.addEventListener('dragend',()=>{draggedQuickIndex=null;});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(popupPanel){e.preventDefault();e.stopImmediatePropagation();closePopups(true);return;}if(editing){setEditMode(false);toast('문구 편집을 마쳤어요.');}}},true);
+  let recipientSwipeStart=null;
+  document.addEventListener('touchstart',e=>{
+    if(route!=='/recipients'||!matchMedia('(max-width:767px)').matches||e.touches.length!==1||!e.target.closest('.recipients-page')||e.target.closest('input,textarea,select,dialog,.mockup-popup')){recipientSwipeStart=null;return;}
+    recipientSwipeStart={x:e.touches[0].clientX,y:e.touches[0].clientY};
+  },{passive:true});
+  document.addEventListener('touchcancel',()=>{recipientSwipeStart=null;},{passive:true});
+  document.addEventListener('touchend',e=>{
+    const start=recipientSwipeStart;recipientSwipeStart=null;
+    if(!start||e.touches.length||e.changedTouches.length!==1||route!=='/recipients'||!matchMedia('(max-width:767px)').matches)return;
+    const dx=e.changedTouches[0].clientX-start.x,dy=e.changedTouches[0].clientY-start.y;
+    if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.5)return;
+    const tabs=['recipients','journal','report'],next=tabs.indexOf(recipientTab)+(dx<0?1:-1);
+    if(next>=0&&next<tabs.length)$(`[data-recipient-tab="${tabs[next]}"]`)?.click();
+  },{passive:true});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!popupPanel&&matchMedia('(max-width:767px)').matches&&!$('.app-layout').classList.contains('mockup-nav-collapsed')){$('.app-layout').classList.add('mockup-nav-collapsed');syncSidebarButton();return;}if(popupPanel){e.preventDefault();e.stopImmediatePropagation();closePopups(true);return;}if(editing){setEditMode(false);toast('문구 편집을 마쳤어요.');}}},true);
   $('#mockup-toggle').addEventListener('click',()=>{const panel=$('#mockup-panel');panel.hidden=!panel.hidden;$('#mockup-toggle').setAttribute('aria-expanded',String(!panel.hidden));});
   $('#mockup-edit-mode').addEventListener('change',e=>setEditMode(e.target.checked));
   $('#mockup-color').addEventListener('input',e=>{state.color=e.target.value;applyDesign();persist();});
@@ -5404,7 +5506,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     }
     render();
   });window.addEventListener('resize',scaleReports);
-  function syncSidebarButton(){const collapsed=$('.app-layout').classList.contains('mockup-nav-collapsed'),button=$('.nav-handle');button.setAttribute('aria-expanded',String(!collapsed));button.setAttribute('aria-label',collapsed?'메뉴 열기':'메뉴 접기');button.title=collapsed?'메뉴 열기':'메뉴 접기';}
+  function syncSidebarButton(){const collapsed=$('.app-layout').classList.contains('mockup-nav-collapsed'),button=$('.nav-handle');button.setAttribute('aria-expanded',String(!collapsed));button.setAttribute('aria-label',collapsed?'메뉴 열기':'메뉴 접기');button.title=collapsed?'메뉴 열기':'메뉴 접기';$('.app-bottom-nav button')?.setAttribute('aria-expanded',String(!collapsed));}
   matchMedia('(max-width:1023px)').addEventListener('change', e => { $('.app-layout').classList.toggle('mockup-nav-collapsed',e.matches);syncSidebarButton(); });
   function scaleReports(){ const viewport=$('.configured-report-viewport');if(!viewport)return;const pages=$('.configured-report-pages'),style=getComputedStyle(viewport),width=viewport.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight);const scale=Math.min(1,Math.max(0,width)/794);pages.style.setProperty('--configured-report-scale',scale); }
   function prepareConfiguration(){
@@ -5826,7 +5928,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     scoreCurrentDomain=Math.max(0,Math.min(scoreCurrentDomain,domains.length-1));
     const domainNav=domains.map((d,i)=>`<button type="button" class="score-area-option" data-action="score-select-domain" data-index="${i}" aria-pressed="${i===scoreCurrentDomain}"><span>${escapeHTML(d.name||'이름 없는 영역')}</span><small>${mockupScoreQuestionCount(d)}</small></button>`).join('');
     const panels=domains.map((d,i)=>`<section class="score-area-panel" ${i===scoreCurrentDomain?'':'hidden'} aria-label="${escapeHTML(d.name)} 문항"><header class="score-area-heading"><div><div class="score-title-editor"><span class="score-title-text">${escapeHTML(d.name)}</span><label class="sr-only" for="score-domain-title-${i}">${i+1}번째 영역명</label><input id="score-domain-title-${i}" maxlength="40" value="${escapeHTML(d.name)}" aria-describedby="score-domain-title-${i}-limit" hidden><button type="button" class="button secondary score-title-edit" data-action="score-title-edit" data-target="score-domain-title-${i}" aria-label="${escapeHTML(d.name)} 영역명 수정"><span class="score-desktop-label">이름 수정</span><span class="score-mobile-label">영역 이름 수정</span></button></div><small class="field-limit" id="score-domain-title-${i}-limit">${d.name.length}/40자</small><p data-score-count="${i}">문항 ${mockupScoreQuestionCount(d)}개${mockupScoreQuestionCount(d)<5?' · 리포트 생성에는 5개 이상 필요':''}</p></div></header><ol class="score-question-list">${d.questions.map((q,j)=>`<li><span>${j+1}</span><div><label class="sr-only" for="score-question-${i}-${j}">${escapeHTML(d.name)} ${j+1}번 문항</label><textarea id="score-question-${i}-${j}" data-score-question="${i}" maxlength="80" rows="1" aria-describedby="score-question-${i}-${j}-limit score-question-${i}-${j}-error">${escapeHTML(q)}</textarea><small class="field-limit score-input-limit" id="score-question-${i}-${j}-limit">${q.length}/80자</small><p class="field-error" id="score-question-${i}-${j}-error" role="alert" hidden>문항을 입력해 주세요.</p></div><button class="button danger" type="button" data-action="score-delete-question" data-index="${i}" data-question="${j}" aria-label="${escapeHTML(d.name)} ${j+1}번 문항 삭제">삭제</button></li>`).join('')}</ol><button class="score-question-add" type="button" data-action="score-add-question" data-index="${i}" ${d.questions.length>=15?'disabled':''}>+ 문항 추가 (${d.questions.length}/15)</button></section>`).join('');
-    $('.score-editor-page').innerHTML=`<a class="score-editor-back" href="#/recipients?tab=report">‹ 대상·템플릿</a><form id="score-edit-form"><div class="score-editor-heading"><h1>리포트 템플릿 편집</h1></div><section class="score-editor-top card"><div class="score-editor-template"><div class="score-title-editor"><div class="dropdown score-title-text"><button type="button" class="dropdown-trigger" data-options="score-templates" aria-label="편집할 템플릿 고르기" aria-haspopup="listbox" aria-expanded="false"><span>${escapeHTML(scoreDraft.title)}</span></button></div><label class="sr-only" for="score-template-title">템플릿 이름</label><input id="score-template-title" maxlength="40" value="${escapeHTML(scoreDraft.title)}" aria-describedby="score-template-title-limit" hidden><button type="button" class="button secondary score-title-edit" data-action="score-title-edit" data-target="score-template-title" aria-label="템플릿 이름 수정"><span class="score-desktop-label">이름 수정</span><span class="score-mobile-label">템플릿 이름 수정</span></button></div><small class="field-limit" id="score-template-title-limit">${scoreDraft.title.length}/40자</small></div><div class="score-editor-actions"><button class="button secondary" type="button" data-action="score-reset">초기화</button><button class="button primary" type="submit">저장</button><p class="score-editor-status" role="status" data-score-status></p></div></section><div class="score-editor-workspace card"><aside class="score-area-list"><div class="score-area-list-heading"><h2>영역</h2><span>${domains.length}/5</span></div><div class="score-area-mobile-row"><div class="score-area-mobile-select dropdown"><button type="button" class="dropdown-trigger" data-options="score-domains" aria-label="영역 선택" aria-haspopup="listbox" aria-expanded="false"><span>${escapeHTML(domains[scoreCurrentDomain]?.name||'영역 선택')}</span></button></div><button class="button secondary score-area-mobile-reset" type="button" data-action="score-reset">초기화</button></div><div class="score-area-options">${domainNav}</div></aside><div class="score-area-content">${panels||'<p class="score-area-empty">영역이 없어요. 초기화하면 기본 영역을 불러올 수 있어요.</p>'}</div></div><div class="score-mobile-save"><p class="score-editor-status" role="status" data-score-status></p><button class="button primary" type="submit">저장</button></div></form>`;
+    $('.score-editor-page').innerHTML=`<a class="score-editor-back" href="#/recipients?tab=report"><svg class="mobile-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span class="desktop-back-chevron" aria-hidden="true">‹</span> 대상·템플릿</a><form id="score-edit-form"><div class="score-editor-heading"><h1>리포트 템플릿 편집</h1></div><section class="score-editor-top card"><div class="score-editor-template"><div class="score-title-editor"><div class="dropdown score-title-text"><button type="button" class="dropdown-trigger" data-options="score-templates" aria-label="편집할 템플릿 고르기" aria-haspopup="listbox" aria-expanded="false"><span>${escapeHTML(scoreDraft.title)}</span></button></div><label class="sr-only" for="score-template-title">템플릿 이름</label><input id="score-template-title" maxlength="40" value="${escapeHTML(scoreDraft.title)}" aria-describedby="score-template-title-limit" hidden><button type="button" class="button secondary score-title-edit" data-action="score-title-edit" data-target="score-template-title" aria-label="템플릿 이름 수정"><span class="score-desktop-label">이름 수정</span><span class="score-mobile-label">템플릿 이름 수정</span></button></div><small class="field-limit" id="score-template-title-limit">${scoreDraft.title.length}/40자</small></div><div class="score-editor-actions"><button class="button secondary" type="button" data-action="score-reset">초기화</button><button class="button primary" type="submit">저장</button><p class="score-editor-status" role="status" data-score-status></p></div></section><div class="score-editor-workspace card"><aside class="score-area-list"><div class="score-area-list-heading"><h2>영역</h2><span>${domains.length}/5</span></div><div class="score-area-mobile-row"><div class="score-area-mobile-select dropdown"><button type="button" class="dropdown-trigger" data-options="score-domains" aria-label="영역 선택" aria-haspopup="listbox" aria-expanded="false"><span>${escapeHTML(domains[scoreCurrentDomain]?.name||'영역 선택')}</span></button></div><button class="button secondary score-area-mobile-reset" type="button" data-action="score-reset">초기화</button></div><div class="score-area-options">${domainNav}</div></aside><div class="score-area-content">${panels||'<p class="score-area-empty">영역이 없어요. 초기화하면 기본 영역을 불러올 수 있어요.</p>'}</div></div><div class="score-mobile-save"><p class="score-editor-status" role="status" data-score-status></p><button class="button primary" type="submit">저장</button></div></form>`;
     updateScoreSave();
     const rail=$('.score-area-options'),selected=$('.score-area-option[aria-pressed="true"]');
     if(rail&&selected){const r=rail.getBoundingClientRect(),s=selected.getBoundingClientRect();if(s.right>r.right)rail.scrollLeft+=s.right-r.right;else if(s.left<r.left)rail.scrollLeft-=r.left-s.left;}
@@ -5961,7 +6063,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     else if(action==='journal-ai-view')setJournalAiView(button.closest('.field').querySelector('textarea').id,button.dataset.aiView);
     else if(action==='account-preview')accountDialog(button);
     else if(action==='reactivate'){const i=Number(button.dataset.index);if(!recipientHasCapacity()){showRecipientLimit();return;}dialog('관리대상을 활성화할까요?',`<p>「${escapeHTML(state.recipients[i].name)}」을 홈과 기록 작성 목록에서 다시 볼 수 있어요.</p>`,'활성화',async()=>{if(!recipientHasCapacity()){showRecipientLimit();return;}const r=state.recipients[i],previous=copy(r);r.active=true;delete r.pausedByPlanLimit;if(!await persist()){Object.assign(r,previous);return;}prepareSettings();});}
-    else if(action==='toggle-recipient'){const r=state.recipients[detailRecipient];if(!r.active&&!recipientHasCapacity()){showRecipientLimit();return;}dialog(r.active?'관리대상을 비활성화할까요?':'관리대상을 활성화할까요?',`<p>${r.active?'홈과 기록 작성 목록에서 제외돼요. 기존 일지와 리포트는 보관돼요.':'홈과 기록 작성 목록에 다시 표시돼요.'}</p>`,r.active?'비활성화':'활성화',async()=>{if(!r.active&&!recipientHasCapacity()){showRecipientLimit();return;}const previous=copy(r);r.active=!r.active;delete r.pausedByPlanLimit;if(!await persist()){Object.assign(r,previous);return;}$('#recipient-dialog').close();renderRecipients();});}
+    else if(action==='toggle-recipient'){const r=state.recipients[detailRecipient];if(r.active)return;if(!r.active&&!recipientHasCapacity()){showRecipientLimit();return;}dialog(r.active?'관리대상을 비활성화할까요?':'관리대상을 활성화할까요?',`<p>${r.active?'홈과 기록 작성 목록에서 제외돼요. 기존 일지와 리포트는 보관돼요.':'홈과 기록 작성 목록에 다시 표시돼요.'}</p>`,r.active?'비활성화':'활성화',async()=>{if(!r.active&&!recipientHasCapacity()){showRecipientLimit();return;}const previous=copy(r);r.active=!r.active;delete r.pausedByPlanLimit;if(!await persist()){Object.assign(r,previous);return;}$('#recipient-dialog').close();renderRecipients();});}
     else if(action==='trash-report')dialog('리포트를 휴지통으로 옮길까요?','<p>30일 동안 휴지통에서 복원할 수 있어요.</p>','휴지통으로',async()=>{const chosen=reportRecords(recipient).find(item=>item.id===params.get('report'))||reportRecords(recipient)[0];if(!chosen)return;(state.hiddenReportIds||=[]).push(`${recipient}:${chosen.id}`);state.trash.push({type:'report',recipient,date:currentDate(),title:`${formatShortDate(chosen.from)} – ${formatShortDate(chosen.to)} 주간 리포트`,reportId:chosen.id});if(!await persist())return;routeTo(`#/records?recipient=${recipient}&tab=reports`);toast('리포트를 휴지통으로 옮겼어요.');},true);
     else if(action==='restore-trash'){const i=Number(button.dataset.index);dialog('기록을 복원할까요?','<p>복원한 기록은 기록 목록에서 다시 볼 수 있어요.</p>','복원',async()=>{const item=state.trash[i];if(item.type==='report'){if(state.reportRemoved)state.reportRemoved[item.recipient]=false;if(item.reportId)state.hiddenReportIds=(state.hiddenReportIds||[]).filter(key=>key!==`${item.recipient}:${item.reportId}`);}if(item.type==='journal'&&item.key)state.deletedJournalKeys=(state.deletedJournalKeys||[]).filter(key=>key!==item.key);state.trash.splice(i,1);if(!await persist())return;renderRecords();});}
     else if(action==='delete-trash'){const i=Number(button.dataset.index);dialog('기록을 완전히 삭제할까요?','<p>완전히 삭제한 기록은 복원할 수 없어요.</p>','완전삭제',async()=>{state.trash.splice(i,1);if(!await persist())return;renderRecords();},true);}
@@ -6096,7 +6198,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   }
   document.addEventListener('keydown',event=>{
     if(!event.altKey||!event.shiftKey||event.ctrlKey||event.metaKey||event.isComposing)return;
-    const device={Digit1:'pc',Digit2:'mac',Digit3:'tablet',Digit4:'phone'}[event.code];
+    const device={Digit1:'pc',Digit2:'mac',Digit3:'tablet',Digit4:'phone',Digit5:'app'}[event.code];
     if(!device)return;
     event.preventDefault();
     if(embedded){parent.postMessage({type:'careit-device-select',device},'*');return;}
