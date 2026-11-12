@@ -1687,3 +1687,58 @@ dialog#quick-type-picker .quick-check-type-footer>p { margin:0; color:var(--text
   body.mobile-app-preview .report-document-modal-content { touch-action:pan-x pan-y; }
   body.mobile-app-preview #screen :is(.page:not(.home-page) > .page-header h1, .score-editor-page .score-editor-heading h1)::before { content:""; display:inline-block; width:24px; height:24px; margin-right:10px; vertical-align:-5px; background:url("assets/logo.webp") center / contain no-repeat; }
 }
+
+
+/* Settings: linked sign-in methods */
+.settings-page .social-login-settings { border-top:1px solid var(--line); padding:var(--space-4) 0; }
+.settings-page .social-login-settings h3 { margin:0; font-size:var(--fs-body-sm); font-weight:700; }
+.settings-page .social-login-settings > p { margin:4px 0 8px; color:var(--muted); font-size:var(--fs-caption); }
+.social-login-row { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:64px; }
+.social-login-identity { display:flex; align-items:center; gap:12px; min-width:0; }
+.social-login-identity > div { display:flex; flex-direction:column; gap:4px; min-width:0; }
+.social-login-identity strong { font-size:var(--fs-body-sm); }
+.social-login-identity [data-social-status] { color:var(--muted); font-size:var(--fs-caption); }
+.social-login-icon { width:32px; height:32px; display:grid; place-items:center; flex:none; border-radius:8px; background:var(--neutral-soft); }
+.social-login-icon.kakao { background:#fee500; }
+.social-login-icon svg { width:20px; height:20px; }
+.settings-page .social-login-action { flex:none; background:var(--neutral-soft); color:#526575 !important; }
+body[data-theme=dark] .settings-page .social-login-action { color:var(--text) !important; }
+.settings-password-mobile { display:none; }
+@media (max-width:767px) {
+  body .app-content .settings-page .settings-card h2 { font-size:calc(18px * var(--native-text-scale,1)); }
+  body .app-content .settings-page :is(.settings-card dt,.settings-card dd,.settings-security-row strong,.session-details>summary,.session-info strong,.consent-row h3,.settings-links strong,.social-login-settings h3,.social-login-identity strong) { font-size:calc(15px * var(--native-text-scale,1)); }
+  body .app-content .settings-page :is(.settings-consent-status,.settings-links small,.social-login-settings>p,.social-login-identity [data-social-status],.settings-account small) { font-size:calc(14px * var(--native-text-scale,1)); }
+  body .app-content .settings-page .settings-card .button { min-height:44px; padding-inline:12px; }
+  body .app-content .settings-page .settings-consents .button { background:var(--neutral-soft) !important; color:#526575 !important; }
+  body[data-theme=dark] .app-content .settings-page .settings-consents .button { color:var(--text) !important; }
+  body .app-content .settings-page .settings-card .button:not([data-consent-state="not-agreed"]):not([data-connected="false"]) { color:#526575 !important; }
+  body[data-theme=dark] .app-content .settings-page .settings-card .button:not([data-consent-state="not-agreed"]):not([data-connected="false"]) { color:var(--text) !important; }
+  body .app-content .settings-page .settings-security-row { padding:0; }
+  .settings-page .settings-security-row > div,.settings-page .settings-security-row > .button { display:none; }
+  .settings-page .settings-security-row .settings-password-mobile { display:flex; align-items:center; justify-content:space-between; width:100%; min-height:56px; padding:12px 0; border:0; background:transparent; color:var(--text); text-align:left; font:600 calc(15px * var(--native-text-scale,1))/1.4 var(--font-sans); cursor:pointer; }
+  .settings-password-mobile::after { content:'›'; color:var(--muted); font-size:20px; }
+  body .app-content .settings-page .social-login-settings { padding-block:12px; }
+  body .app-content .settings-page .social-login-row { min-height:60px; }
+  body.mobile-app-preview .settings-security-heading { margin-bottom:16px; }
+}
+body .app-content .settings-page .settings-consents .button[data-consent-state="not-agreed"] { color:var(--primary-dark) !important; }
+body .app-content .settings-page .social-login-action[data-connected="false"] { color:#526575 !important; }
+body[data-theme=dark] .app-content .settings-page .settings-consents .button[data-consent-state="not-agreed"] { color:var(--primary-dark) !important; }
+body[data-theme=dark] .app-content .settings-page .social-login-action[data-connected="false"] { color:var(--text) !important; }
+
+/* Mobile scoring: show actions only for the question being edited. */
+@media (max-width:767px) {
+  .score-editor-page .score-area-list { position:relative; }
+  .score-editor-page .score-area-list-heading { min-height:44px; padding-right:108px; }
+  .score-editor-page .score-area-mobile-row { margin-top:8px; }
+  .score-editor-page .score-area-mobile-row .score-area-mobile-reset { position:absolute; top:0; right:0; }
+  .score-editor-page .score-area-panel .score-question-list { gap:0; }
+  .score-editor-page .score-area-panel .score-question-list li { position:relative; grid-template-columns:minmax(0,1fr); gap:0; align-items:start; padding:12px 0; border-bottom:1px solid var(--line); }
+  .score-editor-page .score-area-panel .score-question-list li>span { display:none; }
+  .score-editor-page .score-area-panel .score-question-list li>div { grid-column:1; grid-row:1; }
+  .score-editor-page .score-area-panel .score-question-list textarea { display:block; min-height:76px; padding:10px 76px 10px 12px; overflow:hidden; resize:none; border-radius:var(--radius-form-control); background:var(--neutral-soft); color:var(--text); font-weight:400; line-height:1.5; }
+  .score-editor-page .score-area-panel .score-question-list li>.button { display:none; position:absolute; z-index:1; grid-column:1; grid-row:1; top:30px; right:4px; width:52px; min-height:44px; margin:0; padding:0; border-radius:var(--radius-control); background:color-mix(in srgb,var(--neutral-soft) 92%,var(--text)); color:#23242a; font-family:var(--font-sans); font-size:calc(14px * var(--native-text-scale,1)); font-weight:500; }
+  body[data-theme=dark] .score-editor-page .score-area-panel .score-question-list li>.button { color:var(--text); }
+  .score-editor-page .score-area-panel .score-question-list li:focus-within>.button { display:inline-flex; }
+  .score-editor-page .score-area-panel .score-question-list .score-input-limit { top:12px; right:12px; }
+}
