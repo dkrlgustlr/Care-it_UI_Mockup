@@ -65,10 +65,11 @@
   <template id="page-ai-chat" data-path="/ai-chat">
     <section class="page ai-chat-page">
       <div class="ai-chat-workspace">
-        <div class="ai-chat-main">
+        <div class="ai-chat-main" id="ai-chat-main">
           <div class="ai-chat-conversation" data-ai-chat-content></div>
           <form class="ai-chat-composer" id="ai-chat-form"><div class="ai-chat-attachments" data-ai-attachments hidden></div><div class="ai-chat-input-row"><input id="ai-chat-files" type="file" multiple hidden><button class="ai-chat-attach" type="button" data-action="ai-chat-attach" aria-label="사진 및 파일 첨부"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button><label class="sr-only" for="ai-chat-input">메시지</label><textarea id="ai-chat-input" rows="1" maxlength="2000" placeholder="궁금한 내용을 입력해 주세요"></textarea><button class="ai-chat-send" type="submit" aria-label="메시지 보내기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></button></div></form>
         </div>
+        <div class="ai-chat-resizer" data-ai-resize role="separator" aria-label="대화창 너비 조절" aria-orientation="vertical" aria-controls="ai-chat-main" aria-valuemin="320" tabindex="0" hidden></div>
         <aside class="ai-chat-preview" aria-label="작업 미리보기" hidden></aside>
       </div>
     </section>

@@ -232,10 +232,16 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   const mockupNotice = {title:'돌봄 기록부터 리포트까지, 케어릿과 함께',summary:'일지 작성부터 주간 리포트 확인까지 알아보세요.'};
   const embedded = JSON.parse($('#saved-design').textContent || '{}');
   const aiEmbed=new URLSearchParams(location.search).get('aiEmbed');
-  const STORAGE = 'careit-ui-mockup-20260923-v1' + (embedded.exportId ? '-'+embedded.exportId : '') + (aiEmbed?'-ai-preview-'+aiEmbed:'');
-  const store=createMockupStorage({storage:aiEmbed?sessionStorage:localStorage,key:STORAGE,locks:aiEmbed?null:navigator.locks,onBlocked:showStorageBlock});
+  let sharedAiBridge=null;
+  try { if(aiEmbed&&window.parent!==window)sharedAiBridge=window.parent.__careitAiBridge||null; } catch {}
+  const STORAGE = 'careit-ui-mockup-20260923-v1' + (embedded.exportId ? '-'+embedded.exportId : '') + (aiEmbed&&!sharedAiBridge?'-ai-preview-'+aiEmbed:'');
+  const store=sharedAiBridge?.store||createMockupStorage({storage:aiEmbed?sessionStorage:localStorage,key:STORAGE,locks:aiEmbed?null:navigator.locks,onBlocked:showStorageBlock});
   let state = {...embedded};
   try { state = {...state, ...JSON.parse(store.initial || '{}')}; } catch {}
+  if(sharedAiBridge)state=sharedAiBridge.state;
+  for(const template of state.customReportTemplates||[])if(!LIVE_SCORING.some(item=>item.id===template.id))LIVE_SCORING.push(template);
+  const aiTemplateDirty=new Set();
+  let aiTemplatePendingNavigation=null;
   if (!state.mockSocialExamplesInitialized) { state.mockSocialLinks = {...state.mockSocialLinks, google:true}; state.mockSocialExamplesInitialized = true; }
   state.edits ||= {};
   state.drafts ||= {};
@@ -383,12 +389,13 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(!state.scoring[0]||JSON.stringify(state.scoring[0])===JSON.stringify(previousDefault))delete state.scoring[0];
     state.liveReportBaseline='2026-11-08-v3';
   }
-  if(aiEmbed){
+  if(aiEmbed&&!sharedAiBridge){
     state.recipients[1].name='그림책 샘플';state.recipients[2].name='산책 샘플';
     state.journalTemplates[4]={name:'일지 템플릿',quickChecks:6};
     state.journalTemplateConfigs[4]={labels:['자유 메모','사회 · 정서','학습 · 활동','건강 · 안전','특이사항'],quickChecks:liveBaseQuick()};
   }
   state.liveAppReplica = true;
+  if(!aiEmbed)window.__careitAiBridge={state,store};
   let route = '/', params = new URLSearchParams(), recipient = 0, detailRecipient = 0, recordTab = 'journals', recipientTab = 'recipients';
   const recordRange = {from:'', to:''};
   let recordPage=1;
@@ -406,7 +413,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   }
   window.addEventListener('storage',event=>{if(event.storageArea===localStorage&&(event.key===STORAGE||event.key===null))store.check();});
   window.addEventListener('focus',()=>store.check());
-  window.addEventListener('beforeunload',event=>{if(store.pending||journalDirty()||configurationDirty()||scorePageDirty()){event.preventDefault();event.returnValue='';}});
+  window.addEventListener('beforeunload',event=>{if(store.pending||journalDirty()||configurationDirty()||scorePageDirty()||aiTemplateDirty.size){event.preventDefault();event.returnValue='';}});
   $('#mockup-storage-dialog').addEventListener('cancel',event=>event.preventDefault());
   let confirmAction,pendingNavigation=null,pendingClose=null,navigationApproved=false;
   function dialog(title, html, confirmLabel, onConfirm, danger=false) {
@@ -485,6 +492,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     document.body.dataset.theme=dark?'dark':'light';
     const label=dark?'라이트 모드로 변경':'다크 모드로 변경';
     button.setAttribute('aria-label',label);button.dataset.tooltip=label;
+    if(!aiEmbed)$$('.ai-chat-preview iframe').forEach(frame=>frame.contentWindow.postMessage({type:'careit-ai-theme',theme:document.body.dataset.theme},location.protocol==='file:'?'*':location.origin));
   }
   function syncAppNavigation() {
     if(new URLSearchParams(location.search).get('previewMode')!=='app')return;
@@ -519,6 +527,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     $$('dialog[open]').forEach(x => x.close());
     const hash = location.hash.slice(1) || '/';
     [route] = hash.split('?'); params = new URLSearchParams(hash.split('?')[1] || '');
+    if(route!=='/ai-chat'&&aiSplitObserved){aiSplitObserver.disconnect();aiSplitObserved=null;aiSplitDrag=null;}
     if(['/','/journals/new','/reports'].includes(route)&&state.recipients.filter(r=>r.active&&!r.deleted).length>mockupRecipientCapacity(state,currentDate())){routeTo('#/recipients');return;}
     if(route==='/journals/new'){
       const raw=Number(params.get('recipient')||0),requested=Number.isInteger(raw)&&raw>=0?raw:0;
@@ -577,51 +586,444 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     ensureMobileMenuScrim();
     syncAppNavigation();
     registerEdits(); window.scrollTo(0,0); requestAnimationFrame(()=>{scaleReports();updateMobileScrollTitle();});
+    if(aiEmbed&&route==='/journals/new')queueMicrotask(aiEmbedNotifyDraft);
     if (route === '/plans' && !mockupActivePlan(state,currentDate()) && ['starter','team','pro'].includes(params.get('plan'))) openPlanCheckout(params.get('plan'));
   }
   const aiSuggestions=[
     ['오늘 일지 작성 도와줘','일지에 담을 오늘의 활동과 관찰 내용을 알려주세요.'],
     ['이번 주 리포트 확인하고 싶어','리포트를 확인할 관리대상과 기간을 알려주세요.'],
-    ['새 관리대상 추가해 줘','추가할 관리대상의 이름과 사용할 템플릿을 알려주세요.']
+    ['새 관리대상 추가해 줘','추가할 관리대상의 이름과 사용할 템플릿을 알려주세요.'],
+    ['리포트 채점 기준 만들어줘','관찰하고 싶은 상황을 알려주세요.'],
+    ['일지 양식 편집해줘','편집할 일지 양식을 선택해 주세요.']
   ];
-  const aiMessages=[],aiPendingFiles=[];
-  let aiPreviewKind='',aiPreviewOpen=false;
+  // AI 요청은 고정 규칙으로 시연하며, 파일이나 기록을 외부로 보내지 않습니다.
+  state.aiChatDemo ||= {messages:[],flow:null,preview:null,previewOpen:false};
+  const aiChat=state.aiChatDemo,aiPendingFiles=[],aiFilePreviews=new Map();
+  let aiWork=null,aiPendingFrameAction=null,aiPendingTemplateActions=[],aiSplitDrag=null,aiSplitObserved=null;
+  let aiScrollTimer;
+  document.addEventListener('scroll',event=>{
+    const content=event.target;
+    if(!content.matches?.('.ai-chat-conversation'))return;
+    content.classList.add('is-scrolling');clearTimeout(aiScrollTimer);
+    aiScrollTimer=setTimeout(()=>content.classList.remove('is-scrolling'),1000);
+  },true);
+  const aiSave=()=>persist();
+  const aiSplitObserver=new ResizeObserver(()=>updateAiSplit());
+  function updateAiSplit(requested){
+    const workspace=$('.ai-chat-workspace'),handle=$('[data-ai-resize]'),panel=$('.ai-chat-preview');
+    if(!workspace||!handle||!panel)return;
+    const desktop=matchMedia('(min-width:768px)').matches;
+    handle.hidden=!desktop||panel.hidden;
+    if(handle.hidden)return;
+    const min=320,max=Math.max(min,workspace.clientWidth-16-360),stored=Number(aiChat.chatWidth);
+    const wanted=Number.isFinite(requested)?requested:(stored>0?stored:workspace.clientWidth*.48);
+    const width=Math.round(Math.max(min,Math.min(max,wanted)));
+    workspace.style.setProperty('--ai-chat-width',`${width}px`);
+    handle.setAttribute('aria-valuemax',String(max));handle.setAttribute('aria-valuenow',String(width));handle.setAttribute('aria-valuetext',`대화창 ${width}px`);
+    return width;
+  }
+  window.addEventListener('resize',()=>updateAiSplit());
+  document.addEventListener('pointerdown',event=>{
+    const handle=event.target.closest('[data-ai-resize]');if(!handle||handle.hidden||event.button!==0)return;
+    const workspace=handle.closest('.ai-chat-workspace');aiSplitDrag={id:event.pointerId,start:event.clientX,width:Number(handle.getAttribute('aria-valuenow'))};
+    handle.setPointerCapture(event.pointerId);workspace.classList.add('is-resizing');handle.focus();event.preventDefault();
+  });
+  document.addEventListener('pointermove',event=>{
+    if(!aiSplitDrag||event.pointerId!==aiSplitDrag.id)return;
+    aiSplitDrag.current=updateAiSplit(aiSplitDrag.width+event.clientX-aiSplitDrag.start);event.preventDefault();
+  });
+  function finishAiSplit(event,cancelled=false){
+    if(!aiSplitDrag||event.pointerId!==aiSplitDrag.id)return;
+    $('.ai-chat-workspace')?.classList.remove('is-resizing');
+    if(cancelled)updateAiSplit(aiSplitDrag.width);
+    else if(aiSplitDrag.current!=null){aiChat.chatWidth=aiSplitDrag.current;aiSave();}
+    aiSplitDrag=null;
+  }
+  document.addEventListener('pointerup',event=>finishAiSplit(event));
+  document.addEventListener('pointercancel',event=>finishAiSplit(event,true));
+  document.addEventListener('keydown',event=>{
+    if(!event.target.matches('[data-ai-resize]')||!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+    const handle=event.target,current=Number(handle.getAttribute('aria-valuenow')),max=Number(handle.getAttribute('aria-valuemax'));
+    const width=updateAiSplit(event.key==='Home'?320:event.key==='End'?max:current+(event.key==='ArrowRight'?16:-16));
+    if(width!=null){aiChat.chatWidth=width;aiSave();}event.preventDefault();
+  });
+  if(!aiEmbed&&aiChat.pending){const pending=aiChat.pending;aiChat.pending=null;aiChat.messages.push({role:'assistant',text:'이전 요청이 중단됐어요. 다시 시도할 수 있어요.',choices:[{label:'다시 시도',action:'retry',value:pending}]});aiSave();}
+  function aiReply(text,choices=[],preview=null){aiChat.messages.push({role:'assistant',text,choices,preview});aiSave();renderAiChat();}
+  function aiButton(label,action,value){return {label,action,value};}
+  function aiName(index){return state.recipients[index]?.name||'관리대상';}
+  function aiAvailable(){return state.recipients.flatMap((person,index)=>person.active&&!person.deleted?[index]:[]);}
+  function aiRecipientChoices(){return aiAvailable().map(index=>aiButton(aiName(index),'recipient',index));}
+  function aiFrameKey(preview){const key=[preview.kind,preview.recipient,preview.date||'',preview.reportId||'',preview.entry??''];if(preview.kind==='journal-template'||preview.kind?.startsWith('report-template'))key.push(preview.template??'',preview.draftId||'');return JSON.stringify(key);}
+  function aiPreviewLabel(preview){return ({journal:'일지',report:'리포트','journal-template':'일지 양식','report-template':'리포트 채점 기준','report-template-new':'새 리포트 기준'})[preview.kind]||'작업';}
   function renderAiChat(){
     const page=$('.ai-chat-page');if(!page)return;
     const content=$('[data-ai-chat-content]',page);
-    content.innerHTML=aiMessages.length?`<div class="ai-chat-messages" aria-live="polite">${aiMessages.map(message=>`<div class="ai-chat-message ${message.role}">${message.role==='assistant'?'<strong>케어릿 AI <span>예시 답변</span></strong>':''}${message.files?.map(name=>`<span class="ai-chat-message-file">${escapeHTML(name)}</span>`).join('')||''}${message.text?`<p>${escapeHTML(message.text)}</p>`:''}${message.preview?`<button type="button" class="ai-chat-open-preview" data-action="ai-preview-open" data-kind="${message.preview}">${message.preview==='journal'?'일지':'리포트'} 보기 <span aria-hidden="true">›</span></button>`:''}</div>`).join('')}</div>`:`<div class="ai-chat-welcome"><img class="ai-chat-mark" src="${escapeHTML($('.brand-mark').getAttribute('src'))}" alt=""><h2>무엇을 도와드릴까요?</h2><p>케어릿 사용부터 돌봄 기록까지, 편하게 요청해 주세요.</p><div class="ai-chat-suggestions">${aiSuggestions.map(([question],i)=>`<button type="button" data-action="ai-chat-suggest" data-index="${i}"><span>${escapeHTML(question)}</span><span aria-hidden="true">›</span></button>`).join('')}</div></div>`;
-    renderAiAttachments();
-    renderAiPreview();
-    if(aiMessages.length)content.scrollTop=content.scrollHeight;
+    content.innerHTML=aiChat.messages.length?`<div class="ai-chat-messages" aria-live="polite">${aiChat.messages.map((message,i)=>`<div class="ai-chat-message ${message.role}">${message.role==='assistant'?'<strong>케어릿 AI</strong>':''}${message.files?.map((file,j)=>`<span class="ai-chat-message-file">${aiFilePreviews.get(i)?.[j]?`<img src="${escapeHTML(aiFilePreviews.get(i)[j])}" alt="">`:''}${escapeHTML(typeof file==='string'?file:file.name)}</span>`).join('')||''}${message.text?`<p>${escapeHTML(message.text)}</p>`:''}${message.preview?`<button type="button" class="ai-chat-open-preview" data-action="ai-preview-open" data-message="${i}">${aiPreviewLabel(message.preview)} 보기 <span aria-hidden="true">›</span></button>`:''}${message.choices?.length&&!message.chosen?`<div class="ai-chat-choices">${message.choices.map((choice,j)=>choice.href?`<a class="ai-chat-choice" href="${escapeHTML(choice.href)}">${escapeHTML(choice.label)} <span aria-hidden="true">›</span></a>`:`<button type="button" class="ai-chat-choice" data-action="ai-chat-choice" data-message="${i}" data-choice="${j}">${escapeHTML(choice.label)} <span aria-hidden="true">›</span></button>`).join('')}</div>`:''}</div>`).join('')}${aiWork?'<div class="ai-chat-message assistant ai-chat-loading" role="status"><strong>케어릿 AI</strong><p>요청을 확인하고 있어요.</p><button type="button" data-action="ai-chat-stop">중단</button></div>':''}</div>`:`<div class="ai-chat-welcome"><img class="ai-chat-mark" src="${escapeHTML($('.brand-mark').getAttribute('src'))}" alt=""><h2>무엇을 도와드릴까요?</h2><p>케어릿 사용부터 돌봄 기록까지, 편하게 요청해 주세요.</p><div class="ai-chat-suggestions">${aiSuggestions.map(([question],i)=>`<button type="button" data-action="ai-chat-suggest" data-index="${i}"><span>${escapeHTML(question)}</span><span aria-hidden="true">›</span></button>`).join('')}</div></div>`;
+    renderAiAttachments();renderAiPreview();
+    const submit=$('.ai-chat-send',page);if(submit)submit.disabled=!!aiWork;
+    if(aiChat.messages.length)content.scrollTop=content.scrollHeight;
   }
   function renderAiPreview(){
     const panel=$('.ai-chat-preview');if(!panel)return;
-    panel.hidden=!aiPreviewOpen;
-    if(!aiPreviewOpen)return;
-    const journal=aiPreviewKind==='journal';
-    if(!panel.dataset.ready){panel.innerHTML='<header class="ai-preview-header"><button type="button" data-action="ai-preview-close" aria-label="대화로 돌아가기">‹</button><strong></strong><span>시연 화면</span></header><div class="ai-preview-frames"></div>';panel.dataset.ready='true';}
-    $('.ai-preview-header strong',panel).textContent=journal?'일지 작성':'리포트';
-    let frame=$(`iframe[data-kind="${aiPreviewKind}"]`,panel);
+    const preview=aiChat.preview;panel.hidden=!aiChat.previewOpen||!preview;
+    const handle=$('[data-ai-resize]');if(handle)handle.hidden=panel.hidden||!matchMedia('(min-width:768px)').matches;
+    if(panel.hidden){if(aiSplitObserved){aiSplitObserver.disconnect();aiSplitObserved=null;}return;}
+    const journal=preview.kind==='journal',journalTemplate=preview.kind==='journal-template',reportTemplate=preview.kind==='report-template'||preview.kind==='report-template-new';
+    if(!panel.dataset.ready){panel.innerHTML='<header class="ai-preview-header"><button type="button" data-action="ai-preview-close" aria-label="대화로 돌아가기">‹</button><strong></strong></header><div class="ai-preview-frames"></div>';panel.dataset.ready='true';}
+    $('.ai-preview-header strong',panel).textContent=journal?'일지 작성':aiPreviewLabel(preview);
+    const key=aiFrameKey(preview);
+    let frame=$$('iframe',panel).find(item=>item.dataset.key===key);
     if(!frame){
-      frame=document.createElement('iframe');frame.dataset.kind=aiPreviewKind;frame.title=journal?'일지 작성 시연 화면':'리포트 시연 화면';
-      const url=new URL(location.href);url.search='';url.searchParams.set('aiEmbed',aiPreviewKind);
-      url.hash=journal?'#/journals/new?recipient=1':`#/reports?recipient=2&report=home-example-${mockupReportWeek(currentDate(),-1).from}`;
-      frame.src=url.href;$('.ai-preview-frames',panel).append(frame);
+      frame=document.createElement('iframe');frame.dataset.kind=preview.kind;frame.dataset.key=key;frame.title=aiPreviewLabel(preview)+' 화면';
+      const url=new URL(location.href),query=new URLSearchParams({recipient:String(preview.recipient)});url.search='';url.searchParams.set('aiEmbed',preview.kind);
+      if(journal&&preview.date)query.set('date',preview.date);if(journal&&preview.entry!=null)query.set('entry',String(preview.entry));
+      if(!journal&&preview.reportId)query.set('report',preview.reportId);if(!journal&&preview.from)query.set('from',preview.from);
+      if(journalTemplate){query.set('template',String(Number(preview.template)+1));}
+      if(reportTemplate){query.set('mode','common');if(preview.kind==='report-template-new')query.set('new','1');else query.set('template',String(preview.template));}
+      url.hash=`#/${journal?'journals/new':journalTemplate?'settings/configuration':reportTemplate?'recipients/scoring':'reports'}?${query}`;frame.src=url.href;
+      $('.ai-preview-frames',panel).append(frame);
     }
     $$('iframe',panel).forEach(item=>item.hidden=item!==frame);
+    const workspace=panel.closest('.ai-chat-workspace');if(aiSplitObserved!==workspace){aiSplitObserver.disconnect();aiSplitObserved=workspace;aiSplitObserver.observe(workspace);}updateAiSplit();
+  }
+  function aiOpenPreview(preview,open=true){if(aiTemplateDirty.size&&!aiTemplateDirty.has(aiFrameKey(preview))){aiReply('현재 편집 중인 양식을 먼저 저장해 주세요.',[],aiChat.preview);return;}aiChat.preview={...preview};aiChat.previewOpen=open;if(preview.kind==='journal-template'||preview.kind?.startsWith('report-template'))aiChat.flow={type:'template-editor',stage:'editing',kind:preview.kind,template:preview.template};aiSave();renderAiChat();}
+  function aiOpenTemplate(kind,index,goal=''){
+    if(aiTemplateDirty.size){aiReply('현재 편집 중인 양식을 먼저 저장해 주세요.',[],aiChat.preview);return;}
+    const preview={kind,template:index,...(kind==='report-template-new'?{draftId:String(Date.now())}:{})};
+    aiChat.flow={type:'template-editor',stage:'editing',kind,template:index};
+    aiChat.preview=preview;aiChat.previewOpen=true;
+    const affected=kind==='journal-template'?journalTemplateRecipients(index).length:kind==='report-template'?reportTemplateRecipients(index).filter(item=>!item.custom).length:0;
+    aiReply(kind==='report-template-new'?'예시 관찰 문항을 초안으로 준비했어요. 내용을 확인하고 수정한 뒤 저장해 주세요.':`${aiPreviewLabel(preview)}을 열었어요. 이 공통 양식에 연결된 관리대상은 ${affected}명이에요. 변경할 내용을 알려주거나 화면에서 직접 수정해 주세요.`,[],preview);
+    if(kind==='report-template-new')aiTemplateCommand({action:'create',goal});
+  }
+  function aiTemplateCommand(command){
+    const preview=aiChat.preview,key=preview&&aiFrameKey(preview),frame=key&&$$('.ai-chat-preview iframe').find(item=>item.dataset.key===key);
+    if(!frame){aiReply('편집 화면을 다시 열어 주세요.');return;}
+    if(frame.dataset.ready!=='true'){aiPendingTemplateActions.push({key,command});return;}
+    frame.contentWindow.postMessage({type:'careit-ai-template-command',command},location.protocol==='file:'?'*':location.origin);
+  }
+  function finishAiTemplateNavigation(){
+    if(!aiTemplatePendingNavigation)return;
+    const move=aiTemplatePendingNavigation;aiTemplatePendingNavigation=null;
+    const previous=location.hash;navigationApproved=true;move();if(location.hash===previous)navigationApproved=false;
+  }
+  function confirmAiTemplateNavigation(move){
+    pendingNavigation=move;
+    dialog('변경 내용을 저장할까요?','<p>편집 중인 템플릿의 변경 내용이 있어요.</p>','저장하고 나가기',()=>{
+      const frame=$$('.ai-chat-preview iframe').find(item=>aiTemplateDirty.has(item.dataset.key));
+      if(!frame){aiTemplatePendingNavigation=null;return;}
+      aiTemplatePendingNavigation=pendingNavigation;pendingNavigation=null;aiChat.previewOpen=true;renderAiPreview();
+      frame.contentWindow.postMessage({type:'careit-ai-template-save'},location.protocol==='file:'?'*':location.origin);
+    });
+    $('#mockup-dialog .dialog-actions [data-action="confirm-dialog"]').insertAdjacentHTML('beforebegin','<button type="button" class="button secondary" data-action="discard-and-move">저장하지 않고 나가기</button>');
+    const modal=$('#mockup-dialog'),close=$('[data-dialog-close]',modal);close.hidden=false;close.dataset.action='close-dialog';$('.dialog-actions [data-action="close-dialog"]',modal).remove();close.focus();
+  }
+  function aiTemplateEdit(text){
+    const quoted=[...text.matchAll(/[‘'“"「]([^’'”"」]+)[’'”"」]/g)].map(match=>match[1].trim());
+    const plain=text.match(/^(.+?)(?:을|를)\s+(.+?)(?:으로|로)\s*(?:바꿔|변경|수정)/);
+    if(plain&&quoted.length<2)quoted.splice(0,quoted.length,plain[1].trim(),plain[2].trim());
+    if(/바꿔|변경|수정/.test(text)&&quoted.length>=2){aiTemplateCommand({action:'replace',from:quoted[0],to:quoted[1]});return;}
+    if(/추가/.test(text)&&quoted.length&&aiChat.flow.kind.startsWith('report-template')){aiTemplateCommand({action:'add-question',text:quoted.at(-1),area:quoted.length>1?quoted[0]:''});return;}
+    if(/삭제|지워|제거/.test(text)&&quoted.length&&aiChat.flow.kind.startsWith('report-template')){aiTemplateCommand({action:'delete-question',text:quoted.at(-1),area:quoted.length>1?quoted[0]:''});return;}
+    aiReply('예를 들어 “학습 · 활동”을 “놀이 · 활동”으로 바꿔줘처럼 변경할 문구를 알려주세요. 리포트 문항은 “문항 내용” 추가해줘 또는 삭제해줘로 편집할 수 있어요.',[],aiChat.preview);
+  }
+  function aiUpdateFrame(value,expected=null){
+    const preview=aiChat.preview,frame=preview&&$$('.ai-chat-preview iframe').find(item=>item.dataset.key===aiFrameKey(preview));
+    if(!frame){aiReply('일지 화면을 열지 못했어요. 일지 보기를 눌러 다시 시도해 주세요.',[],preview);return;}
+    if(frame.dataset.ready!=='true'){aiPendingFrameAction={key:aiFrameKey(preview),value,expected};return;}
+    frame.contentWindow.postMessage({type:'careit-ai-apply',value,expected},location.protocol==='file:'?'*':location.origin);
   }
   function renderAiAttachments(){
     const list=$('[data-ai-attachments]');if(!list)return;
     list.hidden=!aiPendingFiles.length;
-    list.innerHTML=aiPendingFiles.map((name,i)=>`<span class="ai-chat-attachment"><span>${escapeHTML(name)}</span><button type="button" data-action="ai-chat-remove-file" data-index="${i}" aria-label="${escapeHTML(name)} 첨부 취소">×</button></span>`).join('');
+    list.innerHTML=aiPendingFiles.map((file,i)=>`<span class="ai-chat-attachment">${file.url?`<img src="${escapeHTML(file.url)}" alt="">`:''}<span>${escapeHTML(file.name)}</span><button type="button" data-action="ai-chat-remove-file" data-index="${i}" aria-label="${escapeHTML(file.name)} 첨부 취소">×</button></span>`).join('');
+  }
+  function aiSelectRecipient(index){
+    if(!state.recipients[index]?.active||state.recipients[index]?.deleted){aiReply('선택한 관리대상을 사용할 수 없어요. 다시 선택해 주세요.',aiRecipientChoices());return;}
+    const flow=aiChat.flow;if(!flow)return;flow.recipient=index;
+    if(flow.type==='journal'){
+      const draft=state.drafts[index],draftDate=state.draftDates[index];
+      if(draftDate&&draftDate!==(flow.date||currentDate())&&draft&&Object.entries(draft).some(([key,value])=>!key.startsWith('journal-field-label-')&&value!==false&&value!==''&&value!=null)){
+        flow.stage='draft-conflict';aiReply(`${aiName(index)}의 ${formatShortDate(draftDate)} 작성 중인 일지가 있어요. 먼저 이어서 작성하거나 취소해 주세요.`,[aiButton('작성 중인 일지 이어 쓰기','resume-draft',draftDate),aiButton('취소','cancel',null)]);return;
+      }
+      const existing=journalRows(index).findIndex(row=>row[0]===(flow.date||currentDate()));
+      if(existing>=0&&!draft){flow.stage='existing-confirm';aiReply(`${aiName(index)}의 해당 날짜에 저장된 일지가 있어요. 기존 일지를 열어 수정할까요?`,[aiButton('기존 일지 수정','edit-existing',existing),aiButton('취소','cancel',null)]);return;}
+      flow.stage='content';const preview={kind:'journal',recipient:index,date:flow.date||currentDate()};
+      aiChat.preview=preview;aiChat.previewOpen=!matchMedia('(max-width:767px)').matches;
+      aiReply(`${aiName(index)}의 ${formatDate(preview.date)} 일지예요. 오늘 있었던 활동이나 모습을 알려주세요.`,[],preview);return;
+    }
+    if(flow.type==='report'){
+      if(flow.weekFrom){const from=flow.weekFrom;delete flow.weekFrom;aiChooseWeek(from);return;}
+      flow.stage='week';const last=mockupReportWeek(currentDate(),-1),thisWeek=mockupReportWeek(currentDate());
+      aiReply(`${aiName(index)}의 어떤 기간을 확인할까요?`,[aiButton(`지난주 · ${formatShortDate(last.from)} ~ ${formatShortDate(last.to)}`,'week',last.from),aiButton(`이번 주 · ${formatShortDate(thisWeek.from)} ~ ${formatShortDate(thisWeek.to)}`,'week',thisWeek.from)]);return;
+    }
+    if(flow.type==='records'||flow.type==='delete'){
+      const rows=journalRows(index).map((row,i)=>({row,i})).filter(item=>!flow.recordRange||(item.row[0]>=flow.recordRange.from&&item.row[0]<=flow.recordRange.to)).slice(0,5);flow.stage='record';
+      if(!rows.length){aiReply(`${aiName(index)}의 선택한 기간에 저장된 일지가 없어요.`,[aiButton('일지 작성하기','start-journal',index)]);return;}
+      aiReply(flow.type==='delete'?'어떤 일지를 휴지통으로 옮길까요?':'일지를 골라 주세요.',rows.map(({row,i})=>aiButton(`${formatShortDate(row[0])} · ${row[2].replace(/\s+/g,' ').slice(0,32)}`,'record',i)));return;
+    }
+  }
+  function aiStart(type,text){
+    const active=aiAvailable(),explicit=text.match(/\d{4}[-.]\d{2}[-.]\d{2}/)?.[0]?.replaceAll('.','-'),date=explicit||(/어제/.test(text)?mockupAddDays(currentDate(),-1):currentDate());
+    if(type==='journal'&&!mockupJournalDateAllowed(date,currentDate())){aiChat.flow={type,stage:'date',request:text};aiReply('새 일지는 오늘부터 3일 전까지 작성할 수 있어요. 날짜를 다시 알려주세요.');return;}
+    const weekFrom=type==='report'?(explicit||(/지난주|저번 주/.test(text)?mockupReportWeek(currentDate(),-1).from:/이번\s*주/.test(text)?mockupReportWeek(currentDate()).from:'')):'';
+    const recordRange=['records','delete'].includes(type)?(/지난주|저번 주/.test(text)?mockupReportWeek(currentDate(),-1):/이번\s*주/.test(text)?mockupReportWeek(currentDate()):explicit?{from:explicit,to:explicit}:null):null;
+    aiChat.flow={type,stage:'recipient',date,weekFrom,recordRange};
+    if(!active.length){aiReply('먼저 활성 관리대상을 추가해 주세요.',[{label:'관리대상 추가하기',href:'#/recipients'}]);return;}
+    const matching=active.filter(index=>text.includes(aiName(index)));
+    if(matching.length===1||active.length===1){aiSelectRecipient(matching[0]??active[0]);return;}
+    aiReply(type==='journal'?'누구의 일지를 작성할까요?':type==='report'?'누구의 리포트를 확인할까요?':'누구의 일지를 찾을까요?',aiRecipientChoices());
+  }
+  function aiChooseWeek(from){
+    const flow=aiChat.flow;if(!flow||flow.type!=='report')return;
+    const range=mockupReportWeek(from);if(!range){aiReply('날짜를 확인한 뒤 다시 입력해 주세요.');return;}
+    const rows=journalRows(flow.recipient),days=mockupReportDays(range,rows),status=mockupReportEligibility(range,currentDate(),days);
+    const reports=reportRecords(flow.recipient).filter(report=>report.from===range.from&&report.to===range.to),preview={kind:'report',recipient:flow.recipient,from:range.from,reportId:reports[0]?.id};
+    flow.range=range;
+    if(reports.length){flow.stage='report-choice';aiReply(`${aiName(flow.recipient)}의 해당 기간에 만들어진 리포트가 있어요.`,[aiButton('기존 리포트 보기','report-view',reports[0].id),...(status.allowed?[aiButton('새로 생성하기','report-offer',range.from)]:[])]);return;}
+    if(!status.allowed){
+      flow.stage='week';const reason=status.reason==='insufficient'?`일지가 ${days}일 있어요. 리포트에는 3일 이상 필요해요.`:status.reason==='future'?`이 기간은 ${formatDate(status.opensOn)}부터 생성할 수 있어요.`:'이 기간은 리포트 생성 기한이 지났어요.';
+      aiReply(reason,status.reason==='insufficient'?[aiButton('일지 작성하기','start-journal',flow.recipient),aiButton('다른 기간 선택','other-week',null)]:[aiButton('다른 기간 선택','other-week',null)]);return;
+    }
+    aiOfferReport(range.from);
+  }
+  function aiOfferReport(from){
+    const flow=aiChat.flow,range=mockupReportWeek(from);if(!flow||!range)return;
+    flow.range=range;flow.stage='report-confirm';
+    const days=mockupReportDays(range,journalRows(flow.recipient));
+    aiReply(`${aiName(flow.recipient)} · ${formatShortDate(range.from)} ~ ${formatShortDate(range.to)}\n기록 ${days}일 · 기준 ${currentScoring(flow.recipient).title}\n이 조건으로 리포트를 만들까요?`,[aiButton('리포트 생성','report-generate',null),aiButton('취소','cancel',null)]);
+  }
+  async function aiCreateReport(){
+    const flow=aiChat.flow;if(!flow?.range)return;
+    if(!state.aiConsent){aiReply('리포트 생성 전 AI 기능 동의 상태를 확인해 주세요.',[{label:'설정 열기',href:'#/settings'}]);return;}
+    const {recipient:index,range}=flow,days=mockupReportDays(range,journalRows(index)),status=mockupReportEligibility(range,currentDate(),days),scoring=currentScoring(index);
+    if(!status.allowed){aiReply('기록이나 기간이 바뀌어 생성할 수 없어요. 다시 확인해 주세요.');return;}
+    if(scoring.domains.length<3||scoring.domains.length>5||scoring.domains.some(domain=>domain.questions.length<5)){aiReply('리포트 채점 기준을 먼저 확인해 주세요.',[{label:'템플릿 확인',href:'#/recipients?tab=report'}]);return;}
+    const report={id:`mock-${Date.now()}`,recipient:index,from:range.from,to:range.to,generated:currentDate(),version:reportRecords(index).filter(item=>item.from===range.from&&item.to===range.to).length+1,days,mock:true,scoring:copy(scoring)};
+    (state.generatedReports||=[]).unshift(report);
+    if(!await persist()){state.generatedReports=state.generatedReports.filter(item=>item!==report);aiReply('리포트를 저장하지 못했어요. 다시 시도해 주세요.',[aiButton('다시 시도','report-generate',null)]);return;}
+    flow.stage='done';const preview={kind:'report',recipient:index,from:range.from,reportId:report.id};aiChat.preview=preview;aiChat.previewOpen=true;
+    aiReply('목업 리포트를 만들었어요. 결과를 확인해 주세요.',[],preview);
+  }
+  function aiListRecord(index){
+    const flow=aiChat.flow,row=flow&&journalRows(flow.recipient)[index];if(!row){aiReply('해당 일지를 찾을 수 없어요. 다시 골라 주세요.');return;}
+    if(flow.type==='delete'){flow.stage='delete-confirm';flow.record={index,date:row[0],text:row[2]};aiReply(`${aiName(flow.recipient)}의 ${formatShortDate(row[0])} 일지를 휴지통으로 옮길까요? 30일 동안 복원할 수 있어요.`,[aiButton('휴지통으로 이동','delete-confirm',null),aiButton('취소','cancel',null)]);return;}
+    flow.type='journal';flow.stage='editing';flow.entry=index;flow.date=row[0];const preview={kind:'journal',recipient:flow.recipient,entry:index};aiChat.preview=preview;aiChat.previewOpen=true;aiReply(`${formatShortDate(row[0])} 일지를 열었어요.`,[],preview);
+  }
+  async function aiDeleteRecord(){
+    const flow=aiChat.flow,row=flow?.record&&journalRows(flow.recipient)[flow.record.index];
+    if(!row||row[0]!==flow.record.date||row[2]!==flow.record.text){aiReply('일지 목록이 바뀌었어요. 다시 선택해 주세요.');return;}
+    const key=JSON.stringify([flow.recipient,row[0],row[2]]),item={type:'journal',recipient:flow.recipient,date:row[0],title:row[1]+' 일지',key};
+    (state.deletedJournalKeys||=[]).push(key);state.trash.push(item);
+    if(!await persist()){state.deletedJournalKeys=state.deletedJournalKeys.filter(value=>value!==key);state.trash=state.trash.filter(value=>value!==item);aiReply('삭제하지 못했어요. 다시 시도해 주세요.',[aiButton('다시 시도','delete-confirm',null)]);return;}
+    flow.stage='done';aiReply('일지를 휴지통으로 옮겼어요. 30일 동안 복원할 수 있어요.',[{label:'휴지통 보기',href:`#/records?recipient=${flow.recipient}&tab=trash`}]);
+  }
+  function aiJournalCurrent(flow){
+    const preview=aiChat.preview,current=aiChat.currentRaw;
+    if(preview&&current?.key===aiFrameKey(preview))return current.value;
+    if(flow.entry!=null){const row=journalRows(flow.recipient)[flow.entry];return row?.values?.['journal-raw']??row?.[2]??'';}
+    return state.drafts[flow.recipient]?.['journal-raw']||'';
+  }
+  function aiJournalText(text){
+    const flow=aiChat.flow;if(!flow||flow.recipient==null)return;
+    if(text.length>1000){aiReply('자유 메모는 1,000자까지 넣을 수 있어요. 내용을 나누거나 줄여서 다시 알려주세요.');return;}
+    const existing=aiJournalCurrent(flow),preview={kind:'journal',recipient:flow.recipient,...(flow.entry!=null?{entry:flow.entry}:{date:flow.date||currentDate()})};
+    aiChat.preview=preview;aiChat.previewOpen=true;flow.stage='editing';
+    if(existing&&existing!==text){flow.proposal={original:existing,value:text};aiReply(`이미 작성 중인 자유 메모가 있어요. 아래 내용으로 바꾸기 전에 확인해 주세요.\n\n${text}`,[aiButton('변경 내용 적용','apply-proposal',null),aiButton('기존 내용 유지','cancel-proposal',null)],preview);return;}
+    aiReply('일지 화면을 준비하고 있어요.',[],preview);
+    aiUpdateFrame(text);
+  }
+  function aiProcess(text,files){
+    const flow=aiChat.flow,clean=text.trim();
+    if(/^(취소|그만|취소해|그만할게)[.!\s]*$/.test(clean)){aiChat.flow=null;aiReply('요청을 취소했어요. 작성 중인 내용은 그대로 보관해요.');return;}
+    if(flow&&/^(응|네|예|그래|좋아|해줘|만들어줘|추가해줘|변경해줘|적용해줘|삭제해줘)[.!\s]*$/.test(clean)){
+      const action={'report-confirm':'report-generate','add-confirm':'add-confirm','template-confirm':'template-confirm','delete-confirm':'delete-confirm','existing-confirm':'edit-existing','draft-conflict':'resume-draft'}[flow.stage];
+      if(action){for(let i=aiChat.messages.length-1;i>=0;i--){const message=aiChat.messages[i],index=message.choices?.findIndex(choice=>choice.action===action)??-1;if(index>=0&&!message.chosen){aiChoose(i,index,false);return;}}}
+    }
+    if(flow?.stage==='recipient'){
+      const matches=aiAvailable().filter(index=>aiName(index)===clean||(clean.length>1&&aiName(index).includes(clean))||clean.includes(aiName(index)));
+      if(matches.length===1){aiSelectRecipient(matches[0]);return;}
+      aiReply('관리대상을 하나 골라 주세요.',aiRecipientChoices());return;
+    }
+    if(flow?.stage==='add-name'){
+      if(!clean){aiReply('추가할 관리대상의 이름을 입력해 주세요.');return;}
+      flow.name=clean.slice(0,100);flow.stage='add-confirm';aiReply(`‘${flow.name}’ 관리대상을 추가할까요? 기본 템플릿을 사용해요.`,[aiButton('추가하기','add-confirm',null),aiButton('취소','cancel',null)]);return;
+    }
+    if(flow?.type==='journal'&&flow.stage==='date'){
+      const value=clean.match(/\d{4}[-.]\d{2}[-.]\d{2}/)?.[0]?.replaceAll('.','-')||(/어제/.test(clean)?mockupAddDays(currentDate(),-1):/오늘/.test(clean)?currentDate():'');
+      if(!mockupJournalDateAllowed(value,currentDate())){aiReply('오늘부터 3일 전 사이의 날짜를 알려주세요.');return;}
+      const request=flow.request.replace(/\d{4}[-.]\d{2}[-.]\d{2}/g,'');aiStart('journal',`${request} ${value}`);return;
+    }
+    if(flow?.stage==='template-name'){
+      if(!clean||clean.length>40){aiReply('템플릿 이름을 40자 이내로 입력해 주세요.');return;}
+      flow.newName=clean;flow.stage='template-confirm';aiReply(`‘${state.journalTemplates[flow.template]?.name||''}’의 이름을 ‘${clean}’으로 바꿀까요?`,[aiButton('변경하기','template-confirm',null),aiButton('취소','cancel',null)]);return;
+    }
+    if(flow?.type==='report-template-create'&&flow.stage==='goal'){
+      if(!clean){aiReply('관찰하고 싶은 상황이나 영역을 알려주세요.');return;}
+      aiOpenTemplate('report-template-new',null,clean);return;
+    }
+    if(flow?.type==='template-editor'&&flow.stage==='editing'&&!/^(다른|새)\s*(일지|리포트)/.test(clean)&&!(/리포트/.test(clean)&&/채점|기준|템플릿/.test(clean)&&/만들|생성|열어/.test(clean))){aiTemplateEdit(clean);return;}
+    if(flow?.type==='report'&&flow.stage==='week'){
+      if(/지난주|저번 주/.test(clean)){aiChooseWeek(mockupReportWeek(currentDate(),-1).from);return;}
+      if(/이번 주|이번주/.test(clean)){aiChooseWeek(mockupReportWeek(currentDate()).from);return;}
+      const date=clean.match(/\d{4}[-.]\d{2}[-.]\d{2}/)?.[0]?.replaceAll('.','-');if(date){aiChooseWeek(date);return;}
+      aiReply('기간을 골라 주거나 날짜를 알려주세요.');return;
+    }
+    if(/리포트/.test(clean)&&/채점|기준|템플릿|문항/.test(clean)&&/만들|새로|생성/.test(clean)){aiChat.flow={type:'report-template-create',stage:'goal'};aiReply('어떤 상황이나 영역을 관찰할 기준인가요? 예를 들어 자유 놀이에서 의사소통과 또래 관계를 관찰한다고 알려주세요.');return;}
+    if(/리포트/.test(clean)&&/채점|기준|템플릿|문항/.test(clean)&&/편집|수정|바꿔|열어/.test(clean)){aiChat.flow={type:'template-editor-select',stage:'report-select'};aiReply('어떤 리포트 채점 기준을 편집할까요?',LIVE_SCORING.map((template,index)=>aiButton(state.reportTemplateConfigs?.[index]?.title||template.title,'ai-report-template',index)));return;}
+    if(/일지/.test(clean)&&/양식|템플릿|항목/.test(clean)&&/편집|수정|바꿔|열어/.test(clean)){aiChat.flow={type:'template-editor-select',stage:'journal-select'};aiReply('어떤 일지 양식을 편집할까요?',state.journalTemplates.map((template,index)=>aiButton(template.name,'ai-journal-template',index)));return;}
+    if(flow?.type==='journal'&&['content','editing'].includes(flow.stage)&&/리포트/.test(clean)&&/써|작성|만들|생성|보여|확인|열어/.test(clean)){aiStart('report',clean);return;}
+    if(flow?.type==='journal'&&['content','editing'].includes(flow.stage)&&/일지|기록/.test(clean)&&/찾|목록|지난|삭제|지워/.test(clean)){aiStart(/삭제|지워/.test(clean)?'delete':'records',clean);return;}
+    if(flow?.type==='journal'&&['content','editing'].includes(flow.stage)&&!(/요금제|가격|무료|플러스|템플릿/.test(clean)||/관리대상/.test(clean)&&/추가|등록|만들/.test(clean))){
+      if(/저장/.test(clean)){
+        const preview=aiChat.preview,frame=preview&&$$('.ai-chat-preview iframe').find(item=>item.dataset.key===aiFrameKey(preview));
+        if(!frame||frame.dataset.ready!=='true'){aiChat.previewOpen=true;renderAiPreview();aiReply('일지 화면을 열어 저장할 내용을 확인해 주세요.',[],preview);return;}
+        frame.contentWindow.postMessage({type:'careit-ai-save'},location.protocol==='file:'?'*':location.origin);return;
+      }
+      if(/짧게|간결하게/.test(clean)){
+        const current=aiJournalCurrent(flow),short=current.split(/(?<=[.!?。])\s+/)[0];
+        if(!current){aiReply('먼저 정리할 일지 내용을 알려주세요.');return;}
+        if(short===current){aiReply('첫 문장이 이미 전체 내용이에요. 직접 바꾸고 싶은 문장을 알려주세요.');return;}
+        flow.proposal={original:current,value:short};aiReply(`이렇게 바꿀까요?\n\n${short}`,[aiButton('변경 내용 적용','apply-proposal',null),aiButton('기존 내용 유지','cancel-proposal',null)]);return;
+      }
+      if(files.length&&!clean){aiReply('첨부를 확인했어요. 목업에서는 파일 내용을 읽을 수 없어요. 활동 내용을 글로 알려주세요.');return;}
+      if(/[?？]$/.test(clean)){aiReply('일지에 넣을 내용을 알려주거나 원하는 작업을 다시 말씀해 주세요.',[],aiChat.preview);return;}
+      if(clean){aiJournalText(clean);return;}
+    }
+    if(/요금제|가격|무료|플러스/.test(clean)){aiChat.flow=null;aiReply('목업 기준으로 무료는 관리대상 1명의 일지를 기록할 수 있어요. 플러스는 AI 문장 정리와 주간 리포트가 추가되고, 팀은 최대 3명이 각자 이용하는 구성이에요. 유료 요금제는 준비 중이에요.',[{label:'요금제 보기',href:'#/plans'}]);return;}
+    if(/템플릿/.test(clean)&&/이름/.test(clean)&&/바꿔|변경|수정/.test(clean)&&!/리포트/.test(clean)){aiChat.flow={type:'template',stage:'template-select'};aiReply('어떤 일지 템플릿의 이름을 바꿀까요?',state.journalTemplates.map((template,index)=>aiButton(template.name,'template-select',index)));return;}
+    if(/템플릿/.test(clean)){aiChat.flow=null;aiReply('일지와 리포트 템플릿은 대상·템플릿 화면에서 확인하고 수정할 수 있어요.',[{label:'템플릿 관리 열기',href:`#/recipients?tab=${/리포트/.test(clean)?'report':'journal'}`}]);return;}
+    if(/관리대상/.test(clean)&&/추가|등록|만들/.test(clean)){aiChat.flow={type:'add',stage:'add-name'};if(!recipientHasCapacity()){aiReply('현재 추가 가능한 관리대상 자리가 없어요. 요금제나 기존 대상을 확인해 주세요.',[{label:'관리대상 보기',href:'#/recipients'},{label:'요금제 보기',href:'#/plans'}]);return;}aiReply('추가할 관리대상의 이름을 알려주세요.');return;}
+    if(/일지/.test(clean)&&/삭제|지워|휴지통/.test(clean)){aiStart('delete',clean);return;}
+    if(/일지|기록/.test(clean)&&/찾|목록|지난|이전|조회|보여|확인|수정|고쳐/.test(clean)){aiStart('records',clean);return;}
+    if(/리포트/.test(clean)&&/써|작성|만들|생성|보여|확인|열어|도와/.test(clean)){aiStart('report',clean);return;}
+    if(/일지/.test(clean)&&/써|작성|만들|시작|도와/.test(clean)){aiStart('journal',clean);if(files.length)aiReply('첨부한 파일은 목업에서 내용을 읽지 못해요. 활동 내용을 글로 알려주세요.');return;}
+    if(files.length){aiReply('파일을 첨부했어요. 목업에서는 파일 내용을 읽을 수 없어요. 필요한 내용을 글로 알려주세요.');return;}
+    aiReply('목업에서는 일지 작성, 리포트 확인, 기록 찾기와 관리대상 추가 흐름을 시연할 수 있어요. 원하는 작업을 말씀해 주세요.',[aiButton('일지 작성','example',0),aiButton('리포트 확인','example',1)]);
   }
   function sendAiChat(text,suggestion=-1){
-    text=text.trim();if(!text&&!aiPendingFiles.length)return;
-    const kind=/(써|작성|만들|생성|보여|확인|열어|도와)/.test(text)?(/리포트/.test(text)?'report':/일지/.test(text)?'journal':''):'';
-    if(kind){aiPreviewKind=kind;aiPreviewOpen=true;}
-    aiMessages.push({role:'user',text,files:aiPendingFiles.splice(0)},{role:'assistant',preview:kind,text:kind?`${kind==='journal'?'일지':'리포트'} 예시 화면을 열었어요.`:suggestion>=0?aiSuggestions[suggestion][1]:'이 화면은 AI 대화의 미리보기예요. 실제 답변은 AI 연결 후 제공돼요.'});
-    renderAiChat();$('#ai-chat-input').value='';
+    text=text.trim();if((!text&&!aiPendingFiles.length)||aiWork)return;
+    const selected=aiPendingFiles.splice(0),files=selected.map(file=>({name:file.name,type:file.type}));
+    if(selected.some(file=>file.url))aiFilePreviews.set(aiChat.messages.length,selected.map(file=>file.url));
+    aiChat.messages.push({role:'user',text,files});$('#ai-chat-input').value='';
+    aiRun(text,files);
   }
+  window.addEventListener('unload',()=>{aiPendingFiles.forEach(file=>file.url&&URL.revokeObjectURL(file.url));aiFilePreviews.forEach(urls=>urls.forEach(url=>url&&URL.revokeObjectURL(url)));});
+  function aiRun(text,files=[]){
+    const work={text,files,timer:null};aiWork=work;aiChat.pending={text,files};aiSave();renderAiChat();
+    work.timer=setTimeout(()=>{if(aiWork!==work)return;aiWork=null;aiChat.pending=null;try{aiProcess(work.text,work.files);}catch{aiReply('요청을 처리하지 못했어요. 입력한 내용은 보관되어 있어요.',[aiButton('다시 시도','retry',{text:work.text,files:work.files})]);}aiSave();renderAiChat();},350);
+  }
+  async function aiChoose(messageIndex,choiceIndex,recordChoice=true){
+    const message=aiChat.messages[messageIndex],choice=message?.choices?.[choiceIndex];if(!choice||message.chosen||aiWork)return;
+    const flow=aiChat.flow,stages={recipient:['recipient'],week:['week'],record:['record'],'delete-confirm':['delete-confirm'],'report-view':['report-choice'],'report-offer':['report-choice'],'report-generate':['report-confirm'],'add-confirm':['add-confirm'],'template-select':['template-select'],'template-confirm':['template-confirm'],'ai-report-template':['report-select'],'ai-journal-template':['journal-select'],'resume-draft':['draft-conflict'],'edit-existing':['existing-confirm'],'apply-proposal':['editing'],'cancel-proposal':['editing']};
+    if(stages[choice.action]&&!stages[choice.action].includes(flow?.stage)){message.chosen=true;aiReply('이전 요청이 바뀌었어요. 현재 작업에서 다시 선택해 주세요.');return;}
+    message.chosen=true;if(recordChoice&&!['example','retry'].includes(choice.action))aiChat.messages.push({role:'user',text:choice.label});aiSave();
+    if(choice.action==='recipient')aiSelectRecipient(Number(choice.value));
+    else if(choice.action==='week')aiChooseWeek(choice.value);
+    else if(choice.action==='other-week'){if(flow){flow.stage='week';aiSelectRecipient(flow.recipient);}}
+    else if(choice.action==='report-offer')aiOfferReport(choice.value);
+    else if(choice.action==='report-generate')await aiCreateReport();
+    else if(choice.action==='report-view'&&flow?.range){flow.stage='done';const preview={kind:'report',recipient:flow.recipient,from:flow.range.from,reportId:choice.value};aiChat.preview=preview;aiChat.previewOpen=true;aiReply('저장된 리포트를 열었어요.',[],preview);}
+    else if(choice.action==='record')aiListRecord(Number(choice.value));
+    else if(choice.action==='delete-confirm')await aiDeleteRecord();
+    else if(choice.action==='start-journal'){aiChat.flow={type:'journal',stage:'recipient',date:currentDate()};aiSelectRecipient(Number(choice.value));}
+    else if(choice.action==='resume-draft'&&flow){flow.date=choice.value;flow.stage='content';const preview={kind:'journal',recipient:flow.recipient,date:flow.date};aiChat.preview=preview;aiChat.previewOpen=!matchMedia('(max-width:767px)').matches;aiReply('작성 중인 일지를 이어서 열었어요. 내용을 알려주거나 직접 수정해 주세요.',[],preview);}
+    else if(choice.action==='edit-existing'&&flow){flow.entry=Number(choice.value);flow.stage='editing';const preview={kind:'journal',recipient:flow.recipient,entry:flow.entry};aiChat.preview=preview;aiChat.previewOpen=true;aiReply('기존 일지를 열었어요. 바꾸고 싶은 내용을 알려주세요.',[],preview);}
+    else if(choice.action==='cancel'){aiChat.flow=null;aiReply('요청을 취소했어요. 작성 중인 내용은 그대로 보관해요.');}
+    else if(choice.action==='cancel-proposal'){if(flow){delete flow.proposal;flow.stage='editing';}aiReply('기존 내용을 유지했어요.');}
+    else if(choice.action==='apply-proposal'&&flow?.proposal){const proposal=flow.proposal;delete flow.proposal;flow.stage='editing';aiChat.previewOpen=true;renderAiPreview();aiUpdateFrame(proposal.value,proposal.original);}
+    else if(choice.action==='add-confirm'&&flow?.name){
+      if(!recipientHasCapacity()){aiReply('추가 가능한 관리대상 자리가 없어요.',[{label:'요금제 보기',href:'#/plans'}]);return;}
+      const index=state.recipients.length,person={name:flow.name,templateIndex:0,count:0,date:currentDate().replaceAll('-','/'),active:true};state.recipients.push(person);state.reportTemplates[index]='누리과정';
+      if(!await persist()){state.recipients.pop();delete state.reportTemplates[index];aiReply('추가하지 못했어요. 다시 시도해 주세요.',[aiButton('다시 시도','add-confirm',null)]);return;}
+      flow.stage='done';aiReply(`${person.name} 관리대상을 추가했어요.`,[{label:'관리대상 보기',href:'#/recipients'},aiButton('일지 작성하기','start-journal',index)]);
+    }
+    else if(choice.action==='ai-report-template')aiOpenTemplate('report-template',Number(choice.value));
+    else if(choice.action==='ai-journal-template')aiOpenTemplate('journal-template',Number(choice.value));
+    else if(choice.action==='template-select'&&flow?.type==='template'){const index=Number(choice.value);if(!state.journalTemplates[index])return;flow.template=index;flow.stage='template-name';aiReply(`‘${state.journalTemplates[index].name}’을 어떤 이름으로 바꿀까요?`);}
+    else if(choice.action==='template-confirm'&&flow?.type==='template'){
+      const template=state.journalTemplates[flow.template];if(!template||!flow.newName)return;
+      const previous=template.name;template.name=flow.newName;
+      if(!await persist()){template.name=previous;aiReply('이름을 바꾸지 못했어요. 다시 시도해 주세요.',[aiButton('다시 시도','template-confirm',null)]);return;}
+      flow.stage='done';aiReply(`템플릿 이름을 ‘${template.name}’으로 바꿨어요.`,[{label:'템플릿 보기',href:'#/recipients?tab=journal'}]);
+    }
+    else if(choice.action==='view-preserved'){
+      const draft=aiChat.conflictedDrafts?.[Number(choice.value)],values=draft?.values||{},labels={'journal-raw':'자유 메모','journal-finalSocialEmotional':'사회 · 정서','journal-finalLearningActivity':'학습 · 활동','journal-finalHealthSafety':'건강 · 안전','journal-finalSpecialNotes':'특이사항'};
+      const text=Object.entries(labels).filter(([id])=>values[id]).map(([id,label])=>`${label}: ${values[id]}`).join('\n\n');
+      aiReply(text?`이전에 작성한 내용이에요. 현재 일지와 비교해 주세요.\n\n${text}`:'이전 수정 내용은 보관되어 있어요. 현재 저장된 일지를 먼저 확인해 주세요.',[],aiChat.preview);
+    }
+    else if(choice.action==='example'){const example=aiSuggestions[Number(choice.value)]?.[0];if(example){aiChat.messages.push({role:'user',text:example});aiRun(example);}}
+    else if(choice.action==='retry')aiRun(typeof choice.value==='string'?choice.value:choice.value?.text||'',choice.value?.files||[]);
+    else {aiSave();renderAiChat();}
+  }
+  window.addEventListener('message',async event=>{
+    if(route!=='/ai-chat'||!String(event.data?.type||'').startsWith('careit-ai-'))return;
+    if(event.origin!==(location.protocol==='file:'?'null':location.origin))return;
+    const frame=$$('.ai-chat-preview iframe').find(item=>item.contentWindow===event.source);if(!frame)return;
+    const data=event.data,targetOrigin=location.protocol==='file:'?'*':location.origin;
+    if(data.type==='careit-ai-frame-ready'){
+      if(!frame.dataset.initialized){frame.dataset.initialized='true';frame.contentWindow.postMessage({type:'careit-ai-init',state:copy(state)},targetOrigin);return;}
+      frame.dataset.ready='true';if(aiPendingFrameAction?.key===frame.dataset.key){const pending=aiPendingFrameAction;aiPendingFrameAction=null;if(aiChat.preview&&aiFrameKey(aiChat.preview)===frame.dataset.key)aiUpdateFrame(pending.value,pending.expected);else aiReply('작업 화면이 바뀌어 이전 입력을 적용하지 않았어요.');}
+      const pending=aiPendingTemplateActions.filter(item=>item.key===frame.dataset.key);aiPendingTemplateActions=aiPendingTemplateActions.filter(item=>item.key!==frame.dataset.key);
+      if(aiChat.preview&&aiFrameKey(aiChat.preview)===frame.dataset.key)pending.forEach(item=>aiTemplateCommand(item.command));
+      return;
+    }
+    if(data.type==='careit-ai-template-result'){if(aiChat.preview&&aiFrameKey(aiChat.preview)===frame.dataset.key)aiReply(data.message,[],aiChat.preview);return;}
+    if(data.type==='careit-ai-template-dirty'){if(data.dirty)aiTemplateDirty.add(frame.dataset.key);else aiTemplateDirty.delete(frame.dataset.key);return;}
+    if(data.type==='careit-ai-template-save-cancelled'){aiTemplatePendingNavigation=null;return;}
+    if(data.type==='careit-ai-template-saved'){
+      if(!data.shared){
+        const keys=Object.keys(data.previous||{});
+        if(keys.some(key=>JSON.stringify(state[key]||{})!==JSON.stringify(data.previous[key]||{}))){aiReply('다른 곳에서 템플릿이 변경되어 자동으로 적용하지 않았어요. 현재 내용을 확인해 주세요.');return;}
+        const previous=Object.fromEntries(keys.map(key=>[key,state[key]]));
+        keys.forEach(key=>state[key]=data.updated[key]);
+        if(!await persist()){keys.forEach(key=>state[key]=previous[key]);aiReply('템플릿을 저장하지 못했어요. 다시 확인해 주세요.');return;}
+      }
+      aiTemplateDirty.delete(frame.dataset.key);aiReply('템플릿을 저장했어요.');finishAiTemplateNavigation();return;
+    }
+    if(data.type==='careit-ai-template-created'){
+      const template=data.template;if(!template?.id)return;
+      if(!LIVE_SCORING.some(item=>item.id===template.id))LIVE_SCORING.push(template);
+      if(!data.shared){(state.customReportTemplates||=[]).push(template);if(!await persist()){state.customReportTemplates.pop();aiReply('새 기준을 저장하지 못했어요. 다시 시도해 주세요.');return;}}
+      aiTemplateDirty.delete(frame.dataset.key);aiReply('새 리포트 기준을 저장했어요. 대상·템플릿에서 선택할 수 있어요.');finishAiTemplateNavigation();return;
+    }
+    if(data.type==='careit-ai-apply-conflict'){aiReply('그동안 일지 내용이 바뀌었어요. 현재 내용을 확인한 뒤 다시 요청해 주세요.',[],aiChat.preview);return;}
+    if(data.type==='careit-ai-draft-conflict'){
+      const draft=aiChat.editDrafts?.[frame.dataset.key];if(!draft)return;
+      const saved=(aiChat.conflictedDrafts||=[]);saved.push(draft);delete aiChat.editDrafts[frame.dataset.key];
+      aiReply('저장된 일지가 바뀌어 이전 수정 내용을 자동 적용하지 않았어요. 이전 내용은 보관해 뒀어요.',[aiButton('이전 작성 내용 보기','view-preserved',saved.length-1)],aiChat.preview);return;
+    }
+    if(data.type==='careit-ai-applied'){if(aiChat.preview&&aiFrameKey(aiChat.preview)===frame.dataset.key){aiChat.currentRaw={key:frame.dataset.key,value:String(data.value||'')};aiReply('자유 메모에 반영했어요. 일지를 확인하고 저장해 주세요.',[],aiChat.preview);}return;}
+    if(data.type==='careit-ai-save-error'){aiReply('일지를 저장하지 못했어요. 작성 내용과 날짜를 확인한 뒤 다시 시도해 주세요.',[],aiChat.preview);return;}
+    if(data.type==='careit-ai-draft'){
+      if(frame.dataset.ready!=='true')return;
+      const index=Number(data.recipient);if(!state.recipients[index])return;
+      if(!aiChat.preview||aiFrameKey(aiChat.preview)!==frame.dataset.key)return;
+      const previous=aiChat.preview,entry=data.entry==null?null:Number(data.entry),newPreview={kind:'journal',recipient:index,...(entry!==null?{entry}:{date:data.date})};
+      if(aiFrameKey(previous)!==aiFrameKey(newPreview)){
+        aiChat.preview=newPreview;frame.dataset.key=aiFrameKey(newPreview);
+        if(aiChat.flow?.type==='journal'){aiChat.flow.recipient=index;aiChat.flow.date=data.date;aiChat.flow.entry=entry;aiChat.flow.stage='editing';}
+      }
+      aiChat.currentRaw={key:frame.dataset.key,value:String(data.raw||'')};
+      if(data.entry!=null&&data.values){if(data.dirty)(aiChat.editDrafts||={})[frame.dataset.key]={values:data.values,date:data.date,base:data.base};else if(aiChat.editDrafts)delete aiChat.editDrafts[frame.dataset.key];}
+      if(!data.shared&&data.entry==null&&data.values){state.drafts[index]=data.values;state.draftDates[index]=data.date;}
+      aiSave();return;
+    }
+    if(data.type==='careit-ai-discard-edit'){if(aiChat.editDrafts)delete aiChat.editDrafts[frame.dataset.key];aiSave();return;}
+    if(data.type!=='careit-ai-journal-saved')return;
+    const index=Number(data.recipient);if(!state.recipients[index])return;
+    if(!data.shared&&data.record){
+      const record=data.record,current=state.savedJournals.find(item=>item.recipient===index&&(record.sourceKey?item.sourceKey===record.sourceKey:item.date===record.date&&!item.sourceKey));
+      if(JSON.stringify(current||null)!==JSON.stringify(data.previous||null)){aiReply('기존 일지가 변경되어 저장하지 못했어요. 기록을 확인한 뒤 다시 시도해 주세요.',[{label:'기록 보기',href:`#/records?recipient=${index}&tab=journals`}]);return;}
+      const previousCount=state.recipients[index].count,previousDraft=state.drafts[index],previousDate=state.draftDates[index];
+      if(current)Object.assign(current,record);else{state.savedJournals.unshift(record);if(!record.sourceKey)state.recipients[index].count++;}
+      delete state.drafts[index];delete state.draftDates[index];
+      if(!await persist()){if(current)Object.assign(current,data.previous);else state.savedJournals=state.savedJournals.filter(item=>item!==record);state.recipients[index].count=previousCount;state.drafts[index]=previousDraft;state.draftDates[index]=previousDate;aiReply('일지를 저장하지 못했어요. 다시 시도해 주세요.');return;}
+    }
+    if(aiChat.editDrafts)delete aiChat.editDrafts[frame.dataset.key];
+    if(aiChat.flow?.type==='journal'&&aiChat.flow.recipient===index)aiChat.flow.stage='editing';
+    aiReply(`${aiName(index)}의 ${formatShortDate(data.date)} 일지를 저장했어요.`,[{label:'저장한 기록 보기',href:`#/records?recipient=${index}&tab=journals`}]);
+  });
   let journalSavedSnapshot=null,journalSavedRecord=null,journalSaving=false,journalAiComparison=null;
   function setDraftStatus(message){$$('[data-draft-status]').forEach(status=>status.textContent=message);}
   function journalSnapshot(){return JSON.stringify({date:$('[data-action="date"]')?.dataset.value,values:Object.fromEntries($$('input[id],textarea[id]',$('#screen')).filter(el=>!el.id.startsWith('journal-field-label-')).map(el=>[el.id,(el.type==='radio'||el.type==='checkbox')?el.checked:el.value]))});}
@@ -702,6 +1104,11 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const values = {}; $$('input[id],textarea[id]', $('#screen')).forEach(el => values[el.id] = (el.type==='radio'||el.type==='checkbox') ? el.checked : el.value);
     if(params.get('entry')!==null)return values;
     state.drafts[recipient] = values; state.draftDates[recipient]=$('[data-action="date"]')?.dataset.value||TODAY;if(save)persist(); return values;
+  }
+  function aiEmbedNotifyDraft(){
+    if(!aiEmbed||route!=='/journals/new'||window.parent===window)return;
+    const values=captureDraft(false),date=$('[data-action="date"]')?.dataset.value||currentDate();
+    window.parent.postMessage({type:'careit-ai-draft',recipient,date,entry:params.get('entry'),values,raw:$('#journal-raw')?.value||'',dirty:journalDirty(),base:journalSavedSnapshot,shared:!!sharedAiBridge},location.protocol==='file:'?'*':location.origin);
   }
   function journalRows(index=recipient){return allJournalRows(index).filter(row=>!(state.deletedJournalKeys||[]).includes(JSON.stringify([index,row[0],row[2]])));}
   function journalSchemaKey(index,row){return row?JSON.stringify([index,row.sourceKey||JSON.stringify([index,row[0],row[2]])]):'';}
@@ -1305,7 +1712,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       }
       else {button.dataset.value=date;button.querySelector('span').textContent=formatDate(date);}
       closePopups(true);filterRecords();
-      if(route==='/journals/new'){$('[data-journal-date-warning]')?.remove();captureDraft();recordRecentVisit();setDraftStatus('작성 내용은 이 브라우저에 자동 보관돼요.');updateJournalSaveState();}
+      if(route==='/journals/new'){$('[data-journal-date-warning]')?.remove();captureDraft();recordRecentVisit();setDraftStatus('작성 내용은 이 브라우저에 자동 보관돼요.');updateJournalSaveState();aiEmbedNotifyDraft();}
     };
     const draw=(focusDate)=>{
       const days=new Date(year,month+1,0).getDate(),offset=isReportRange?0:new Date(year,month,1).getDay();
@@ -1377,7 +1784,9 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const previousDraft=state.drafts[recipient],previousDraftDate=state.draftDates[recipient];if(!row){delete state.drafts[recipient];delete state.draftDates[recipient];}
     const savedSnapshot=journalSnapshot();journalSaving=true;updateJournalSaveState();
     if(!await persist()){if(previousRecord)Object.assign(existing,previousRecord);else state.savedJournals=state.savedJournals.filter(item=>item!==existing);state.recipients[recipient].count=previousCount;if(!row&&!state.drafts[recipient]){state.drafts[recipient]=previousDraft;state.draftDates[recipient]=previousDraftDate;}journalSaving=false;setDraftStatus('저장하지 못했어요. 다시 시도해 주세요.');updateJournalSaveState();return;}
-    journalSavedRecord=existing;journalSavedSnapshot=savedSnapshot;journalSaving=false;updateJournalSaveState();toast('일지를 저장했어요.');return true;
+    journalSavedRecord=existing;journalSavedSnapshot=savedSnapshot;journalSaving=false;updateJournalSaveState();toast('일지를 저장했어요.');
+    if(aiEmbed&&window.parent!==window)window.parent.postMessage({type:'careit-ai-journal-saved',recipient,date,record:copy(existing),previous:copy(previousRecord),shared:!!sharedAiBridge},location.protocol==='file:'?'*':location.origin);
+    return true;
   }
   async function exportHTML({save=true}={}) {
     if(document.querySelector('script[src]')){
@@ -1421,10 +1830,12 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const button=e.target.closest('[data-action]');if(!button)return;
     const action=button.dataset.action;
     if(handlePopupAction(action,button,e))return;
-    if(action==='ai-preview-close'){aiPreviewOpen=false;renderAiPreview();}
-    else if(action==='ai-preview-open'){aiPreviewKind=button.dataset.kind;aiPreviewOpen=true;renderAiPreview();}
+    if(action==='ai-preview-close'){aiChat.previewOpen=false;aiSave();renderAiPreview();}
+    else if(action==='ai-preview-open'){const preview=aiChat.messages[Number(button.dataset.message)]?.preview;if(preview)aiOpenPreview(preview);}
     else if(action==='ai-chat-attach')$('#ai-chat-files').click();
-    else if(action==='ai-chat-remove-file'){aiPendingFiles.splice(Number(button.dataset.index),1);renderAiAttachments();}
+    else if(action==='ai-chat-remove-file'){const [file]=aiPendingFiles.splice(Number(button.dataset.index),1);if(file?.url)URL.revokeObjectURL(file.url);renderAiAttachments();}
+    else if(action==='ai-chat-choice')await aiChoose(Number(button.dataset.message),Number(button.dataset.choice));
+    else if(action==='ai-chat-stop'){if(aiWork){const work=aiWork;clearTimeout(work.timer);aiWork=null;aiChat.pending=null;aiReply('요청을 중단했어요. 입력한 내용은 대화에 남아 있어요.',[aiButton('다시 시도','retry',{text:work.text,files:work.files})]);}}
     else if(action==='ai-chat-suggest'){const i=Number(button.dataset.index);if(aiSuggestions[i])sendAiChat(aiSuggestions[i][0],i);}
     else if(action==='coupon-tab'){const tab=button.dataset.tab;$$('[data-action="coupon-tab"]').forEach(item=>item.setAttribute('aria-pressed',String(item.dataset.tab===tab)));$$('[data-coupon-panel]').forEach(panel=>panel.hidden=panel.dataset.couponPanel!==tab);}
     else if(action==='coupon-preview')useCoupon(Number(button.dataset.index));
@@ -1536,9 +1947,9 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(el.type==='range'&&el.closest('.quick-check-slider')){const slider=el.closest('.quick-check-slider');slider.classList.add('is-selected');$('input[type="hidden"]',slider).value='true';$$('.quick-check-slider-ticks button',slider).forEach(button=>button.setAttribute('aria-pressed',String(button.textContent.trim()===el.value)));}
     if(el.dataset.editKey&&editing){state.edits[el.dataset.editKey]=el.textContent;persist();return;}
     updateCounter(el);
-    if(route==='/journals/new'&&el.closest('#screen')){updateJournalSaveState();if(params.get('entry')===null){captureDraft(false);const saved=await persist();setDraftStatus(saved?'작성 내용은 이 브라우저에 자동 보관돼요.':'자동 보관이 중단됐어요.');updateJournalSaveState();}}
+    if(route==='/journals/new'&&el.closest('#screen')){updateJournalSaveState();if(params.get('entry')===null){captureDraft(false);const saved=await persist();setDraftStatus(saved?'작성 내용은 이 브라우저에 자동 보관돼요.':'자동 보관이 중단됐어요.');updateJournalSaveState();}aiEmbedNotifyDraft();}
   });
-  document.addEventListener('change',e=>{if(e.target.id==='ai-chat-files'){aiPendingFiles.push(...Array.from(e.target.files,file=>file.name));e.target.value='';renderAiAttachments();}if(e.target.matches('.timefield input[type="number"]'))syncTimeInput(e.target.closest('.timefield'));if(route==='/journals/new'&&e.target.closest('[data-quick-checks]')){captureDraft();updateJournalSaveState();}if(e.target.name==='quick-type-choice')$$('.quick-check-type-card',$('#quick-type-picker')).forEach(card=>card.classList.toggle('is-selected',!!$('input[name="quick-type-choice"]',card)?.checked));});
+  document.addEventListener('change',e=>{if(e.target.id==='ai-chat-files'){aiPendingFiles.push(...Array.from(e.target.files,file=>({name:file.name,type:file.type,url:file.type.startsWith('image/')?URL.createObjectURL(file):''})));e.target.value='';renderAiAttachments();}if(e.target.matches('.timefield input[type="number"]'))syncTimeInput(e.target.closest('.timefield'));if(route==='/journals/new'&&e.target.closest('[data-quick-checks]')){captureDraft();updateJournalSaveState();aiEmbedNotifyDraft();}if(e.target.name==='quick-type-choice')$$('.quick-check-type-card',$('#quick-type-picker')).forEach(card=>card.classList.toggle('is-selected',!!$('input[name="quick-type-choice"]',card)?.checked));});
   document.addEventListener('focusin',e=>{if(e.target.matches('.score-question-list textarea'))sizeScoreQuestion(e.target);});
   document.addEventListener('focusout',e=>{if(e.target.matches('.score-question-list textarea'))requestAnimationFrame(()=>{if(e.target.isConnected)sizeScoreQuestion(e.target);});});
   window.addEventListener('resize',()=>{$$('.score-area-panel:not([hidden]) .score-question-list textarea').forEach(sizeScoreQuestion);});
@@ -1582,7 +1993,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   window.addEventListener('hashchange',event=>{
     if(navigationApproved){navigationApproved=false;render();return;}
     const next=new URL(event.newURL).hash||'#/',previous=new URL(event.oldURL).hash||'#/';
-    const guard=journalDirty()?confirmJournalNavigation:configurationDirty()?confirmConfigurationNavigation:scorePageDirty()?confirmScoreNavigation:null;
+    const guard=journalDirty()?confirmJournalNavigation:configurationDirty()?confirmConfigurationNavigation:scorePageDirty()?confirmScoreNavigation:route==='/ai-chat'&&aiTemplateDirty.size?confirmAiTemplateNavigation:null;
     if(guard&&next!==previous){history.replaceState(null,'',previous);guard(()=>routeTo(next));return;}
     render();
   });window.addEventListener('resize',scaleReports);
@@ -1621,6 +2032,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(!await persist()){state.journalTemplateConfigs=previous.templates;state.journalSchemaSnapshots=previous.schemas;commonJournalDraft=previous.draft;state.configuration=previous.configuration;return;}
     if(editingCommonJournal)commonJournalSnapshot=JSON.stringify(commonJournalDraft);
     prepareConfiguration();toast('일지 기록 항목을 저장했어요.');
+    if(aiEmbed==='journal-template'&&window.parent!==window)window.parent.postMessage({type:'careit-ai-template-saved',shared:!!sharedAiBridge,previous:{journalTemplateConfigs:previous.templates,journalSchemaSnapshots:previous.schemas,configuration:previous.configuration},updated:{journalTemplateConfigs:copy(state.journalTemplateConfigs),journalSchemaSnapshots:copy(state.journalSchemaSnapshots),configuration:copy(state.configuration)}},location.protocol==='file:'?'*':location.origin);
   }
   function defaultQuickChecks(){
     return quickFields.map(([name,choices],i)=>({name,type:'선택형',multiple:i===4,active:true,choices:choices.map(name=>({name,active:true})),min:'',max:'',unit:'',maxLength:500}));
@@ -1976,7 +2388,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   }
   function scoreSeed(template=2){
     const t=LIVE_SCORING[template]||LIVE_SCORING[2];
-    const domains=template===0?[t.domains[0],t.domains[3],t.domains[1],t.domains[4],t.domains[2]]:template===1?[t.domains[0],t.domains[3],t.domains[1],t.domains[4],t.domains[2]]:[t.domains[0],t.domains[3],t.domains[1],t.domains[4],t.domains[2]];
+    const domains=t.id?.startsWith('custom-')?t.domains:[t.domains[0],t.domains[3],t.domains[1],t.domains[4],t.domains[2]];
     return {title:t.title,templateId:t.id,version:'live-2026-11-08',domains:domains.map(d=>({name:d.name,questions:[...d.questions]}))};
   }
   function scoreTemplateIndex(draft){
@@ -2032,6 +2444,15 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   function updateScoreSave(){const form=$('#score-edit-form');if(!form)return;readScoreDraft();$$('button[type="submit"]',form).forEach(button=>button.disabled=JSON.stringify(scoreDraft)===scoreSnapshot);}
   async function saveScoring(confirmed=false){
     readScoreDraft();if(!scoreDraft.title.trim()){$$('[data-score-status]').forEach(status=>status.textContent='템플릿 이름을 입력해 주세요.');const input=$('#score-template-title'),editor=input.closest('.score-title-editor');$('.score-title-text',editor).hidden=true;input.hidden=false;$('.score-title-edit',editor).hidden=true;input.focus();return false;}
+    const newTemplate=aiEmbed==='report-template-new'&&params.has('new');
+    if(editingCommonReport&&(newTemplate||editingReportTemplateIndex!==null)&&LIVE_SCORING.some((template,index)=>index!==editingReportTemplateIndex&&(state.reportTemplateConfigs?.[index]?.title||template.title)===scoreDraft.title.trim())){$$('[data-score-status]').forEach(status=>status.textContent='같은 이름의 리포트 기준이 있어요. 다른 이름을 입력해 주세요.');return false;}
+    if(newTemplate){
+      if(scoreDraft.domains.length<3||scoreDraft.domains.length>5||scoreDraft.domains.some(domain=>!domain.name.trim()||domain.questions.length<5||domain.questions.length>15||domain.questions.some(q=>!q.trim()))){$$('[data-score-status]').forEach(status=>status.textContent='영역 3~5개와 영역별 문항 5~15개를 채워 주세요.');return false;}
+      const template={id:`custom-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,title:scoreDraft.title.trim(),domains:copy(scoreDraft.domains)};
+      (state.customReportTemplates||=[]).push(template);if(!await persist()){state.customReportTemplates.pop();return false;}
+      LIVE_SCORING.push(template);scoreDraft={...scoreDraft,templateId:template.id};scoreSnapshot=JSON.stringify(scoreDraft);params.delete('new');params.set('template',String(LIVE_SCORING.length-1));editingReportTemplateIndex=LIVE_SCORING.length-1;history.replaceState(null,'','#'+route+'?'+params);updateScoreSave();
+      $$('[data-score-status]').forEach(status=>status.textContent='새 리포트 기준을 저장했어요.');window.parent.postMessage({type:'careit-ai-template-created',template,shared:!!sharedAiBridge},location.protocol==='file:'?'*':location.origin);return true;
+    }
     if(editingCommonReport&&editingReportTemplateIndex!==null&&!confirmed){const affected=reportTemplateRecipients(editingReportTemplateIndex).filter(item=>!item.custom).length;dialog('리포트 템플릿을 저장할까요?',`<p>공통 기준을 사용하는 ${affected}명의 새 리포트에 적용돼요. 기존 리포트와 개별 기준은 그대로 유지돼요.</p>`,'저장',()=>saveScoring(true));return;}
     const previous={configs:copy(state.reportTemplateConfigs||{}),templates:copy(state.reportTemplates),common:copy(state.commonTemplates||{}),scoring:copy(state.scoring)};
     const restore=()=>{state.reportTemplateConfigs=previous.configs;state.reportTemplates=previous.templates;state.commonTemplates=previous.common;state.scoring=previous.scoring;};
@@ -2039,7 +2460,9 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       if(editingReportTemplateIndex===null)mockupSaveCommonTemplate(state,'report',scoreDraft);
       else {const oldTitle=state.reportTemplateConfigs?.[editingReportTemplateIndex]?.title||LIVE_SCORING[editingReportTemplateIndex].title;(state.reportTemplateConfigs||={})[editingReportTemplateIndex]=copy(scoreDraft);state.recipients.forEach((_,i)=>{if((state.reportTemplates[i]||'누리과정')===oldTitle)state.reportTemplates[i]=scoreDraft.title;});}
       if(!await persist()){restore();return false;}scoreSnapshot=JSON.stringify(scoreDraft);if(route==='/recipients')renderRecipients();updateScoreSave();
-      $$('[data-score-status]').forEach(status=>status.textContent='리포트 공통 템플릿을 저장했어요.');return true;
+      $$('[data-score-status]').forEach(status=>status.textContent='리포트 공통 템플릿을 저장했어요.');
+      if(aiEmbed?.startsWith('report-template')&&window.parent!==window)window.parent.postMessage({type:'careit-ai-template-saved',shared:!!sharedAiBridge,previous:{reportTemplateConfigs:previous.configs,reportTemplates:previous.templates,commonTemplates:previous.common,scoring:previous.scoring},updated:{reportTemplateConfigs:copy(state.reportTemplateConfigs||{}),reportTemplates:copy(state.reportTemplates),commonTemplates:copy(state.commonTemplates||{}),scoring:copy(state.scoring)}},location.protocol==='file:'?'*':location.origin);
+      return true;
     }
     state.scoring[detailRecipient]=copy(scoreDraft);state.reportTemplates[detailRecipient]=scoreDraft.title;if(!await persist()){restore();return false;}scoreSnapshot=JSON.stringify(scoreDraft);
     $$('[data-score-status]').forEach(status=>status.textContent='저장했어요. 새 리포트부터 적용돼요.');updateScoreSave();return true;
@@ -2114,7 +2537,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     else if(action==='common-edit'){if(button.dataset.kind==='journal')routeTo('#/settings/configuration?template=common');else if(button.dataset.kind==='report')openScoring(true);}
     else if(action==='close-modal')closeEditorDialog(button.dataset.modal);
     else if(action==='discard-and-close'){const close=pendingClose;pendingClose=null;confirmAction=null;$('#mockup-dialog').close();close?.();}
-    else if(action==='discard-and-move'){const move=pendingNavigation;pendingNavigation=null;confirmAction=null;$('#mockup-dialog').close();const previous=location.hash;navigationApproved=true;move?.();if(location.hash===previous)navigationApproved=false;}
+    else if(action==='discard-and-move'){if(aiEmbed&&route==='/journals/new'&&params.has('entry'))window.parent.postMessage({type:'careit-ai-discard-edit'},location.protocol==='file:'?'*':location.origin);if(route==='/ai-chat'){aiTemplateDirty.clear();aiTemplatePendingNavigation=null;}const move=pendingNavigation;pendingNavigation=null;confirmAction=null;$('#mockup-dialog').close();const previous=location.hash;navigationApproved=true;move?.();if(location.hash===previous)navigationApproved=false;}
     else if(action==='new-quick-check')openQuickEditor();
     else if(action==='edit-quick-check')openQuickEditor(Number(button.dataset.index));
     else if(action==='quick-toggle'){readQuickDraft();quickDraft.active=!quickDraft.active;drawQuickEditor();}
@@ -2287,5 +2710,83 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   $('#iep-mock-tier').addEventListener('change',event=>iep.simulate('tier',event.target.value));
   $('#iep-mock-outcome').addEventListener('change',event=>iep.simulate('outcome',event.target.value));
   $('#iep-mock-cycle').addEventListener('click',()=>iep.simulate('cycle'));
+  let notifyAiFrameReady=null;
+  if(aiEmbed&&window.parent!==window){
+    const targetOrigin=location.protocol==='file:'?'*':location.origin;
+    const ready=()=>window.parent.postMessage({type:'careit-ai-frame-ready'},targetOrigin);
+    const templateEmbed=aiEmbed==='journal-template'||aiEmbed.startsWith('report-template');
+    const notifyTemplateDirty=()=>{if(templateEmbed)window.parent.postMessage({type:'careit-ai-template-dirty',dirty:configurationDirty()||scorePageDirty()},targetOrigin);};
+    if(templateEmbed){
+      document.addEventListener('input',()=>queueMicrotask(notifyTemplateDirty));
+      document.addEventListener('click',event=>{if(event.target.closest('#mockup-dialog [data-action="close-dialog"]'))window.parent.postMessage({type:'careit-ai-template-save-cancelled'},targetOrigin);setTimeout(notifyTemplateDirty,0);});
+    }
+    notifyAiFrameReady=ready;
+    window.addEventListener('message',async event=>{
+      if(event.source!==window.parent)return;
+      if(event.origin!==(location.protocol==='file:'?'null':location.origin))return;
+      const data=event.data||{};
+      if(data.type==='careit-ai-init'){
+        if(!sharedAiBridge&&data.state){state=data.state;for(const template of state.customReportTemplates||[])if(!LIVE_SCORING.some(item=>item.id===template.id))LIVE_SCORING.push(template);if(!await persist())return;render();}
+        syncSidebarTheme();
+        let draftConflict=false;
+        if(route==='/journals/new'&&params.has('entry')){
+          const key=aiFrameKey({kind:'journal',recipient,entry:Number(params.get('entry'))}),draft=state.aiChatDemo?.editDrafts?.[key];
+          if(draft?.values&&draft.base&&draft.base!==journalSavedSnapshot)draftConflict=true;
+          else if(draft?.values){Object.entries(draft.values).forEach(([id,value])=>{const input=document.getElementById(id);if(!input)return;if(input.type==='radio'||input.type==='checkbox')input.checked=!!value;else input.value=value;updateCounter(input);});$$('.timefield').forEach(updateTimeField);updateJournalSaveState();}
+        }
+        ready();notifyTemplateDirty();if(draftConflict)window.parent.postMessage({type:'careit-ai-draft-conflict'},targetOrigin);aiEmbedNotifyDraft();
+      }else if(data.type==='careit-ai-theme'&&(data.theme==='dark'||data.theme==='light')){
+        state.sidebarTheme=data.theme;syncSidebarTheme();
+      }else if(data.type==='careit-ai-template-command'){
+        const command=data.command||{};let message='';
+        if(route==='/settings/configuration'&&command.action==='replace'){
+          const inputs=$$('#configuration-form input'),matches=inputs.filter(input=>input.value.trim()===command.from);
+          if(matches.length!==1)message='일치하는 일지 항목을 하나 찾지 못했어요. 항목 이름을 정확히 알려주세요.';
+          else if(!command.to||command.to.length>12)message='일지 항목 이름은 12자 이내로 입력해 주세요.';
+          else{matches[0].value=command.to;matches[0].dispatchEvent(new Event('input',{bubbles:true}));message='일지 양식 초안에 반영했어요. 오른쪽에서 확인하고 저장해 주세요.';}
+        }else if(route==='/recipients/scoring'){
+          readScoreDraft();
+          if(command.action==='create'&&params.has('new')){
+            const situation=/식사|간식/.test(command.goal)?'식사':/산책|외출/.test(command.goal)?'산책':/놀이/.test(command.goal)?'놀이':'';
+            scoreDraft={title:situation?`${situation} 관찰 기준`:'관찰 기준 초안',domains:[
+              {name:'의사소통',questions:['원하는 활동이나 물건을 자신의 방식으로 표현한다.','익숙한 사람의 말이나 안내에 반응한다.','도움이 필요할 때 자신의 방식으로 요청한다.','활동을 선택할 때 말이나 몸짓으로 의사를 표현한다.','상대의 표현을 보고 반응을 주고받는다.']},
+              {name:'사회관계',questions:['다른 사람의 놀이에 관심을 보인다.','익숙한 사람과 함께 활동에 참여한다.','놀이 중 다른 사람의 행동을 살펴본다.','도움이나 제안을 받았을 때 반응한다.','함께 사용하는 물건이나 공간을 경험한다.']},
+              {name:'활동 참여',questions:['관심 있는 활동을 선택한다.','활동에 필요한 재료를 살펴본다.','익숙한 활동의 순서를 경험한다.','필요할 때 휴식이나 도움을 표현한다.','활동을 마칠 때 자신의 방식으로 반응한다.']}]};
+            if(situation)scoreDraft.domains.forEach(domain=>domain.questions=domain.questions.map(question=>question.replaceAll('활동',`${situation} 활동`)));
+            scoreCurrentDomain=0;drawScoring();message='고정된 예시 문항을 초안으로 넣었어요. 요청한 상황에 맞게 직접 확인하고 고쳐 주세요.';
+          }else if(command.action==='replace'){
+            const matches=[];scoreDraft.domains.forEach((domain,i)=>{if(domain.name===command.from)matches.push({i,j:-1});domain.questions.forEach((q,j)=>{if(q===command.from)matches.push({i,j});});});
+            if(matches.length!==1)message='같은 이름이나 문항을 하나 찾지 못했어요. 전체 문구를 정확히 알려주세요.';
+            else if(!command.to||command.to.length>(matches[0].j<0?40:80))message='영역 이름은 40자, 문항은 80자 이내로 입력해 주세요.';
+            else{const {i,j}=matches[0];if(j<0)scoreDraft.domains[i].name=command.to;else scoreDraft.domains[i].questions[j]=command.to;scoreCurrentDomain=i;drawScoring();message='리포트 기준 초안에 반영했어요. 오른쪽에서 확인하고 저장해 주세요.';}
+          }else if(command.action==='add-question'){
+            const matches=command.area?scoreDraft.domains.map((domain,i)=>domain.name===command.area?i:-1).filter(i=>i>=0):[scoreCurrentDomain],i=matches[0];
+            if(matches.length!==1)message='추가할 영역을 하나 찾지 못했어요. 영역 이름을 정확히 알려주세요.';
+            else if(!command.text||command.text.length>80)message='문항은 80자 이내로 입력해 주세요.';
+            else if(scoreDraft.domains[i].questions.length>=15)message='한 영역에는 문항을 15개까지 추가할 수 있어요.';
+            else{scoreDraft.domains[i].questions.push(command.text);scoreCurrentDomain=i;drawScoring();message='문항을 초안에 추가했어요. 오른쪽에서 확인하고 저장해 주세요.';}
+          }else if(command.action==='delete-question'){
+            const matches=[];scoreDraft.domains.forEach((domain,i)=>{if(command.area&&domain.name!==command.area)return;domain.questions.forEach((question,j)=>{if(question===command.text)matches.push({i,j});});});
+            if(matches.length!==1)message='삭제할 문항을 하나 찾지 못했어요. 전체 문구와 영역을 정확히 알려주세요.';
+            else{const {i,j}=matches[0];scoreDraft.domains[i].questions.splice(j,1);scoreCurrentDomain=i;drawScoring();message='문항을 초안에서 삭제했어요. 영역당 문항이 5개 이상인지 확인하고 저장해 주세요.';}
+          }
+        }
+        notifyTemplateDirty();window.parent.postMessage({type:'careit-ai-template-result',message:message||'이 편집 화면에서는 해당 요청을 처리할 수 없어요.'},targetOrigin);
+      }else if(data.type==='careit-ai-template-save'&&templateEmbed){
+        if(route==='/settings/configuration'){
+          const previous={journalTemplates:copy(state.journalTemplates),journalTemplateConfigs:copy(state.journalTemplateConfigs),journalSchemaSnapshots:copy(state.journalSchemaSnapshots),configuration:copy(state.configuration)};
+          if(await saveConfigurationForNavigation())window.parent.postMessage({type:'careit-ai-template-saved',shared:!!sharedAiBridge,previous,updated:{journalTemplates:copy(state.journalTemplates),journalTemplateConfigs:copy(state.journalTemplateConfigs),journalSchemaSnapshots:copy(state.journalSchemaSnapshots),configuration:copy(state.configuration)}},targetOrigin);
+          else window.parent.postMessage({type:'careit-ai-template-save-cancelled'},targetOrigin);
+        }else if(route==='/recipients/scoring'&&await saveScoring()===false)window.parent.postMessage({type:'careit-ai-template-save-cancelled'},targetOrigin);
+      }else if(data.type==='careit-ai-apply'&&route==='/journals/new'){
+        const input=$('#journal-raw');if(!input)return;
+        if(data.expected!==null&&data.expected!==undefined&&input.value!==data.expected){window.parent.postMessage({type:'careit-ai-apply-conflict'},targetOrigin);return;}
+        input.value=String(data.value||'');input.dispatchEvent(new Event('input',{bubbles:true}));window.parent.postMessage({type:'careit-ai-applied',value:input.value},targetOrigin);
+      }else if(data.type==='careit-ai-save'&&route==='/journals/new'){
+        if(!await saveJournal())window.parent.postMessage({type:'careit-ai-save-error'},targetOrigin);
+      }
+    });
+  }
   applyDesign();syncSidebarTheme();render();
+  notifyAiFrameReady?.();
 })();
