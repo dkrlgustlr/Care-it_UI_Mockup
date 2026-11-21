@@ -1859,7 +1859,8 @@ body[data-theme=dark] .app-content .settings-page .social-login-action[data-conn
 .ai-chat-messages { display:flex; flex-direction:column; gap:24px; padding:8px 0 24px; }
 .ai-chat-message { max-width:85%; color:var(--text); font:400 16px/1.65 var(--font-sans); overflow-wrap:anywhere; }
 .ai-chat-message p { margin:0; white-space:pre-wrap; }
-.ai-chat-message.user { align-self:flex-end; padding:12px 16px; border-radius:16px 16px 4px 16px; background:var(--mint-soft); }
+.ai-chat-message.user { align-self:flex-end; padding:12px 16px; border-radius:16px 16px 4px 16px; background:#dcefe5; }
+body[data-theme="dark"] .ai-chat-message.user { background:#284438; }
 .ai-chat-message.assistant { align-self:flex-start; }
 .ai-chat-message.assistant strong { display:block; margin-bottom:8px; font-size:14px; }
 .ai-chat-choices { display:grid; gap:8px; margin-top:12px; }
@@ -1870,12 +1871,13 @@ body[data-theme=dark] .app-content .settings-page .social-login-action[data-conn
 .ai-chat-loading button { margin-top:8px; padding:6px 10px; border:0; border-radius:8px; background:var(--neutral-soft); color:var(--muted); font:600 13px/1.4 var(--font-sans); cursor:pointer; }
 .ai-chat-send:disabled { opacity:.5; cursor:default; }
 .ai-chat-open-preview { display:flex; align-items:center; justify-content:space-between; gap:24px; min-width:150px; margin-top:14px; padding:10px 14px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--text); font:600 14px/1.4 var(--font-sans); cursor:pointer; }
-.ai-chat-open-preview span { color:var(--muted); font-size:20px; }
+.ai-chat-open-preview svg { flex:none; width:16px; height:16px; color:var(--muted); }
 .ai-chat-preview[hidden] { display:none; }
 .ai-chat-preview { display:flex; flex-direction:column; flex:0 0 52%; min-width:0; max-height:calc(100dvh - 80px); overflow:hidden; border:1px solid var(--line); border-radius:12px; background:var(--surface); }
 .ai-chat-resizer { display:none; }
 .ai-preview-header { position:sticky; z-index:1; top:0; display:flex; align-items:center; gap:12px; min-height:60px; padding:8px 20px; border-bottom:1px solid var(--line); background:var(--surface); }
-.ai-preview-header button { width:36px; height:36px; border:0; border-radius:8px; background:transparent; color:var(--muted); font:400 28px/1 var(--font-sans); cursor:pointer; }
+.ai-preview-header button { display:grid; place-items:center; flex:none; width:36px; height:36px; padding:0; border:0; border-radius:8px; background:transparent; color:var(--muted); cursor:pointer; }
+.ai-preview-header button svg { width:16px; height:16px; }
 .ai-preview-header button:hover { background:var(--neutral-soft); }
 .ai-preview-header strong { flex:1; font:700 16px/1.4 var(--font-sans); }
 .ai-preview-frames { flex:1; min-height:0; }
@@ -2112,6 +2114,36 @@ html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="t
   .journal-page > .journal-actions > div:first-child { flex:none; }
   .journal-page > .journal-actions > div:last-child { justify-content:flex-end; }
 }
+</style>
+  <style id="motion-styles">/* 짧고 일관된 동작으로 상태 변화를 알려줍니다. */
+:root {
+  --motion:200ms;
+  --motion-hover:160ms;
+  --motion-popup:240ms;
+  --motion-popup-backdrop:200ms;
+  --motion-template-enter:200ms;
+}
+.pricing-card>.button,.pricing-hint>.button { --motion-hover:160ms; }
+
+@media (prefers-reduced-motion:no-preference) {
+  .app-layout .button,
+  .app-layout :is(.dropdown-trigger,.ai-chat-choice,.ai-chat-open-preview,.ai-chat-suggestions button,.ai-chat-input-row button,.journal-ai-controls button,.quick-check-slider-ticks button),
+  .app-layout :is(.record-tabs button,.app-bottom-nav a,.app-bottom-nav button) {
+    transition:transform 120ms var(--ease),background-color 150ms var(--ease),color 150ms var(--ease),border-color 150ms var(--ease),box-shadow 150ms var(--ease);
+  }
+  .app-layout .button:active:not(:disabled),
+  .app-layout :is(.dropdown-trigger,.ai-chat-choice,.ai-chat-open-preview,.ai-chat-suggestions button,.ai-chat-input-row button,.journal-ai-controls button,.quick-check-slider-ticks button,.record-tabs button,.app-bottom-nav a,.app-bottom-nav button):active:not(:disabled) {
+    transform:scale(.98);
+  }
+  .journal-choice-chips label:active>span { transform:scale(.98); }
+  .journal-choice-chips label>span { transition:transform 120ms var(--ease),background-color 150ms var(--ease),color 150ms var(--ease),border-color 150ms var(--ease); }
+  .app-layout details[open]>:not(summary) { animation:careit-reveal 220ms var(--ease) both; }
+  .mockup-listbox[popover]:popover-open { animation:careit-reveal 180ms var(--ease) both; }
+  .ai-chat-preview:not([hidden]) { animation:careit-panel-in 240ms var(--ease) both; }
+  .ai-chat-workspace.is-resizing .ai-chat-preview { animation:none; }
+}
+@keyframes careit-reveal { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+@keyframes careit-panel-in { from { opacity:0; transform:translateX(12px); } to { opacity:1; transform:none; } }
 </style>
   <!-- 디자인 수정은 이 CSS 또는 mockup.css에서 합니다. 원본 CSS는 보존합니다. -->
   <style id="design-overrides"></style>
@@ -4879,6 +4911,10 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   });
   if(!aiEmbed&&aiChat.pending){const pending=aiChat.pending;aiChat.pending=null;aiChat.messages.push({role:'assistant',text:'이전 요청이 중단됐어요. 다시 시도할 수 있어요.',choices:[{label:'다시 시도',action:'retry',value:pending}]});aiSave();}
   function aiReply(text,choices=[],preview=null){aiChat.messages.push({role:'assistant',text,choices,preview});aiSave();renderAiChat();}
+  function revealMotion(element,duration=180,distance=4){
+    if(!element||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    element.animate([{opacity:0,transform:`translateY(${distance}px)`},{opacity:1,transform:'translateY(0)'}],{duration,easing:'cubic-bezier(.22,1,.36,1)'});
+  }
   function aiButton(label,action,value){return {label,action,value};}
   function aiName(index){return state.recipients[index]?.name||'관리대상';}
   function aiAvailable(){return state.recipients.flatMap((person,index)=>person.active&&!person.deleted?[index]:[]);}
@@ -4888,10 +4924,16 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   function renderAiChat(){
     const page=$('.ai-chat-page');if(!page)return;
     const content=$('[data-ai-chat-content]',page);
-    content.innerHTML=aiChat.messages.length?`<div class="ai-chat-messages" aria-live="polite">${aiChat.messages.map((message,i)=>`<div class="ai-chat-message ${message.role}">${message.role==='assistant'?'<strong>케어릿 AI</strong>':''}${message.files?.map((file,j)=>`<span class="ai-chat-message-file">${aiFilePreviews.get(i)?.[j]?`<img src="${escapeHTML(aiFilePreviews.get(i)[j])}" alt="">`:''}${escapeHTML(typeof file==='string'?file:file.name)}</span>`).join('')||''}${message.text?`<p>${escapeHTML(message.text)}</p>`:''}${message.preview?`<button type="button" class="ai-chat-open-preview" data-action="ai-preview-open" data-message="${i}">${aiPreviewLabel(message.preview)} 보기 <span aria-hidden="true">›</span></button>`:''}${message.choices?.length&&!message.chosen?`<div class="ai-chat-choices">${message.choices.map((choice,j)=>choice.href?`<a class="ai-chat-choice" href="${escapeHTML(choice.href)}">${escapeHTML(choice.label)} <span aria-hidden="true">›</span></a>`:`<button type="button" class="ai-chat-choice" data-action="ai-chat-choice" data-message="${i}" data-choice="${j}">${escapeHTML(choice.label)} <span aria-hidden="true">›</span></button>`).join('')}</div>`:''}</div>`).join('')}${aiWork?'<div class="ai-chat-message assistant ai-chat-loading" role="status"><strong>케어릿 AI</strong><p>요청을 확인하고 있어요.</p><button type="button" data-action="ai-chat-stop">중단</button></div>':''}</div>`:`<div class="ai-chat-welcome"><img class="ai-chat-mark" src="${escapeHTML($('.brand-mark').getAttribute('src'))}" alt=""><h2>무엇을 도와드릴까요?</h2><p>케어릿 사용부터 돌봄 기록까지, 편하게 요청해 주세요.</p><div class="ai-chat-suggestions">${aiSuggestions.map(([question],i)=>`<button type="button" data-action="ai-chat-suggest" data-index="${i}"><span>${escapeHTML(question)}</span><span aria-hidden="true">›</span></button>`).join('')}</div></div>`;
+    const previousCount=$$('.ai-chat-message:not(.ai-chat-loading)',content).length,alreadyRendered=content.dataset.motionReady==='true';
+    content.innerHTML=aiChat.messages.length?`<div class="ai-chat-messages" aria-live="polite">${aiChat.messages.map((message,i)=>`<div class="ai-chat-message ${message.role}">${message.role==='assistant'?'<strong>케어릿 AI</strong>':''}${message.files?.map((file,j)=>`<span class="ai-chat-message-file">${aiFilePreviews.get(i)?.[j]?`<img src="${escapeHTML(aiFilePreviews.get(i)[j])}" alt="">`:''}${escapeHTML(typeof file==='string'?file:file.name)}</span>`).join('')||''}${message.text?`<p>${escapeHTML(message.text)}</p>`:''}${message.preview?`<button type="button" class="ai-chat-open-preview" data-action="ai-preview-open" data-message="${i}"><span>${aiPreviewLabel(message.preview)} 보기</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>`:''}${message.choices?.length&&!message.chosen?`<div class="ai-chat-choices">${message.choices.map((choice,j)=>choice.href?`<a class="ai-chat-choice" href="${escapeHTML(choice.href)}">${escapeHTML(choice.label)} <span aria-hidden="true">›</span></a>`:`<button type="button" class="ai-chat-choice" data-action="ai-chat-choice" data-message="${i}" data-choice="${j}">${escapeHTML(choice.label)} <span aria-hidden="true">›</span></button>`).join('')}</div>`:''}</div>`).join('')}${aiWork?'<div class="ai-chat-message assistant ai-chat-loading" role="status"><strong>케어릿 AI</strong><p>요청을 확인하고 있어요.</p><button type="button" data-action="ai-chat-stop">중단</button></div>':''}</div>`:`<div class="ai-chat-welcome"><img class="ai-chat-mark" src="${escapeHTML($('.brand-mark').getAttribute('src'))}" alt=""><h2>무엇을 도와드릴까요?</h2><p>케어릿 사용부터 돌봄 기록까지, 편하게 요청해 주세요.</p><div class="ai-chat-suggestions">${aiSuggestions.map(([question],i)=>`<button type="button" data-action="ai-chat-suggest" data-index="${i}"><span>${escapeHTML(question)}</span><span aria-hidden="true">›</span></button>`).join('')}</div></div>`;
     renderAiAttachments();renderAiPreview();
     const submit=$('.ai-chat-send',page);if(submit)submit.disabled=!!aiWork;
     if(aiChat.messages.length)content.scrollTop=content.scrollHeight;
+    if(alreadyRendered&&aiChat.messages.length>previousCount)requestAnimationFrame(()=>{
+      if(!content.isConnected)return;
+      $$('.ai-chat-message:not(.ai-chat-loading)',content).slice(previousCount).forEach(message=>revealMotion(message));
+    });
+    content.dataset.motionReady='true';
   }
   function renderAiPreview(){
     const panel=$('.ai-chat-preview');if(!panel)return;
@@ -4899,7 +4941,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const handle=$('[data-ai-resize]');if(handle)handle.hidden=panel.hidden||!matchMedia('(min-width:768px)').matches;
     if(panel.hidden){if(aiSplitObserved){aiSplitObserver.disconnect();aiSplitObserved=null;}return;}
     const journal=preview.kind==='journal',journalTemplate=preview.kind==='journal-template',reportTemplate=preview.kind==='report-template'||preview.kind==='report-template-new';
-    if(!panel.dataset.ready){panel.innerHTML='<header class="ai-preview-header"><button type="button" data-action="ai-preview-close" aria-label="대화로 돌아가기">‹</button><strong></strong></header><div class="ai-preview-frames"></div>';panel.dataset.ready='true';}
+    if(!panel.dataset.ready){panel.innerHTML='<header class="ai-preview-header"><button type="button" data-action="ai-preview-close" aria-label="대화로 돌아가기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><strong></strong></header><div class="ai-preview-frames"></div>';panel.dataset.ready='true';}
     $('.ai-preview-header strong',panel).textContent=journal?'일지 작성':aiPreviewLabel(preview);
     const key=aiFrameKey(preview);
     let frame=$$('iframe',panel).find(item=>item.dataset.key===key);
@@ -5316,11 +5358,13 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   function setJournalAiView(fieldId,view) {
     const item=journalAiComparison?.fields.find(entry=>entry.field.id===fieldId);if(!item)return;
     const {field,original}=item,container=field.parentElement,preview=container.querySelector('.journal-ai-original');
+    const changed=field.hidden!==(view==='original');
     field.hidden=view==='original';preview.hidden=view!=='original';preview.textContent=original;
     const counter=document.getElementById(`${field.id}-limit`);
     if(view==='original'&&counter&&field.maxLength>0)counter.textContent=`${original.length.toLocaleString('ko-KR')}/${field.maxLength.toLocaleString('ko-KR')}자`;
     else if(view==='result')updateCounter(field);
     $$('[data-ai-view]',container).forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.aiView===view)));
+    if(changed)revealMotion(view==='original'?preview:field,160,0);
   }
   function startJournalAiComparison(fields) {
     journalAiComparison={fields:fields.map(field=>({field,original:field.value}))};

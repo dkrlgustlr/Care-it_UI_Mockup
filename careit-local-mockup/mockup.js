@@ -649,6 +649,10 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   });
   if(!aiEmbed&&aiChat.pending){const pending=aiChat.pending;aiChat.pending=null;aiChat.messages.push({role:'assistant',text:'이전 요청이 중단됐어요. 다시 시도할 수 있어요.',choices:[{label:'다시 시도',action:'retry',value:pending}]});aiSave();}
   function aiReply(text,choices=[],preview=null){aiChat.messages.push({role:'assistant',text,choices,preview});aiSave();renderAiChat();}
+  function revealMotion(element,duration=180,distance=4){
+    if(!element||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    element.animate([{opacity:0,transform:`translateY(${distance}px)`},{opacity:1,transform:'translateY(0)'}],{duration,easing:'cubic-bezier(.22,1,.36,1)'});
+  }
   function aiButton(label,action,value){return {label,action,value};}
   function aiName(index){return state.recipients[index]?.name||'관리대상';}
   function aiAvailable(){return state.recipients.flatMap((person,index)=>person.active&&!person.deleted?[index]:[]);}
@@ -658,10 +662,16 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   function renderAiChat(){
     const page=$('.ai-chat-page');if(!page)return;
     const content=$('[data-ai-chat-content]',page);
-    content.innerHTML=aiChat.messages.length?`<div class="ai-chat-messages" aria-live="polite">${aiChat.messages.map((message,i)=>`<div class="ai-chat-message ${message.role}">${message.role==='assistant'?'<strong>케어릿 AI</strong>':''}${message.files?.map((file,j)=>`<span class="ai-chat-message-file">${aiFilePreviews.get(i)?.[j]?`<img src="${escapeHTML(aiFilePreviews.get(i)[j])}" alt="">`:''}${escapeHTML(typeof file==='string'?file:file.name)}</span>`).join('')||''}${message.text?`<p>${escapeHTML(message.text)}</p>`:''}${message.preview?`<button type="button" class="ai-chat-open-preview" data-action="ai-preview-open" data-message="${i}">${aiPreviewLabel(message.preview)} 보기 <span aria-hidden="true">›</span></button>`:''}${message.choices?.length&&!message.chosen?`<div class="ai-chat-choices">${message.choices.map((choice,j)=>choice.href?`<a class="ai-chat-choice" href="${escapeHTML(choice.href)}">${escapeHTML(choice.label)} <span aria-hidden="true">›</span></a>`:`<button type="button" class="ai-chat-choice" data-action="ai-chat-choice" data-message="${i}" data-choice="${j}">${escapeHTML(choice.label)} <span aria-hidden="true">›</span></button>`).join('')}</div>`:''}</div>`).join('')}${aiWork?'<div class="ai-chat-message assistant ai-chat-loading" role="status"><strong>케어릿 AI</strong><p>요청을 확인하고 있어요.</p><button type="button" data-action="ai-chat-stop">중단</button></div>':''}</div>`:`<div class="ai-chat-welcome"><img class="ai-chat-mark" src="${escapeHTML($('.brand-mark').getAttribute('src'))}" alt=""><h2>무엇을 도와드릴까요?</h2><p>케어릿 사용부터 돌봄 기록까지, 편하게 요청해 주세요.</p><div class="ai-chat-suggestions">${aiSuggestions.map(([question],i)=>`<button type="button" data-action="ai-chat-suggest" data-index="${i}"><span>${escapeHTML(question)}</span><span aria-hidden="true">›</span></button>`).join('')}</div></div>`;
+    const previousCount=$$('.ai-chat-message:not(.ai-chat-loading)',content).length,alreadyRendered=content.dataset.motionReady==='true';
+    content.innerHTML=aiChat.messages.length?`<div class="ai-chat-messages" aria-live="polite">${aiChat.messages.map((message,i)=>`<div class="ai-chat-message ${message.role}">${message.role==='assistant'?'<strong>케어릿 AI</strong>':''}${message.files?.map((file,j)=>`<span class="ai-chat-message-file">${aiFilePreviews.get(i)?.[j]?`<img src="${escapeHTML(aiFilePreviews.get(i)[j])}" alt="">`:''}${escapeHTML(typeof file==='string'?file:file.name)}</span>`).join('')||''}${message.text?`<p>${escapeHTML(message.text)}</p>`:''}${message.preview?`<button type="button" class="ai-chat-open-preview" data-action="ai-preview-open" data-message="${i}"><span>${aiPreviewLabel(message.preview)} 보기</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>`:''}${message.choices?.length&&!message.chosen?`<div class="ai-chat-choices">${message.choices.map((choice,j)=>choice.href?`<a class="ai-chat-choice" href="${escapeHTML(choice.href)}">${escapeHTML(choice.label)} <span aria-hidden="true">›</span></a>`:`<button type="button" class="ai-chat-choice" data-action="ai-chat-choice" data-message="${i}" data-choice="${j}">${escapeHTML(choice.label)} <span aria-hidden="true">›</span></button>`).join('')}</div>`:''}</div>`).join('')}${aiWork?'<div class="ai-chat-message assistant ai-chat-loading" role="status"><strong>케어릿 AI</strong><p>요청을 확인하고 있어요.</p><button type="button" data-action="ai-chat-stop">중단</button></div>':''}</div>`:`<div class="ai-chat-welcome"><img class="ai-chat-mark" src="${escapeHTML($('.brand-mark').getAttribute('src'))}" alt=""><h2>무엇을 도와드릴까요?</h2><p>케어릿 사용부터 돌봄 기록까지, 편하게 요청해 주세요.</p><div class="ai-chat-suggestions">${aiSuggestions.map(([question],i)=>`<button type="button" data-action="ai-chat-suggest" data-index="${i}"><span>${escapeHTML(question)}</span><span aria-hidden="true">›</span></button>`).join('')}</div></div>`;
     renderAiAttachments();renderAiPreview();
     const submit=$('.ai-chat-send',page);if(submit)submit.disabled=!!aiWork;
     if(aiChat.messages.length)content.scrollTop=content.scrollHeight;
+    if(alreadyRendered&&aiChat.messages.length>previousCount)requestAnimationFrame(()=>{
+      if(!content.isConnected)return;
+      $$('.ai-chat-message:not(.ai-chat-loading)',content).slice(previousCount).forEach(message=>revealMotion(message));
+    });
+    content.dataset.motionReady='true';
   }
   function renderAiPreview(){
     const panel=$('.ai-chat-preview');if(!panel)return;
@@ -669,7 +679,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const handle=$('[data-ai-resize]');if(handle)handle.hidden=panel.hidden||!matchMedia('(min-width:768px)').matches;
     if(panel.hidden){if(aiSplitObserved){aiSplitObserver.disconnect();aiSplitObserved=null;}return;}
     const journal=preview.kind==='journal',journalTemplate=preview.kind==='journal-template',reportTemplate=preview.kind==='report-template'||preview.kind==='report-template-new';
-    if(!panel.dataset.ready){panel.innerHTML='<header class="ai-preview-header"><button type="button" data-action="ai-preview-close" aria-label="대화로 돌아가기">‹</button><strong></strong></header><div class="ai-preview-frames"></div>';panel.dataset.ready='true';}
+    if(!panel.dataset.ready){panel.innerHTML='<header class="ai-preview-header"><button type="button" data-action="ai-preview-close" aria-label="대화로 돌아가기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><strong></strong></header><div class="ai-preview-frames"></div>';panel.dataset.ready='true';}
     $('.ai-preview-header strong',panel).textContent=journal?'일지 작성':aiPreviewLabel(preview);
     const key=aiFrameKey(preview);
     let frame=$$('iframe',panel).find(item=>item.dataset.key===key);
@@ -1086,11 +1096,13 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   function setJournalAiView(fieldId,view) {
     const item=journalAiComparison?.fields.find(entry=>entry.field.id===fieldId);if(!item)return;
     const {field,original}=item,container=field.parentElement,preview=container.querySelector('.journal-ai-original');
+    const changed=field.hidden!==(view==='original');
     field.hidden=view==='original';preview.hidden=view!=='original';preview.textContent=original;
     const counter=document.getElementById(`${field.id}-limit`);
     if(view==='original'&&counter&&field.maxLength>0)counter.textContent=`${original.length.toLocaleString('ko-KR')}/${field.maxLength.toLocaleString('ko-KR')}자`;
     else if(view==='result')updateCounter(field);
     $$('[data-ai-view]',container).forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.aiView===view)));
+    if(changed)revealMotion(view==='original'?preview:field,160,0);
   }
   function startJournalAiComparison(fields) {
     journalAiComparison={fields:fields.map(field=>({field,original:field.value}))};

@@ -29,6 +29,7 @@ live_css = (ROOT / 'assets/live.css').read_text(encoding='utf-8').replace('./Pre
 html = html.replace('<link rel="stylesheet" href="assets/live.css">', '<style id="live-styles">' + live_css + '</style>')
 html = html.replace('<link rel="stylesheet" href="iep.css">', '<style id="iep-styles">' + (ROOT / 'iep.css').read_text(encoding='utf-8') + '</style>')
 html = html.replace('<link rel="stylesheet" href="quick-check.css">', '<style id="quick-check-styles">' + (ROOT / 'quick-check.css').read_text(encoding='utf-8') + '</style>')
+html = html.replace('<link rel="stylesheet" href="motion.css">', '<style id="motion-styles">' + (ROOT / 'motion.css').read_text(encoding='utf-8') + '</style>')
 html = html.replace('assets/logo.webp', 'data:image/webp;base64,' + logo)
 for asset in ('careit-home-banner-muted.png', 'careit-home-banner-muted-mobile.png'):
     encoded = base64.b64encode((ROOT / 'assets' / asset).read_bytes()).decode()

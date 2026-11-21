@@ -1,0 +1,29 @@
+/* 짧고 일관된 동작으로 상태 변화를 알려줍니다. */
+:root {
+  --motion:200ms;
+  --motion-hover:160ms;
+  --motion-popup:240ms;
+  --motion-popup-backdrop:200ms;
+  --motion-template-enter:200ms;
+}
+.pricing-card>.button,.pricing-hint>.button { --motion-hover:160ms; }
+
+@media (prefers-reduced-motion:no-preference) {
+  .app-layout .button,
+  .app-layout :is(.dropdown-trigger,.ai-chat-choice,.ai-chat-open-preview,.ai-chat-suggestions button,.ai-chat-input-row button,.journal-ai-controls button,.quick-check-slider-ticks button),
+  .app-layout :is(.record-tabs button,.app-bottom-nav a,.app-bottom-nav button) {
+    transition:transform 120ms var(--ease),background-color 150ms var(--ease),color 150ms var(--ease),border-color 150ms var(--ease),box-shadow 150ms var(--ease);
+  }
+  .app-layout .button:active:not(:disabled),
+  .app-layout :is(.dropdown-trigger,.ai-chat-choice,.ai-chat-open-preview,.ai-chat-suggestions button,.ai-chat-input-row button,.journal-ai-controls button,.quick-check-slider-ticks button,.record-tabs button,.app-bottom-nav a,.app-bottom-nav button):active:not(:disabled) {
+    transform:scale(.98);
+  }
+  .journal-choice-chips label:active>span { transform:scale(.98); }
+  .journal-choice-chips label>span { transition:transform 120ms var(--ease),background-color 150ms var(--ease),color 150ms var(--ease),border-color 150ms var(--ease); }
+  .app-layout details[open]>:not(summary) { animation:careit-reveal 220ms var(--ease) both; }
+  .mockup-listbox[popover]:popover-open { animation:careit-reveal 180ms var(--ease) both; }
+  .ai-chat-preview:not([hidden]) { animation:careit-panel-in 240ms var(--ease) both; }
+  .ai-chat-workspace.is-resizing .ai-chat-preview { animation:none; }
+}
+@keyframes careit-reveal { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+@keyframes careit-panel-in { from { opacity:0; transform:translateX(12px); } to { opacity:1; transform:none; } }
