@@ -999,9 +999,6 @@ body.mockup-editing [contenteditable=true]:focus { outline:2px solid #05a66b; ba
 body .app-content .journal-page .journal-memo-fields > .field { row-gap:0; }
 .journal-memo-fields .field-heading { box-sizing:border-box; min-height:52px; padding-bottom:8px; align-items:center; }
 @media (max-width:767px) {
-  .journal-memo-fields .field-heading:has(.journal-ai-controls) { flex-wrap:nowrap; }
-  .journal-memo-fields .field-heading:has(.journal-ai-controls) > label { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .journal-memo-fields .journal-ai-controls button { padding-inline:6px; font-size:12px; }
 }
 .report-recipient-change .button.primary:disabled { opacity:1; background:#78c8ae; color:#fff; box-shadow:none; cursor:not-allowed; }
 /* 라이브 팀 요금제 카드의 현재 목록형 정보 레이아웃 */
@@ -1769,7 +1766,8 @@ body[data-theme=dark] .app-content .settings-page .social-login-action[data-conn
 .ai-chat-page { display:flex; flex-direction:column; height:calc(100dvh - 76px); min-height:0; }
 .ai-chat-workspace { position:relative; flex:1; display:flex; min-height:0; overflow:hidden; }
 .ai-chat-main { display:flex; flex:1; flex-direction:column; min-width:0; min-height:0; max-width:760px; margin:0 auto; padding:24px; }
-.ai-chat-conversation { display:flex; flex:1; flex-direction:column; min-height:0; overflow:auto; scrollbar-color:transparent transparent; }
+.ai-chat-conversation { display:flex; flex:1; flex-direction:column; min-height:0; overflow-y:scroll; margin-right:calc(-1 * var(--ai-scrollbar-width, 0px)); scrollbar-color:transparent transparent; }
+.ai-chat-conversation::-webkit-scrollbar { width:16px; }
 .ai-chat-conversation.is-scrolling { scrollbar-color:#c5cfd5 transparent; }
 .ai-chat-welcome { width:100%; max-width:520px; margin:auto; text-align:center; }
 .ai-chat-mark { display:block; width:40px; height:40px; margin:0 auto 16px; object-fit:contain; }
@@ -1838,6 +1836,41 @@ html[data-ai-embed]:not([data-ai-embed=""]) .app-layout > main { width:100%; min
   .ai-chat-resizer:focus-visible { outline:2px solid var(--primary); outline-offset:-2px; border-radius:4px; }
   .ai-chat-workspace.is-resizing { cursor:col-resize; user-select:none; }
   .ai-chat-workspace.is-resizing iframe { pointer-events:none; }
+}
+
+/* 케어릿 AI는 현재 화면 옆에서 열리는 독립 패널입니다. */
+#ai-dock[hidden],.ai-dock-resizer[hidden] { display:none!important; }
+#ai-dock { position:sticky; top:0; z-index:12; display:flex; flex:0 0 var(--ai-chat-width,360px); flex-direction:column; width:var(--ai-chat-width,360px); min-width:320px; height:100dvh; background:var(--screen); border-right:1px solid var(--line); }
+.ai-dock-header { display:flex; flex:none; align-items:center; justify-content:space-between; min-height:60px; padding:8px 2px 8px 16px; border-bottom:1px solid var(--line); }
+.ai-dock-header strong { color:var(--text); font:700 16px/1.4 var(--font-sans); }
+.ai-dock-header button { display:grid; place-items:center; width:36px; height:36px; padding:0; border:0; border-radius:8px; background:transparent; color:var(--muted); font:400 24px/1 var(--font-sans); cursor:pointer; }
+.ai-dock-header button svg { width:16px; height:16px; }
+.ai-dock-header button:hover { background:var(--neutral-soft); }
+#ai-dock-content { display:flex; flex:1; min-height:0; }
+#ai-dock .ai-chat-page { flex:1; height:auto; min-width:0; min-height:0; }
+#ai-dock .ai-chat-workspace { height:100%; }
+#ai-dock .ai-chat-main { width:100%; max-width:none; margin:0; padding:20px 16px 24px; }
+.ai-dock-resizer { position:sticky; top:0; z-index:13; align-self:flex-start; flex:0 0 16px; height:100dvh; cursor:col-resize; touch-action:none; }
+.ai-dock-resizer::after { content:""; position:absolute; top:50%; left:6px; width:4px; height:40px; border-radius:4px; background:var(--line); transform:translateY(-50%); }
+.ai-dock-resizer:hover::after,.ai-dock-resizer:focus-visible::after,.app-layout.is-resizing .ai-dock-resizer::after { background:var(--muted); }
+.ai-dock-resizer:focus-visible { outline:2px solid var(--primary); outline-offset:-2px; }
+.app-layout.is-resizing { cursor:col-resize; user-select:none; }
+.app-layout.ai-dock-open>main { flex:1; min-width:0; }
+.ai-dock-launcher { display:none; }
+@media(min-width:768px) {
+  .app-layout.ai-dock-overlay #ai-dock { position:fixed; left:var(--ai-sidebar-width,0px); width:360px; max-width:calc(100vw - var(--ai-sidebar-width,0px)); box-shadow:0 4px 24px rgba(18,32,42,.14); }
+}
+@media(max-width:767px) {
+  #ai-dock { position:fixed; z-index:70; inset:0; width:100%; min-width:0; height:100dvh; padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom); border:0; }
+  .ai-dock-header { padding-right:4px; padding-left:18px; }
+  #ai-dock .ai-chat-main { padding:16px 18px 20px; }
+  .ai-dock-resizer { display:none!important; }
+  .app-layout.mockup-nav-collapsed:not(.ai-dock-open) .ai-dock-launcher { position:fixed; z-index:30; right:18px; bottom:calc(86px + env(safe-area-inset-bottom)); display:grid; place-items:center; width:48px; height:48px; padding:12px; border:0; border-radius:50%; background:var(--primary-action); color:#fff; box-shadow:var(--shadow-ui); }
+  .ai-dock-launcher svg { width:24px; height:24px; }
+}
+@media(min-width:768px) {
+  .app-layout.mockup-nav-collapsed:not(.ai-dock-open) .ai-dock-launcher { position:fixed; z-index:25; right:24px; bottom:24px; display:grid; place-items:center; width:48px; height:48px; padding:12px; border:0; border-radius:50%; background:var(--primary-action); color:#fff; box-shadow:var(--shadow-ui); }
+  .ai-dock-launcher svg { width:24px; height:24px; }
 }
 .app-content:has(.ai-chat-page) .site-footer { display:none; }
 @media(max-width:767px) {

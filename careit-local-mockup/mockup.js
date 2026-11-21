@@ -425,7 +425,13 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     confirmAction=onConfirm;
     if(!modal.open)modal.showModal();
   }
-  function cancelPendingNavigation(){pendingNavigation=null;confirmAction=null;$('#mockup-dialog').close();}
+  function cancelPendingNavigation(){if(aiPreviewNavigationPending)cancelAiPendingNavigation();pendingNavigation=null;confirmAction=null;$('#mockup-dialog').close();}
+  async function discardAndMove(){
+    if(aiEmbed&&route==='/journals/new'&&params.has('entry'))window.parent.postMessage({type:'careit-ai-discard-edit'},location.protocol==='file:'?'*':location.origin);
+    if(!aiEmbed&&route==='/journals/new'&&params.has('entry')){const preview=currentJournalPreview(),key=preview&&aiFrameKey(preview),draft=key&&aiChat.editDrafts?.[key];if(draft){delete aiChat.editDrafts[key];if(!await aiSave()){aiChat.editDrafts[key]=draft;return;}}}
+    if(route==='/ai-chat'){aiTemplateDirty.clear();aiTemplatePendingNavigation=null;}
+    const move=pendingNavigation;pendingNavigation=null;confirmAction=null;$('#mockup-dialog').close();const previous=location.hash;navigationApproved=true;move?.();if(location.hash===previous)navigationApproved=false;
+  }
   $('#mockup-dialog').addEventListener('click',event=>{if(!pendingNavigation||event.target!==event.currentTarget)return;const rect=event.currentTarget.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)cancelPendingNavigation();});
   $('#mockup-dialog').addEventListener('cancel',event=>{if(pendingNavigation){event.preventDefault();cancelPendingNavigation();}});
   function applyDesign() {
@@ -527,7 +533,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     $$('dialog[open]').forEach(x => x.close());
     const hash = location.hash.slice(1) || '/';
     [route] = hash.split('?'); params = new URLSearchParams(hash.split('?')[1] || '');
-    if(route!=='/ai-chat'&&aiSplitObserved){aiSplitObserver.disconnect();aiSplitObserved=null;aiSplitDrag=null;}
+    if(route==='/ai-chat'&&!aiEmbed){state.aiPanelOpen=true;route='/';params=new URLSearchParams();history.replaceState(null,'','#/');}
     if(['/','/journals/new','/reports'].includes(route)&&state.recipients.filter(r=>r.active&&!r.deleted).length>mockupRecipientCapacity(state,currentDate())){routeTo('#/recipients');return;}
     if(route==='/journals/new'){
       const raw=Number(params.get('recipient')||0),requested=Number.isInteger(raw)&&raw>=0?raw:0;
@@ -544,7 +550,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if (!template) { dialog('화면 범위 안내', '<p>이 페이지는 이번 목업에 포함되지 않았습니다. 주요 메뉴 화면에서 작업해 주세요.</p>'); return; }
     $('#screen').replaceChildren(template.content.cloneNode(true));
     const sidebarRoute = ['/settings/configuration','/recipients/scoring'].includes(route) ? '/recipients' : route.startsWith('/settings/') ? '/settings' : route;
-    $$('.sidebar nav a').forEach(a => { const current = a.dataset.route === sidebarRoute; a.classList.toggle('active', current); if (current) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
+    $$('.sidebar nav a').forEach(a => { const current = a.dataset.route === sidebarRoute; a.classList.toggle('active', current||(a.dataset.route==='/ai-chat'&&!!state.aiPanelOpen)); if (current) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
     const couponLink=$('.sidebar-tools a[data-route="/coupons"]');
     if(route==='/coupons')couponLink.setAttribute('aria-current','page');else couponLink.removeAttribute('aria-current');
     syncSidebarProfile();
@@ -556,7 +562,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       $('[data-notice-title]').textContent=mockupNotice.title;
       if ($('[data-notice-summary]')) $('[data-notice-summary]').textContent=mockupNotice.summary;
     }
-    if (route === '/journals/new') prepareJournal();
+    if (route === '/journals/new') {prepareJournal();if(!aiEmbed)restorePreviousAiJournalDraft();}
     if (route === '/iep') iep.mount($('.iep-page'),recipient);
     if (route === '/records') {recordTab=['journals','reports','trash'].includes(params.get('tab'))?params.get('tab'):'journals';updateRecordFilters(); renderRecords(); }
     if (route === '/recipients') {if(['recipients','journal','report'].includes(params.get('tab')))recipientTab=params.get('tab');renderRecipients();}
@@ -587,6 +593,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     syncAppNavigation();
     registerEdits(); window.scrollTo(0,0); requestAnimationFrame(()=>{scaleReports();updateMobileScrollTitle();});
     if(aiEmbed&&route==='/journals/new')queueMicrotask(aiEmbedNotifyDraft);
+    if(!aiEmbed)queueMicrotask(flushAiPage);
     if (route === '/plans' && !mockupActivePlan(state,currentDate()) && ['starter','team','pro'].includes(params.get('plan'))) openPlanCheckout(params.get('plan'));
   }
   const aiSuggestions=[
@@ -599,7 +606,14 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   // AI 요청은 고정 규칙으로 시연하며, 파일이나 기록을 외부로 보내지 않습니다.
   state.aiChatDemo ||= {messages:[],flow:null,preview:null,previewOpen:false};
   const aiChat=state.aiChatDemo,aiPendingFiles=[],aiFilePreviews=new Map();
-  let aiWork=null,aiPendingFrameAction=null,aiPendingTemplateActions=[],aiSplitDrag=null,aiSplitObserved=null;
+  let aiWork=null,aiPendingFrameAction=null,aiPendingTemplateActions=[],aiPreviewNavigationPending=false,aiSplitDrag=null,aiSplitObserved=null,aiDockOpener=null;
+  if(!aiEmbed){
+    const fragment=$('#page-ai-chat').content.cloneNode(true);
+    $('.ai-chat-preview',fragment)?.remove();$('.ai-chat-resizer',fragment)?.remove();
+    $('#ai-dock-content').append(fragment);aiChat.previewOpen=false;
+    const conversation=$('.ai-chat-conversation',$('#ai-dock'));
+    new ResizeObserver(()=>conversation.style.setProperty('--ai-scrollbar-width',`${conversation.offsetWidth-conversation.clientWidth}px`)).observe(conversation);
+  }
   let aiScrollTimer;
   document.addEventListener('scroll',event=>{
     const content=event.target;
@@ -608,24 +622,45 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     aiScrollTimer=setTimeout(()=>content.classList.remove('is-scrolling'),1000);
   },true);
   const aiSave=()=>persist();
+  function setAiDock(open,focus=false){
+    const dock=$('#ai-dock');if(!dock||aiEmbed)return;
+    dock.hidden=!open;$('.app-layout').classList.toggle('ai-dock-open',open);
+    syncAiDockAccessibility();
+    $$('[data-action="ai-toggle"]').forEach(button=>{button.setAttribute('aria-expanded',String(open));if(button.matches('.ai-dock-launcher'))button.setAttribute('aria-label',open?'케어릿 AI 닫기':'케어릿 AI 열기');});
+    $('.sidebar a[data-route="/ai-chat"]')?.classList.toggle('active',open);
+    state.aiPanelOpen=open;aiSave();
+    if(open){renderAiChat();aiSplitObserver.observe($('.app-layout'));updateAiSplit();if(focus)$('#ai-chat-input')?.focus();}
+    else {aiSplitObserver.disconnect();updateAiSplit();if(focus){const rect=aiDockOpener?.getBoundingClientRect(),visible=rect&&rect.width&&rect.height&&rect.right>0&&rect.left<innerWidth;const fallback=$('.app-layout').classList.contains('mockup-nav-collapsed')?$('.ai-dock-launcher'):$('[data-action="ai-toggle"]:not(.ai-dock-launcher)');(visible?aiDockOpener:fallback)?.focus();}}
+  }
   const aiSplitObserver=new ResizeObserver(()=>updateAiSplit());
+  function syncAiDockAccessibility(){
+    const dock=$('#ai-dock');if(!dock||aiEmbed)return;
+    const modal=!dock.hidden&&matchMedia('(max-width:767px)').matches;
+    $('#main-content').inert=modal;$('.sidebar').inert=modal;
+    if(modal){dock.setAttribute('role','dialog');dock.setAttribute('aria-modal','true');}
+    else{dock.removeAttribute('role');dock.removeAttribute('aria-modal');}
+  }
   function updateAiSplit(requested){
-    const workspace=$('.ai-chat-workspace'),handle=$('[data-ai-resize]'),panel=$('.ai-chat-preview');
+    const workspace=$('.app-layout'),handle=$('[data-ai-resize]'),panel=$('#ai-dock');
     if(!workspace||!handle||!panel)return;
     const desktop=matchMedia('(min-width:768px)').matches;
-    handle.hidden=!desktop||panel.hidden;
+    const sidebar=$('.sidebar'),sidebarWidth=sidebar&&getComputedStyle(sidebar).display!=='none'?sidebar.getBoundingClientRect().width:0;
+    const min=320,mainMin=988,gutter=16,overlay=desktop&&!panel.hidden&&workspace.clientWidth-sidebarWidth<min+gutter+mainMin;
+    workspace.classList.toggle('ai-dock-overlay',overlay);
+    workspace.style.setProperty('--ai-sidebar-width',`${sidebarWidth}px`);
+    handle.hidden=!desktop||panel.hidden||overlay;
     if(handle.hidden)return;
-    const min=320,max=Math.max(min,workspace.clientWidth-16-360),stored=Number(aiChat.chatWidth);
-    const wanted=Number.isFinite(requested)?requested:(stored>0?stored:workspace.clientWidth*.48);
+    const max=workspace.clientWidth-sidebarWidth-gutter-mainMin,stored=Number(aiChat.chatWidth);
+    const wanted=Number.isFinite(requested)?requested:(stored>0?stored:360);
     const width=Math.round(Math.max(min,Math.min(max,wanted)));
     workspace.style.setProperty('--ai-chat-width',`${width}px`);
     handle.setAttribute('aria-valuemax',String(max));handle.setAttribute('aria-valuenow',String(width));handle.setAttribute('aria-valuetext',`대화창 ${width}px`);
     return width;
   }
-  window.addEventListener('resize',()=>updateAiSplit());
+  window.addEventListener('resize',()=>{syncAiDockAccessibility();updateAiSplit();});
   document.addEventListener('pointerdown',event=>{
     const handle=event.target.closest('[data-ai-resize]');if(!handle||handle.hidden||event.button!==0)return;
-    const workspace=handle.closest('.ai-chat-workspace');aiSplitDrag={id:event.pointerId,start:event.clientX,width:Number(handle.getAttribute('aria-valuenow'))};
+    const workspace=handle.closest('.app-layout');aiSplitDrag={id:event.pointerId,start:event.clientX,width:Number(handle.getAttribute('aria-valuenow'))};
     handle.setPointerCapture(event.pointerId);workspace.classList.add('is-resizing');handle.focus();event.preventDefault();
   });
   document.addEventListener('pointermove',event=>{
@@ -634,7 +669,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   });
   function finishAiSplit(event,cancelled=false){
     if(!aiSplitDrag||event.pointerId!==aiSplitDrag.id)return;
-    $('.ai-chat-workspace')?.classList.remove('is-resizing');
+    $('.app-layout')?.classList.remove('is-resizing');
     if(cancelled)updateAiSplit(aiSplitDrag.width);
     else if(aiSplitDrag.current!=null){aiChat.chatWidth=aiSplitDrag.current;aiSave();}
     aiSplitDrag=null;
@@ -658,7 +693,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   function aiAvailable(){return state.recipients.flatMap((person,index)=>person.active&&!person.deleted?[index]:[]);}
   function aiRecipientChoices(){return aiAvailable().map(index=>aiButton(aiName(index),'recipient',index));}
   function aiFrameKey(preview){const key=[preview.kind,preview.recipient,preview.date||'',preview.reportId||'',preview.entry??''];if(preview.kind==='journal-template'||preview.kind?.startsWith('report-template'))key.push(preview.template??'',preview.draftId||'');return JSON.stringify(key);}
-  function aiPreviewLabel(preview){return ({journal:'일지',report:'리포트','journal-template':'일지 양식','report-template':'리포트 채점 기준','report-template-new':'새 리포트 기준'})[preview.kind]||'작업';}
+  function aiPreviewLabel(preview){return ({journal:'일지',report:'리포트',records:'기록','journal-template':'일지 양식','report-template':'리포트 채점 기준','report-template-new':'새 리포트 기준'})[preview.kind]||'작업';}
   function renderAiChat(){
     const page=$('.ai-chat-page');if(!page)return;
     const content=$('[data-ai-chat-content]',page);
@@ -673,30 +708,40 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     });
     content.dataset.motionReady='true';
   }
-  function renderAiPreview(){
-    const panel=$('.ai-chat-preview');if(!panel)return;
-    const preview=aiChat.preview;panel.hidden=!aiChat.previewOpen||!preview;
-    const handle=$('[data-ai-resize]');if(handle)handle.hidden=panel.hidden||!matchMedia('(min-width:768px)').matches;
-    if(panel.hidden){if(aiSplitObserved){aiSplitObserver.disconnect();aiSplitObserved=null;}return;}
-    const journal=preview.kind==='journal',journalTemplate=preview.kind==='journal-template',reportTemplate=preview.kind==='report-template'||preview.kind==='report-template-new';
-    if(!panel.dataset.ready){panel.innerHTML='<header class="ai-preview-header"><button type="button" data-action="ai-preview-close" aria-label="대화로 돌아가기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><strong></strong></header><div class="ai-preview-frames"></div>';panel.dataset.ready='true';}
-    $('.ai-preview-header strong',panel).textContent=journal?'일지 작성':aiPreviewLabel(preview);
-    const key=aiFrameKey(preview);
-    let frame=$$('iframe',panel).find(item=>item.dataset.key===key);
-    if(!frame){
-      frame=document.createElement('iframe');frame.dataset.kind=preview.kind;frame.dataset.key=key;frame.title=aiPreviewLabel(preview)+' 화면';
-      const url=new URL(location.href),query=new URLSearchParams({recipient:String(preview.recipient)});url.search='';url.searchParams.set('aiEmbed',preview.kind);
-      if(journal&&preview.date)query.set('date',preview.date);if(journal&&preview.entry!=null)query.set('entry',String(preview.entry));
-      if(!journal&&preview.reportId)query.set('report',preview.reportId);if(!journal&&preview.from)query.set('from',preview.from);
-      if(journalTemplate){query.set('template',String(Number(preview.template)+1));}
-      if(reportTemplate){query.set('mode','common');if(preview.kind==='report-template-new')query.set('new','1');else query.set('template',String(preview.template));}
-      url.hash=`#/${journal?'journals/new':journalTemplate?'settings/configuration':reportTemplate?'recipients/scoring':'reports'}?${query}`;frame.src=url.href;
-      $('.ai-preview-frames',panel).append(frame);
+  function aiPreviewHash(preview){
+    const query=new URLSearchParams();
+    if(preview.kind==='records'){query.set('recipient','all');return '#/records?'+query;}
+    if(preview.kind==='journal'){
+      query.set('recipient',String(preview.recipient));
+      if(preview.date)query.set('date',preview.date);
+      if(preview.entry!=null)query.set('entry',String(preview.entry));
+      return '#/journals/new?'+query;
     }
-    $$('iframe',panel).forEach(item=>item.hidden=item!==frame);
-    const workspace=panel.closest('.ai-chat-workspace');if(aiSplitObserved!==workspace){aiSplitObserver.disconnect();aiSplitObserved=workspace;aiSplitObserver.observe(workspace);}updateAiSplit();
+    if(preview.kind==='journal-template'){query.set('template',String(Number(preview.template)+1));return '#/settings/configuration?'+query;}
+    if(preview.kind==='report-template'||preview.kind==='report-template-new'){
+      query.set('mode','common');if(preview.kind==='report-template-new')query.set('new','1');else query.set('template',String(preview.template));
+      return '#/recipients/scoring?'+query;
+    }
+    query.set('recipient',String(preview.recipient));if(preview.reportId)query.set('report',preview.reportId);if(preview.from)query.set('from',preview.from);
+    return '#/reports?'+query;
   }
-  function aiOpenPreview(preview,open=true){if(aiTemplateDirty.size&&!aiTemplateDirty.has(aiFrameKey(preview))){aiReply('현재 편집 중인 양식을 먼저 저장해 주세요.',[],aiChat.preview);return;}aiChat.preview={...preview};aiChat.previewOpen=open;if(preview.kind==='journal-template'||preview.kind?.startsWith('report-template'))aiChat.flow={type:'template-editor',stage:'editing',kind:preview.kind,template:preview.template};aiSave();renderAiChat();}
+  function aiPreviewIsCurrent(preview){
+    if(!preview)return false;
+    if(preview.kind==='records')return route==='/records';
+    if(preview.kind==='journal')return route==='/journals/new'&&recipient===preview.recipient&&(preview.entry!=null?params.get('entry')===String(preview.entry):!params.has('entry')&&(!preview.date||$('[data-action="date"]')?.dataset.value===preview.date));
+    if(preview.kind==='journal-template')return route==='/settings/configuration'&&Number(params.get('template')||1)===Number(preview.template)+1;
+    if(preview.kind==='report-template-new')return route==='/recipients/scoring'&&params.has('new');
+    if(preview.kind==='report-template')return route==='/recipients/scoring'&&params.get('mode')==='common'&&params.get('template')===String(preview.template);
+    return route==='/reports'&&recipient===preview.recipient&&(!preview.reportId||params.get('report')===preview.reportId);
+  }
+  function renderAiPreview(){
+    const preview=aiChat.preview;if(!aiChat.previewOpen||!preview)return;
+    aiChat.previewOpen=false;
+    if(aiPreviewIsCurrent(preview))return;
+    const target=aiPreviewHash(preview);if(location.hash!==target){aiPreviewNavigationPending=true;routeTo(target);}
+  }
+  function cancelAiPendingNavigation(){aiPreviewNavigationPending=false;aiPendingFrameAction=null;aiPendingTemplateActions=[];if(aiChat.flow?.pendingPolish)delete aiChat.flow.pendingPolish;aiChat.previewOpen=false;aiChat.flow=null;}
+  function aiOpenPreview(preview,open=true){if(aiTemplateDirty.size&&!aiTemplateDirty.has(aiFrameKey(preview))){aiReply('현재 편집 중인 양식을 먼저 저장해 주세요.',[],aiChat.preview);return;}aiChat.preview={...preview};aiChat.previewOpen=open;if(preview.kind==='journal-template'||preview.kind?.startsWith('report-template'))aiChat.flow={type:'template-editor',stage:'editing',kind:preview.kind,template:preview.template};else if(preview.kind==='records')aiChat.flow=null;aiSave();renderAiChat();}
   function aiOpenTemplate(kind,index,goal=''){
     if(aiTemplateDirty.size){aiReply('현재 편집 중인 양식을 먼저 저장해 주세요.',[],aiChat.preview);return;}
     const preview={kind,template:index,...(kind==='report-template-new'?{draftId:String(Date.now())}:{})};
@@ -706,11 +751,50 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     aiReply(kind==='report-template-new'?'예시 관찰 문항을 초안으로 준비했어요. 내용을 확인하고 수정한 뒤 저장해 주세요.':`${aiPreviewLabel(preview)}을 열었어요. 이 공통 양식에 연결된 관리대상은 ${affected}명이에요. 변경할 내용을 알려주거나 화면에서 직접 수정해 주세요.`,[],preview);
     if(kind==='report-template-new')aiTemplateCommand({action:'create',goal});
   }
+  function executeAiTemplateCommand(command){
+    let message='';
+        if(route==='/settings/configuration'&&command.action==='replace'){
+          const inputs=$$('#configuration-form input'),matches=inputs.filter(input=>input.value.trim()===command.from);
+          if(matches.length!==1)message='일치하는 일지 항목을 하나 찾지 못했어요. 항목 이름을 정확히 알려주세요.';
+          else if(!command.to||command.to.length>12)message='일지 항목 이름은 12자 이내로 입력해 주세요.';
+          else{matches[0].value=command.to;matches[0].dispatchEvent(new Event('input',{bubbles:true}));message='일지 양식 초안에 반영했어요. 오른쪽에서 확인하고 저장해 주세요.';}
+        }else if(route==='/recipients/scoring'){
+          readScoreDraft();
+          if(command.action==='create'&&params.has('new')){
+            const situation=/식사|간식/.test(command.goal)?'식사':/산책|외출/.test(command.goal)?'산책':/놀이/.test(command.goal)?'놀이':'';
+            scoreDraft={title:situation?`${situation} 관찰 기준`:'관찰 기준 초안',domains:[
+              {name:'의사소통',questions:['원하는 활동이나 물건을 자신의 방식으로 표현한다.','익숙한 사람의 말이나 안내에 반응한다.','도움이 필요할 때 자신의 방식으로 요청한다.','활동을 선택할 때 말이나 몸짓으로 의사를 표현한다.','상대의 표현을 보고 반응을 주고받는다.']},
+              {name:'사회관계',questions:['다른 사람의 놀이에 관심을 보인다.','익숙한 사람과 함께 활동에 참여한다.','놀이 중 다른 사람의 행동을 살펴본다.','도움이나 제안을 받았을 때 반응한다.','함께 사용하는 물건이나 공간을 경험한다.']},
+              {name:'활동 참여',questions:['관심 있는 활동을 선택한다.','활동에 필요한 재료를 살펴본다.','익숙한 활동의 순서를 경험한다.','필요할 때 휴식이나 도움을 표현한다.','활동을 마칠 때 자신의 방식으로 반응한다.']}]};
+            if(situation)scoreDraft.domains.forEach(domain=>domain.questions=domain.questions.map(question=>question.replaceAll('활동',`${situation} 활동`)));
+            scoreCurrentDomain=0;drawScoring();message='고정된 예시 문항을 초안으로 넣었어요. 요청한 상황에 맞게 직접 확인하고 고쳐 주세요.';
+          }else if(command.action==='replace'){
+            const matches=[];scoreDraft.domains.forEach((domain,i)=>{if(domain.name===command.from)matches.push({i,j:-1});domain.questions.forEach((q,j)=>{if(q===command.from)matches.push({i,j});});});
+            if(matches.length!==1)message='같은 이름이나 문항을 하나 찾지 못했어요. 전체 문구를 정확히 알려주세요.';
+            else if(!command.to||command.to.length>(matches[0].j<0?40:80))message='영역 이름은 40자, 문항은 80자 이내로 입력해 주세요.';
+            else{const {i,j}=matches[0];if(j<0)scoreDraft.domains[i].name=command.to;else scoreDraft.domains[i].questions[j]=command.to;scoreCurrentDomain=i;drawScoring();message='리포트 기준 초안에 반영했어요. 오른쪽에서 확인하고 저장해 주세요.';}
+          }else if(command.action==='add-question'){
+            const matches=command.area?scoreDraft.domains.map((domain,i)=>domain.name===command.area?i:-1).filter(i=>i>=0):[scoreCurrentDomain],i=matches[0];
+            if(matches.length!==1)message='추가할 영역을 하나 찾지 못했어요. 영역 이름을 정확히 알려주세요.';
+            else if(!command.text||command.text.length>80)message='문항은 80자 이내로 입력해 주세요.';
+            else if(scoreDraft.domains[i].questions.length>=15)message='한 영역에는 문항을 15개까지 추가할 수 있어요.';
+            else{scoreDraft.domains[i].questions.push(command.text);scoreCurrentDomain=i;drawScoring();message='문항을 초안에 추가했어요. 오른쪽에서 확인하고 저장해 주세요.';}
+          }else if(command.action==='delete-question'){
+            const matches=[];scoreDraft.domains.forEach((domain,i)=>{if(command.area&&domain.name!==command.area)return;domain.questions.forEach((question,j)=>{if(question===command.text)matches.push({i,j});});});
+            if(matches.length!==1)message='삭제할 문항을 하나 찾지 못했어요. 전체 문구와 영역을 정확히 알려주세요.';
+            else{const {i,j}=matches[0];scoreDraft.domains[i].questions.splice(j,1);scoreCurrentDomain=i;drawScoring();message='문항을 초안에서 삭제했어요. 영역당 문항이 5개 이상인지 확인하고 저장해 주세요.';}
+          }
+        }
+    return message||'이 편집 화면에서는 해당 요청을 처리할 수 없어요.';
+  }
   function aiTemplateCommand(command){
-    const preview=aiChat.preview,key=preview&&aiFrameKey(preview),frame=key&&$$('.ai-chat-preview iframe').find(item=>item.dataset.key===key);
-    if(!frame){aiReply('편집 화면을 다시 열어 주세요.');return;}
-    if(frame.dataset.ready!=='true'){aiPendingTemplateActions.push({key,command});return;}
-    frame.contentWindow.postMessage({type:'careit-ai-template-command',command},location.protocol==='file:'?'*':location.origin);
+    const preview=aiChat.preview;if(!preview)return;
+    if(!aiPreviewIsCurrent(preview)){
+      if(location.hash===aiPreviewHash(preview))aiPendingTemplateActions.push({key:aiFrameKey(preview),command});
+      else aiReply('편집할 양식을 먼저 열어 주세요.',[],preview);
+      return;
+    }
+    aiReply(executeAiTemplateCommand(command),[],preview);
   }
   function finishAiTemplateNavigation(){
     if(!aiTemplatePendingNavigation)return;
@@ -738,10 +822,15 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     aiReply('예를 들어 “학습 · 활동”을 “놀이 · 활동”으로 바꿔줘처럼 변경할 문구를 알려주세요. 리포트 문항은 “문항 내용” 추가해줘 또는 삭제해줘로 편집할 수 있어요.',[],aiChat.preview);
   }
   function aiUpdateFrame(value,expected=null){
-    const preview=aiChat.preview,frame=preview&&$$('.ai-chat-preview iframe').find(item=>item.dataset.key===aiFrameKey(preview));
-    if(!frame){aiReply('일지 화면을 열지 못했어요. 일지 보기를 눌러 다시 시도해 주세요.',[],preview);return;}
-    if(frame.dataset.ready!=='true'){aiPendingFrameAction={key:aiFrameKey(preview),value,expected};return;}
-    frame.contentWindow.postMessage({type:'careit-ai-apply',value,expected},location.protocol==='file:'?'*':location.origin);
+    const preview=aiChat.preview;if(!preview||preview.kind!=='journal')return;
+    if(!aiPreviewIsCurrent(preview)){
+      if(location.hash===aiPreviewHash(preview))aiPendingFrameAction={key:aiFrameKey(preview),value,expected};
+      else aiReply('일지 화면이 바뀌었어요. 현재 내용을 확인한 뒤 다시 요청해 주세요.',[],preview);
+      return;
+    }
+    const input=$('#journal-raw');
+    if(!input||input.readOnly||input.disabled||(expected!==null&&input.value!==expected)){aiReply('일지 내용이 바뀌었거나 수정할 수 없어요. 현재 내용을 확인한 뒤 다시 요청해 주세요.',[],preview);return;}
+    input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));syncAiJournal();aiReply('자유 메모에 반영했어요. 일지를 확인하고 저장해 주세요.',[],preview);
   }
   function renderAiAttachments(){
     const list=$('[data-ai-attachments]');if(!list)return;
@@ -759,8 +848,8 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       const existing=journalRows(index).findIndex(row=>row[0]===(flow.date||currentDate()));
       if(existing>=0&&!draft){flow.stage='existing-confirm';aiReply(`${aiName(index)}의 해당 날짜에 저장된 일지가 있어요. 기존 일지를 열어 수정할까요?`,[aiButton('기존 일지 수정','edit-existing',existing),aiButton('취소','cancel',null)]);return;}
       flow.stage='content';const preview={kind:'journal',recipient:index,date:flow.date||currentDate()};
-      aiChat.preview=preview;aiChat.previewOpen=!matchMedia('(max-width:767px)').matches;
-      aiReply(`${aiName(index)}의 ${formatDate(preview.date)} 일지예요. 오늘 있었던 활동이나 모습을 알려주세요.`,[],preview);return;
+      aiChat.preview=preview;aiChat.previewOpen=true;
+      aiReply(`${aiName(index)}의 ${formatDate(preview.date)} 일지예요. 오늘 있었던 활동이나 모습을 알려주세요.`,[],preview);if(flow.pendingPolish)queueAiPolish();return;
     }
     if(flow.type==='report'){
       if(flow.weekFrom){const from=flow.weekFrom;delete flow.weekFrom;aiChooseWeek(from);return;}
@@ -773,12 +862,12 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       aiReply(flow.type==='delete'?'어떤 일지를 휴지통으로 옮길까요?':'일지를 골라 주세요.',rows.map(({row,i})=>aiButton(`${formatShortDate(row[0])} · ${row[2].replace(/\s+/g,' ').slice(0,32)}`,'record',i)));return;
     }
   }
-  function aiStart(type,text){
+  function aiStart(type,text,intent=''){
     const active=aiAvailable(),explicit=text.match(/\d{4}[-.]\d{2}[-.]\d{2}/)?.[0]?.replaceAll('.','-'),date=explicit||(/어제/.test(text)?mockupAddDays(currentDate(),-1):currentDate());
     if(type==='journal'&&!mockupJournalDateAllowed(date,currentDate())){aiChat.flow={type,stage:'date',request:text};aiReply('새 일지는 오늘부터 3일 전까지 작성할 수 있어요. 날짜를 다시 알려주세요.');return;}
     const weekFrom=type==='report'?(explicit||(/지난주|저번 주/.test(text)?mockupReportWeek(currentDate(),-1).from:/이번\s*주/.test(text)?mockupReportWeek(currentDate()).from:'')):'';
     const recordRange=['records','delete'].includes(type)?(/지난주|저번 주/.test(text)?mockupReportWeek(currentDate(),-1):/이번\s*주/.test(text)?mockupReportWeek(currentDate()):explicit?{from:explicit,to:explicit}:null):null;
-    aiChat.flow={type,stage:'recipient',date,weekFrom,recordRange};
+    aiChat.flow={type,stage:'recipient',date,weekFrom,recordRange,...(intent==='polish'?{pendingPolish:true}:{})};
     if(!active.length){aiReply('먼저 활성 관리대상을 추가해 주세요.',[{label:'관리대상 추가하기',href:'#/recipients'}]);return;}
     const matching=active.filter(index=>text.includes(aiName(index)));
     if(matching.length===1||active.length===1){aiSelectRecipient(matching[0]??active[0]);return;}
@@ -834,6 +923,66 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(flow.entry!=null){const row=journalRows(flow.recipient)[flow.entry];return row?.values?.['journal-raw']??row?.[2]??'';}
     return state.drafts[flow.recipient]?.['journal-raw']||'';
   }
+  const aiJournalFields=[
+    ['journal-raw','journal-field-label-memo','자유 메모'],
+    ['journal-finalSocialEmotional','journal-field-label-socialEmotional','사회 · 정서'],
+    ['journal-finalLearningActivity','journal-field-label-learningActivity','학습 · 활동'],
+    ['journal-finalHealthSafety','journal-field-label-healthSafety','건강 · 안전'],
+    ['journal-finalSpecialNotes','journal-field-label-specialNotes','특이사항']
+  ];
+  function currentJournalPreview(){
+    if(route!=='/journals/new'||!$('#journal-raw'))return null;
+    const entry=params.get('entry');return {kind:'journal',recipient,...(entry!==null?{entry:Number(entry)}:{date:$('[data-action="date"]')?.dataset.value||currentDate()})};
+  }
+  function syncAiJournal(){
+    const preview=currentJournalPreview();if(!preview)return;
+    const all=captureDraft(false),allowed=new Set(aiJournalFields.flatMap(([id,labelId])=>[id,labelId]));
+    aiChat.currentJournal={key:aiFrameKey(preview),values:Object.fromEntries(Object.entries(all).filter(([id])=>allowed.has(id)))};
+    aiChat.currentRaw={key:aiFrameKey(preview),value:$('#journal-raw').value};
+    if(!aiPreviewNavigationPending&&aiChat.flow?.type==='journal'&&['content','editing'].includes(aiChat.flow.stage)&&aiChat.preview?.kind==='journal'){
+      aiChat.preview=preview;aiChat.flow.recipient=recipient;aiChat.flow.date=preview.date;if(preview.entry==null)delete aiChat.flow.entry;else aiChat.flow.entry=preview.entry;
+    }
+  }
+  function restorePreviousAiJournalDraft(){
+    const preview=currentJournalPreview();if(!preview||preview.entry==null)return;
+    const key=aiFrameKey(preview),draft=aiChat.editDrafts?.[key];if(!draft?.values)return;
+    if(draft.base&&draft.base!==journalSavedSnapshot){
+      (aiChat.conflictedDrafts||=[]).push(draft);delete aiChat.editDrafts[key];
+      aiReply('저장된 일지가 바뀌어 이전 수정 내용을 자동 적용하지 않았어요. 이전 내용은 보관해 뒀어요.',[aiButton('이전 작성 내용 보기','view-preserved',aiChat.conflictedDrafts.length-1)],preview);return;
+    }
+    Object.entries(draft.values).forEach(([id,value])=>{const input=document.getElementById(id);if(!input)return;if(input.type==='radio'||input.type==='checkbox')input.checked=!!value;else input.value=value;updateCounter(input);});
+    $$('.timefield').forEach(updateTimeField);updateJournalSaveState();
+  }
+  function flushAiPage(){
+    if(route==='/journals/new')syncAiJournal();
+    const preview=aiChat.preview;if(!preview||!aiPreviewIsCurrent(preview))return;aiPreviewNavigationPending=false;
+    const key=aiFrameKey(preview);
+    if(aiPendingFrameAction?.key===key){const pending=aiPendingFrameAction;aiPendingFrameAction=null;aiUpdateFrame(pending.value,pending.expected);}
+    const pending=aiPendingTemplateActions.filter(item=>item.key===key);aiPendingTemplateActions=aiPendingTemplateActions.filter(item=>item.key!==key);
+    pending.forEach(item=>aiTemplateCommand(item.command));
+    if(aiChat.flow?.type==='journal'&&aiChat.flow.pendingPolish)queueAiPolish();
+  }
+  function queueAiPolish(){
+    const flow=aiChat.flow,preview=aiChat.preview;
+    if(!flow||!preview||preview.kind!=='journal')return;
+    flow.pendingPolish=true;
+    if(aiPreviewIsCurrent(preview)){syncAiJournal();flow.pendingPolish=false;aiPolishJournal();}
+  }
+  function aiPolishJournal(){
+    const flow=aiChat.flow,preview=aiChat.preview;if(!flow||!preview||preview.kind!=='journal')return;
+    if(!mockupActivePlan(state,currentDate())){aiReply('문장 정리는 플러스와 팀 요금제에서 이용할 수 있어요.',[{label:'요금제 보기',href:'#/plans'}],preview);return;}
+    if(!state.aiConsent){aiReply('문장 정리 전에 AI 기능 동의 상태를 확인해 주세요.',[{label:'설정 열기',href:'#/settings'}],preview);return;}
+    const key=aiFrameKey(preview),snapshot=aiChat.currentJournal?.key===key?aiChat.currentJournal.values:null;
+    const values=snapshot||(flow.entry!=null?journalRows(flow.recipient)[flow.entry]?.values:state.drafts[flow.recipient])||{};
+    const fields=aiJournalFields.flatMap(([id,labelId,fallback])=>{
+      const original=String(values[id]||'');if(!original.trim())return [];
+      return [{id,label:String(values[labelId]||fallback),original,value:original.replace(/[\t ]+/g,' ').replace(/[\t ]*\n[\t ]*/g,'\n').trim()}];
+    });
+    if(!fields.length){aiReply('정리할 일지 내용을 먼저 입력해 주세요.',[],preview);return;}
+    flow.proposal={kind:'polish',key,fields};flow.stage='editing';
+    const text=fields.map(field=>`${field.label}\n${field.value}`).join('\n\n');
+    aiReply(`목업에서는 AI 연결 전이라 공백만 정리한 예시를 보여드려요. 내용을 확인해 주세요.\n\n${text}`,[aiButton('변경 내용 적용','apply-proposal',null),aiButton('기존 내용 유지','cancel-proposal',null)],preview);
+  }
   function aiJournalText(text){
     const flow=aiChat.flow;if(!flow||flow.recipient==null)return;
     if(text.length>1000){aiReply('자유 메모는 1,000자까지 넣을 수 있어요. 내용을 나누거나 줄여서 다시 알려주세요.');return;}
@@ -846,6 +995,19 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   function aiProcess(text,files){
     const flow=aiChat.flow,clean=text.trim();
     if(/^(취소|그만|취소해|그만할게)[.!\s]*$/.test(clean)){aiChat.flow=null;aiReply('요청을 취소했어요. 작성 중인 내용은 그대로 보관해요.');return;}
+    if(/기록\s*(탭|화면|페이지)/.test(clean)&&/열|보여|이동|가|켜/.test(clean)){
+      if(aiTemplateDirty.size){aiReply('현재 편집 중인 양식을 먼저 저장해 주세요.',[],aiChat.preview);return;}
+      const preview={kind:'records'};aiChat.flow=null;aiChat.preview=preview;aiChat.previewOpen=true;aiReply('기록 화면을 열었어요.',[],preview);return;
+    }
+    const polishRequest=/(?:정리\s*(?:해|좀\s*해)|다듬(?:어|기)|문장\s*정리|자연스럽게\s*(?:바꿔|고쳐))/.test(clean);
+    if(polishRequest&&(route==='/journals/new'||flow?.type==='journal'&&['content','editing'].includes(flow.stage)||/일지|문장/.test(clean))){
+      if(aiTemplateDirty.size){aiReply('현재 편집 중인 양식을 먼저 저장해 주세요.',[],aiChat.preview);return;}
+      const current=currentJournalPreview(),named=aiAvailable().filter(index=>clean.includes(aiName(index))),date=clean.match(/\d{4}[-.]\d{2}[-.]\d{2}/)?.[0]?.replaceAll('.','-');
+      if(current&&(!named.length||named.length===1&&named[0]===recipient)&&(!date||current.date===date)){
+        aiChat.preview=current;aiChat.previewOpen=false;aiChat.flow={type:'journal',stage:'editing',recipient,date:current.date,entry:current.entry};queueAiPolish();return;
+      }
+      if(flow?.type==='journal'&&['content','editing'].includes(flow.stage)&&aiPreviewIsCurrent(aiChat.preview))queueAiPolish();else aiStart('journal',clean,'polish');return;
+    }
     if(flow&&/^(응|네|예|그래|좋아|해줘|만들어줘|추가해줘|변경해줘|적용해줘|삭제해줘)[.!\s]*$/.test(clean)){
       const action={'report-confirm':'report-generate','add-confirm':'add-confirm','template-confirm':'template-confirm','delete-confirm':'delete-confirm','existing-confirm':'edit-existing','draft-conflict':'resume-draft'}[flow.stage];
       if(action){for(let i=aiChat.messages.length-1;i>=0;i--){const message=aiChat.messages[i],index=message.choices?.findIndex(choice=>choice.action===action)??-1;if(index>=0&&!message.chosen){aiChoose(i,index,false);return;}}}
@@ -881,14 +1043,14 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     }
     if(/리포트/.test(clean)&&/채점|기준|템플릿|문항/.test(clean)&&/만들|새로|생성/.test(clean)){aiChat.flow={type:'report-template-create',stage:'goal'};aiReply('어떤 상황이나 영역을 관찰할 기준인가요? 예를 들어 자유 놀이에서 의사소통과 또래 관계를 관찰한다고 알려주세요.');return;}
     if(/리포트/.test(clean)&&/채점|기준|템플릿|문항/.test(clean)&&/편집|수정|바꿔|열어/.test(clean)){aiChat.flow={type:'template-editor-select',stage:'report-select'};aiReply('어떤 리포트 채점 기준을 편집할까요?',LIVE_SCORING.map((template,index)=>aiButton(state.reportTemplateConfigs?.[index]?.title||template.title,'ai-report-template',index)));return;}
-    if(/일지/.test(clean)&&/양식|템플릿|항목/.test(clean)&&/편집|수정|바꿔|열어/.test(clean)){aiChat.flow={type:'template-editor-select',stage:'journal-select'};aiReply('어떤 일지 양식을 편집할까요?',state.journalTemplates.map((template,index)=>aiButton(template.name,'ai-journal-template',index)));return;}
+    if(/일지/.test(clean)&&/양식|템플릿|항목/.test(clean)&&/편집|수정|바꿔|열어/.test(clean)&&!(/템플릿/.test(clean)&&/이름/.test(clean))){aiChat.flow={type:'template-editor-select',stage:'journal-select'};aiReply('어떤 일지 양식을 편집할까요?',state.journalTemplates.map((template,index)=>aiButton(template.name,'ai-journal-template',index)));return;}
     if(flow?.type==='journal'&&['content','editing'].includes(flow.stage)&&/리포트/.test(clean)&&/써|작성|만들|생성|보여|확인|열어/.test(clean)){aiStart('report',clean);return;}
     if(flow?.type==='journal'&&['content','editing'].includes(flow.stage)&&/일지|기록/.test(clean)&&/찾|목록|지난|삭제|지워/.test(clean)){aiStart(/삭제|지워/.test(clean)?'delete':'records',clean);return;}
     if(flow?.type==='journal'&&['content','editing'].includes(flow.stage)&&!(/요금제|가격|무료|플러스|템플릿/.test(clean)||/관리대상/.test(clean)&&/추가|등록|만들/.test(clean))){
       if(/저장/.test(clean)){
-        const preview=aiChat.preview,frame=preview&&$$('.ai-chat-preview iframe').find(item=>item.dataset.key===aiFrameKey(preview));
-        if(!frame||frame.dataset.ready!=='true'){aiChat.previewOpen=true;renderAiPreview();aiReply('일지 화면을 열어 저장할 내용을 확인해 주세요.',[],preview);return;}
-        frame.contentWindow.postMessage({type:'careit-ai-save'},location.protocol==='file:'?'*':location.origin);return;
+        const preview=aiChat.preview;
+        if(!preview||!aiPreviewIsCurrent(preview)){aiReply('일지 화면을 열어 저장할 내용을 확인해 주세요.',[],preview);return;}
+        saveJournal().then(saved=>aiReply(saved?'일지를 저장했어요.':'일지를 저장하지 못했어요. 내용을 확인해 주세요.',[],preview));return;
       }
       if(/짧게|간결하게/.test(clean)){
         const current=aiJournalCurrent(flow),short=current.split(/(?<=[.!?。])\s+/)[0];
@@ -937,11 +1099,22 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     else if(choice.action==='record')aiListRecord(Number(choice.value));
     else if(choice.action==='delete-confirm')await aiDeleteRecord();
     else if(choice.action==='start-journal'){aiChat.flow={type:'journal',stage:'recipient',date:currentDate()};aiSelectRecipient(Number(choice.value));}
-    else if(choice.action==='resume-draft'&&flow){flow.date=choice.value;flow.stage='content';const preview={kind:'journal',recipient:flow.recipient,date:flow.date};aiChat.preview=preview;aiChat.previewOpen=!matchMedia('(max-width:767px)').matches;aiReply('작성 중인 일지를 이어서 열었어요. 내용을 알려주거나 직접 수정해 주세요.',[],preview);}
-    else if(choice.action==='edit-existing'&&flow){flow.entry=Number(choice.value);flow.stage='editing';const preview={kind:'journal',recipient:flow.recipient,entry:flow.entry};aiChat.preview=preview;aiChat.previewOpen=true;aiReply('기존 일지를 열었어요. 바꾸고 싶은 내용을 알려주세요.',[],preview);}
+    else if(choice.action==='resume-draft'&&flow){flow.date=choice.value;flow.stage='content';const preview={kind:'journal',recipient:flow.recipient,date:flow.date};aiChat.preview=preview;aiChat.previewOpen=true;aiReply('작성 중인 일지를 이어서 열었어요. 내용을 알려주거나 직접 수정해 주세요.',[],preview);if(flow.pendingPolish)queueAiPolish();}
+    else if(choice.action==='edit-existing'&&flow){flow.entry=Number(choice.value);flow.stage='editing';const preview={kind:'journal',recipient:flow.recipient,entry:flow.entry};aiChat.preview=preview;aiChat.previewOpen=true;aiReply('기존 일지를 열었어요. 바꾸고 싶은 내용을 알려주세요.',[],preview);if(flow.pendingPolish)queueAiPolish();}
     else if(choice.action==='cancel'){aiChat.flow=null;aiReply('요청을 취소했어요. 작성 중인 내용은 그대로 보관해요.');}
     else if(choice.action==='cancel-proposal'){if(flow){delete flow.proposal;flow.stage='editing';}aiReply('기존 내용을 유지했어요.');}
-    else if(choice.action==='apply-proposal'&&flow?.proposal){const proposal=flow.proposal;delete flow.proposal;flow.stage='editing';aiChat.previewOpen=true;renderAiPreview();aiUpdateFrame(proposal.value,proposal.original);}
+    else if(choice.action==='apply-proposal'&&flow?.proposal){
+      const proposal=flow.proposal;flow.stage='editing';
+      if(proposal.kind==='polish'){
+        if(!mockupActivePlan(state,currentDate())||!state.aiConsent){aiReply('요금제와 AI 기능 동의 상태를 확인해 주세요.',[{label:'설정 열기',href:'#/settings'}]);return;}
+        if(!aiChat.preview||aiFrameKey(aiChat.preview)!==proposal.key||!aiPreviewIsCurrent(aiChat.preview)){aiReply('일지 화면이 바뀌었어요. 현재 내용을 확인한 뒤 다시 요청해 주세요.');return;}
+        const allowed=new Set(aiJournalFields.map(([id])=>id)),seen=new Set();
+        const invalid=proposal.fields.some(item=>{const input=document.getElementById(item.id);if(!allowed.has(item.id)||seen.has(item.id)||!input||input.readOnly||input.disabled||input.value!==item.original||item.value.length>input.maxLength)return true;seen.add(item.id);return false;});
+        if(invalid){delete flow.proposal;aiReply('일지 내용이 바뀌었거나 수정할 수 없어요. 현재 내용을 확인한 뒤 다시 요청해 주세요.',[],aiChat.preview);return;}
+        proposal.fields.forEach(item=>{const input=document.getElementById(item.id);if(input.value!==item.value){input.value=item.value;input.dispatchEvent(new Event('input',{bubbles:true}));}});
+        delete flow.proposal;syncAiJournal();aiReply('일지에 반영했어요. 내용을 확인한 뒤 직접 저장해 주세요.',[],aiChat.preview);
+      }else{delete flow.proposal;aiChat.previewOpen=true;renderAiPreview();aiUpdateFrame(proposal.value,proposal.original);}
+    }
     else if(choice.action==='add-confirm'&&flow?.name){
       if(!recipientHasCapacity()){aiReply('추가 가능한 관리대상 자리가 없어요.',[{label:'요금제 보기',href:'#/plans'}]);return;}
       const index=state.recipients.length,person={name:flow.name,templateIndex:0,count:0,date:currentDate().replaceAll('-','/'),active:true};state.recipients.push(person);state.reportTemplates[index]='누리과정';
@@ -1004,6 +1177,11 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       aiReply('저장된 일지가 바뀌어 이전 수정 내용을 자동 적용하지 않았어요. 이전 내용은 보관해 뒀어요.',[aiButton('이전 작성 내용 보기','view-preserved',saved.length-1)],aiChat.preview);return;
     }
     if(data.type==='careit-ai-applied'){if(aiChat.preview&&aiFrameKey(aiChat.preview)===frame.dataset.key){aiChat.currentRaw={key:frame.dataset.key,value:String(data.value||'')};aiReply('자유 메모에 반영했어요. 일지를 확인하고 저장해 주세요.',[],aiChat.preview);}return;}
+    if(data.type==='careit-ai-polish-applied'||data.type==='careit-ai-polish-conflict'){
+      if(!aiChat.preview||aiFrameKey(aiChat.preview)!==frame.dataset.key)return;
+      if(aiChat.flow?.proposal?.kind==='polish')delete aiChat.flow.proposal;
+      aiReply(data.type==='careit-ai-polish-applied'?'일지에 반영했어요. 내용을 확인한 뒤 직접 저장해 주세요.':'일지 내용이 바뀌었거나 수정할 수 없어요. 현재 내용을 확인한 뒤 다시 요청해 주세요.',[],aiChat.preview);return;
+    }
     if(data.type==='careit-ai-save-error'){aiReply('일지를 저장하지 못했어요. 작성 내용과 날짜를 확인한 뒤 다시 시도해 주세요.',[],aiChat.preview);return;}
     if(data.type==='careit-ai-draft'){
       if(frame.dataset.ready!=='true')return;
@@ -1015,9 +1193,11 @@ function mockupHomeJournalStatus(state, index, today, checks) {
         if(aiChat.flow?.type==='journal'){aiChat.flow.recipient=index;aiChat.flow.date=data.date;aiChat.flow.entry=entry;aiChat.flow.stage='editing';}
       }
       aiChat.currentRaw={key:frame.dataset.key,value:String(data.raw||'')};
+      const allowed=new Set(aiJournalFields.flatMap(([id,labelId])=>[id,labelId]));
+      aiChat.currentJournal={key:frame.dataset.key,values:Object.fromEntries(Object.entries(data.values||{}).filter(([id])=>allowed.has(id)))};
       if(data.entry!=null&&data.values){if(data.dirty)(aiChat.editDrafts||={})[frame.dataset.key]={values:data.values,date:data.date,base:data.base};else if(aiChat.editDrafts)delete aiChat.editDrafts[frame.dataset.key];}
       if(!data.shared&&data.entry==null&&data.values){state.drafts[index]=data.values;state.draftDates[index]=data.date;}
-      aiSave();return;
+      aiSave();if(aiChat.flow?.type==='journal'&&aiChat.flow.pendingPolish){aiChat.flow.pendingPolish=false;aiPolishJournal();}return;
     }
     if(data.type==='careit-ai-discard-edit'){if(aiChat.editDrafts)delete aiChat.editDrafts[frame.dataset.key];aiSave();return;}
     if(data.type!=='careit-ai-journal-saved')return;
@@ -1034,7 +1214,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(aiChat.flow?.type==='journal'&&aiChat.flow.recipient===index)aiChat.flow.stage='editing';
     aiReply(`${aiName(index)}의 ${formatShortDate(data.date)} 일지를 저장했어요.`,[{label:'저장한 기록 보기',href:`#/records?recipient=${index}&tab=journals`}]);
   });
-  let journalSavedSnapshot=null,journalSavedRecord=null,journalSaving=false,journalAiComparison=null;
+  let journalSavedSnapshot=null,journalSavedRecord=null,journalSaving=false;
   function setDraftStatus(message){$$('[data-draft-status]').forEach(status=>status.textContent=message);}
   function journalSnapshot(){return JSON.stringify({date:$('[data-action="date"]')?.dataset.value,values:Object.fromEntries($$('input[id],textarea[id]',$('#screen')).filter(el=>!el.id.startsWith('journal-field-label-')).map(el=>[el.id,(el.type==='radio'||el.type==='checkbox')?el.checked:el.value]))});}
   function journalHasContent(){return $$('input[id],textarea[id]',$('#screen')).some(el=>!el.id.startsWith('journal-field-label-')&&el.type!=='range'&&((el.type==='radio'||el.type==='checkbox')?el.checked:el.value.trim()!==''));}
@@ -1051,7 +1231,6 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     else if(journalSavedSnapshot!==null&&changed&&$('[data-draft-status]')?.textContent==='변경하면 다시 저장할 수 있어요.')setDraftStatus('변경 내용은 이 브라우저에 자동 보관돼요.');
   }
   function prepareJournal() {
-    journalAiComparison=null;
     journalSavedSnapshot=null;journalSavedRecord=null;journalSaving=false;
     const editIndex=params.get('entry'),savedRow=editIndex===null?null:journalRows()[Number(editIndex)],savedSchema=savedRow?.schema||state.journalSchemaSnapshots[journalSchemaKey(recipient,savedRow)];
     $('[data-quick-checks]').innerHTML = (savedSchema?.quickChecks||getQuickChecks()).map((q,i)=>q.active?quickPreview(q,i,false):'').join('');
@@ -1070,7 +1249,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
         $('.page-header h1').innerHTML = '<span class="journal-title-prefix">저장한 </span>일지 수정';
         $('[data-options="recipients"]').disabled=true;$('[data-action="date"]').disabled=true;
         setDraftStatus('수정한 내용은 일지 저장을 눌러 반영해 주세요');
-        const controls=$('.journal-actions>div:last-child'),ai=$('[data-action="ai-preview"]');controls.insertAdjacentHTML('afterbegin','<button class="button danger" type="button" data-action="delete-journal">일지 삭제</button>');if(row[0]!==currentDate())ai.disabled=true;
+        const controls=$('.journal-actions>div:last-child');controls.insertAdjacentHTML('afterbegin','<button class="button danger" type="button" data-action="delete-journal">일지 삭제</button>');
         $('[data-action="date"] span').textContent = formatDate(row[0]);
         $('[data-action="date"]').dataset.value = row[0];
       }
@@ -1084,33 +1263,13 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     $$('.journal-inline-title-input', $('#screen')).forEach(input => {input.readOnly=true;input.tabIndex=-1;const label=$('label',input.closest('.field'));if(label)label.textContent=input.value;});
     $$('.journal-toolbar .dropdown-trigger').forEach(button=>{const value=button.querySelector('span')?.textContent||'';button.setAttribute('aria-description',value);button.title=value;});
     if(editIndex!==null&&journalRows()[Number(editIndex)])journalSavedSnapshot=journalSnapshot();
-    if(editIndex!==null&&!state.recipients[recipient]?.active){$('[data-quick-checks]').disabled=true;$$('.journal-memo-fields textarea').forEach(field=>field.readOnly=true);$('[data-action="ai-preview"]').disabled=true;$('[data-options="journal-templates"]').disabled=true;}
-    const aiButton=$('[data-action="ai-preview"]');if(!mockupActivePlan(state,currentDate())&&state.recipients[recipient]?.active){aiButton.disabled=false;aiButton.setAttribute('aria-description','무료 요금제에서는 사용할 수 없어요. 누르면 요금제 안내가 열려요.');}
+    if(editIndex!==null&&!state.recipients[recipient]?.active){$('[data-quick-checks]').disabled=true;$$('.journal-memo-fields textarea').forEach(field=>field.readOnly=true);$('[data-options="journal-templates"]').disabled=true;}
     updateJournalSaveState();
   }
   function updateCounter(el) {
     const counter = el.id ? document.getElementById(el.id + '-limit') : null;
     if (counter && el.maxLength > 0) counter.textContent = `${el.value.length.toLocaleString('ko-KR')}/${el.maxLength.toLocaleString('ko-KR')}자`;
     if(el.matches('textarea')&&el.closest('.journal-memo-card')){el.style.height='96px';el.style.height=`${Math.min(320,Math.max(96,el.scrollHeight))}px`;}
-  }
-  function setJournalAiView(fieldId,view) {
-    const item=journalAiComparison?.fields.find(entry=>entry.field.id===fieldId);if(!item)return;
-    const {field,original}=item,container=field.parentElement,preview=container.querySelector('.journal-ai-original');
-    const changed=field.hidden!==(view==='original');
-    field.hidden=view==='original';preview.hidden=view!=='original';preview.textContent=original;
-    const counter=document.getElementById(`${field.id}-limit`);
-    if(view==='original'&&counter&&field.maxLength>0)counter.textContent=`${original.length.toLocaleString('ko-KR')}/${field.maxLength.toLocaleString('ko-KR')}자`;
-    else if(view==='result')updateCounter(field);
-    $$('[data-ai-view]',container).forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.aiView===view)));
-    if(changed)revealMotion(view==='original'?preview:field,160,0);
-  }
-  function startJournalAiComparison(fields) {
-    journalAiComparison={fields:fields.map(field=>({field,original:field.value}))};
-    journalAiComparison.fields.forEach(({field})=>{
-      const label=field.parentElement.querySelector(`label[for="${field.id}"]`)?.textContent||'일지 기록';
-      field.parentElement.querySelector('.field-heading').insertAdjacentHTML('beforeend',`<div class="journal-ai-controls" role="group" aria-label="${escapeHTML(label)} 문장 비교"><button type="button" data-action="journal-ai-view" data-ai-view="original" aria-pressed="false">원문 보기</button><button type="button" data-action="journal-ai-view" data-ai-view="result" aria-pressed="true">정리본 보기</button></div>`);
-      field.insertAdjacentHTML('afterend','<div class="journal-ai-original" hidden></div>');
-    });
   }
   function captureDraft(save=true) {
     const values = {}; $$('input[id],textarea[id]', $('#screen')).forEach(el => values[el.id] = (el.type==='radio'||el.type==='checkbox') ? el.checked : el.value);
@@ -1724,7 +1883,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       }
       else {button.dataset.value=date;button.querySelector('span').textContent=formatDate(date);}
       closePopups(true);filterRecords();
-      if(route==='/journals/new'){$('[data-journal-date-warning]')?.remove();captureDraft();recordRecentVisit();setDraftStatus('작성 내용은 이 브라우저에 자동 보관돼요.');updateJournalSaveState();aiEmbedNotifyDraft();}
+      if(route==='/journals/new'){$('[data-journal-date-warning]')?.remove();captureDraft();recordRecentVisit();setDraftStatus('작성 내용은 이 브라우저에 자동 보관돼요.');updateJournalSaveState();if(!aiEmbed)syncAiJournal();aiEmbedNotifyDraft();}
     };
     const draw=(focusDate)=>{
       const days=new Date(year,month+1,0).getDate(),offset=isReportRange?0:new Date(year,month,1).getDay();
@@ -1793,9 +1952,10 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     let existing=(journalSavedRecord?.recipient===recipient&&journalSavedRecord.date===date?journalSavedRecord:null)||state.savedJournals.find(x=>x.recipient===recipient&&(row?(row.sourceKey?x.sourceKey===row.sourceKey:x.date===row[0]&&x.text===row[2]):x.date===date&&!x.sourceKey));
     const previousRecord=existing?{...existing}:null,previousCount=state.recipients[recipient].count;
     if(existing)Object.assign(existing,{text,values,schema});else{existing={recipient,date,text,values,schema,...(sourceKey?{sourceKey}:{})};state.savedJournals.unshift(existing);if(!row)state.recipients[recipient].count++;}
-    const previousDraft=state.drafts[recipient],previousDraftDate=state.draftDates[recipient];if(!row){delete state.drafts[recipient];delete state.draftDates[recipient];}
+    const previousDraft=state.drafts[recipient],previousDraftDate=state.draftDates[recipient],aiDraftKey=row&&currentJournalPreview()?aiFrameKey(currentJournalPreview()):null,previousAiDraft=aiDraftKey&&aiChat.editDrafts?.[aiDraftKey];
+    if(aiDraftKey&&aiChat.editDrafts)delete aiChat.editDrafts[aiDraftKey];if(!row){delete state.drafts[recipient];delete state.draftDates[recipient];}
     const savedSnapshot=journalSnapshot();journalSaving=true;updateJournalSaveState();
-    if(!await persist()){if(previousRecord)Object.assign(existing,previousRecord);else state.savedJournals=state.savedJournals.filter(item=>item!==existing);state.recipients[recipient].count=previousCount;if(!row&&!state.drafts[recipient]){state.drafts[recipient]=previousDraft;state.draftDates[recipient]=previousDraftDate;}journalSaving=false;setDraftStatus('저장하지 못했어요. 다시 시도해 주세요.');updateJournalSaveState();return;}
+    if(!await persist()){if(previousRecord)Object.assign(existing,previousRecord);else state.savedJournals=state.savedJournals.filter(item=>item!==existing);state.recipients[recipient].count=previousCount;if(aiDraftKey&&previousAiDraft)(aiChat.editDrafts||={})[aiDraftKey]=previousAiDraft;if(!row&&!state.drafts[recipient]){state.drafts[recipient]=previousDraft;state.draftDates[recipient]=previousDraftDate;}journalSaving=false;setDraftStatus('저장하지 못했어요. 다시 시도해 주세요.');updateJournalSaveState();return;}
     journalSavedRecord=existing;journalSavedSnapshot=savedSnapshot;journalSaving=false;updateJournalSaveState();toast('일지를 저장했어요.');
     if(aiEmbed&&window.parent!==window)window.parent.postMessage({type:'careit-ai-journal-saved',recipient,date,record:copy(existing),previous:copy(previousRecord),shared:!!sharedAiBridge},location.protocol==='file:'?'*':location.origin);
     return true;
@@ -1829,6 +1989,8 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(quickClear){const field=quickClear.closest('.quick-check-field')||$('.quick-check-field',quickClear.closest('.configuration-card,.quick-check-type-card'));if(!field)return;const time=$('.timefield',field);if(time){$$('input',time).forEach(input=>{input.value='';input.removeAttribute('aria-invalid');});updateTimeField(time);$('.timefield-error',time).hidden=true;$('input[type="hidden"]',time).dispatchEvent(new Event('change',{bubbles:true}));return;}$$('input',field).forEach(input=>{if(input.type==='range')input.value=input.min;else if(input.type==='radio'||input.type==='checkbox')input.checked=false;else input.value='';input.removeAttribute('aria-invalid');input.dispatchEvent(new Event('change',{bubbles:true}));});const durationError=$('.quick-check-duration-error',field);if(durationError)durationError.hidden=true;$('.quick-check-slider',field)?.classList.remove('is-selected');$$('.quick-check-slider-ticks button',field).forEach(b=>b.setAttribute('aria-pressed','false'));return;}
     const tick=e.target.closest('.quick-check-slider-ticks button');
     if(tick){const slider=tick.closest('.quick-check-slider'),input=$('input[type="range"]',slider),selected=$('input[type="hidden"]',slider);slider.classList.add('is-selected');selected.value='true';input.value=tick.textContent.trim();$$('.quick-check-slider-ticks button',slider).forEach(b=>b.setAttribute('aria-pressed',String(b===tick)));input.dispatchEvent(new Event('change',{bubbles:true}));return;}
+    const aiToggle=e.target.closest('[data-action="ai-toggle"],[data-action="ai-close"]');
+    if(aiToggle&&!aiEmbed){e.preventDefault();const open=aiToggle.dataset.action==='ai-close'?false:$('#ai-dock').hidden;if(open){aiDockOpener=aiToggle;if(matchMedia('(max-width:767px)').matches){$('.app-layout').classList.add('mockup-nav-collapsed');syncSidebarButton();}}setAiDock(open,true);return;}
     const navigation=e.target.closest('a[href^="#/"]');
     if(navigation&&journalDirty()){e.preventDefault();const href=navigation.getAttribute('href');confirmJournalNavigation(()=>routeTo(href));return;}
     if(navigation&&configurationDirty()){e.preventDefault();const href=navigation.getAttribute('href');confirmConfigurationNavigation(()=>routeTo(href));return;}
@@ -1855,7 +2017,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     else if(action==='reset-record-dates'){recordRange.from='';recordRange.to='';updateRecordFilters();filterRecords();}
     else if(action==='reset-record-filters'){recordRange.from='';recordRange.to='';params.set('recipient','all');params.set('tab',recordTab);routeTo('#/records?'+params);}
     else if(action==='record-page'){recordPage=Number(button.dataset.page);filterRecords(false);$('[data-record-list]')?.scrollIntoView({block:'start'});}
-    else if(action==='sidebar'){$('.app-layout').classList.toggle('mockup-nav-collapsed');syncSidebarButton();}
+    else if(action==='sidebar'){$('.app-layout').classList.toggle('mockup-nav-collapsed');syncSidebarButton();if(!aiEmbed)updateAiSplit();}
     else if(action==='theme'){const previous=state.sidebarTheme;state.sidebarTheme=document.body.dataset.theme==='dark'?'light':'dark';syncSidebarTheme();if(!await persist()){state.sidebarTheme=previous;syncSidebarTheme();}}
     else if(action==='business-info'){footerBusinessOpen=!footerBusinessOpen;$('.site-footer-business').hidden=!footerBusinessOpen;button.setAttribute('aria-expanded',String(footerBusinessOpen));}
     else if(action==='date')datePicker(button);
@@ -1864,7 +2026,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     else if(action==='export-html')exportHTML();
     else if(action==='storage-backup')exportHTML({save:false});
     else if(action==='storage-reload')location.reload();
-    else if(action==='close-dialog'){pendingNavigation=null;pendingClose=null;confirmAction=null;$('#mockup-dialog').close();}
+    else if(action==='close-dialog'){if(pendingNavigation&&aiPreviewNavigationPending)cancelAiPendingNavigation();pendingNavigation=null;pendingClose=null;confirmAction=null;$('#mockup-dialog').close();}
     else if(action==='save-journal')saveJournal();
     else if(action==='delete-journal'){const row=journalRows()[Number(params.get('entry'))];if(row)dialog('일지를 삭제할까요?','<p>저장한 일지는 30일 동안 휴지통에서 복원할 수 있어요</p>','삭제',async()=>{const key=JSON.stringify([recipient,row[0],row[2]]);(state.deletedJournalKeys||=[]).push(key);state.trash.push({type:'journal',recipient,date:row[0],title:row[1]+' 일지',key});if(!await persist())return;routeTo('#/records?recipient='+recipient);toast('일지를 휴지통으로 옮겼어요.');},true);}
     else if(action==='home-guide')dialog('케어릿 이용 방법','<ol class="home-guide-steps"><li><strong>관리대상 선택</strong><p>기록할 관리대상과 일지 템플릿을 선택해요.</p></li><li><strong>일지 작성</strong><p>퀵체크와 오늘의 일지를 작성하고 저장해요.</p></li><li><strong>주간 리포트 확인</strong><p>금요일부터 목요일까지 기록한 일지가 3일 이상이면 다음 날부터 리포트를 만들 수 있어요.</p></li></ol>');
@@ -1959,7 +2121,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(el.type==='range'&&el.closest('.quick-check-slider')){const slider=el.closest('.quick-check-slider');slider.classList.add('is-selected');$('input[type="hidden"]',slider).value='true';$$('.quick-check-slider-ticks button',slider).forEach(button=>button.setAttribute('aria-pressed',String(button.textContent.trim()===el.value)));}
     if(el.dataset.editKey&&editing){state.edits[el.dataset.editKey]=el.textContent;persist();return;}
     updateCounter(el);
-    if(route==='/journals/new'&&el.closest('#screen')){updateJournalSaveState();if(params.get('entry')===null){captureDraft(false);const saved=await persist();setDraftStatus(saved?'작성 내용은 이 브라우저에 자동 보관돼요.':'자동 보관이 중단됐어요.');updateJournalSaveState();}aiEmbedNotifyDraft();}
+    if(route==='/journals/new'&&el.closest('#screen')){updateJournalSaveState();if(params.get('entry')===null){captureDraft(false);const saved=await persist();setDraftStatus(saved?'작성 내용은 이 브라우저에 자동 보관돼요.':'자동 보관이 중단됐어요.');updateJournalSaveState();}if(!aiEmbed)syncAiJournal();aiEmbedNotifyDraft();}
   });
   document.addEventListener('change',e=>{if(e.target.id==='ai-chat-files'){aiPendingFiles.push(...Array.from(e.target.files,file=>({name:file.name,type:file.type,url:file.type.startsWith('image/')?URL.createObjectURL(file):''})));e.target.value='';renderAiAttachments();}if(e.target.matches('.timefield input[type="number"]'))syncTimeInput(e.target.closest('.timefield'));if(route==='/journals/new'&&e.target.closest('[data-quick-checks]')){captureDraft();updateJournalSaveState();aiEmbedNotifyDraft();}if(e.target.name==='quick-type-choice')$$('.quick-check-type-card',$('#quick-type-picker')).forEach(card=>card.classList.toggle('is-selected',!!$('input[name="quick-type-choice"]',card)?.checked));});
   document.addEventListener('focusin',e=>{if(e.target.matches('.score-question-list textarea'))sizeScoreQuestion(e.target);});
@@ -1997,7 +2159,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const tabs=['recipients','journal','report'],next=tabs.indexOf(recipientTab)+(dx<0?1:-1);
     if(next>=0&&next<tabs.length)$(`[data-recipient-tab="${tabs[next]}"]`)?.click();
   },{passive:true});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!popupPanel&&matchMedia('(max-width:767px)').matches&&!$('.app-layout').classList.contains('mockup-nav-collapsed')){$('.app-layout').classList.add('mockup-nav-collapsed');syncSidebarButton();return;}if(popupPanel){e.preventDefault();e.stopImmediatePropagation();closePopups(true);return;}if(editing){setEditMode(false);toast('문구 편집을 마쳤어요.');}}},true);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!aiEmbed&&!$('#ai-dock').hidden&&!popupPanel&&!$('dialog[open]')){e.preventDefault();e.stopImmediatePropagation();setAiDock(false,true);return;}if(!popupPanel&&matchMedia('(max-width:767px)').matches&&!$('.app-layout').classList.contains('mockup-nav-collapsed')){$('.app-layout').classList.add('mockup-nav-collapsed');syncSidebarButton();return;}if(popupPanel){e.preventDefault();e.stopImmediatePropagation();closePopups(true);return;}if(editing){setEditMode(false);toast('문구 편집을 마쳤어요.');}}},true);
   $('#mockup-toggle').addEventListener('click',()=>{const panel=$('#mockup-panel');panel.hidden=!panel.hidden;$('#mockup-toggle').setAttribute('aria-expanded',String(!panel.hidden));});
   $('#mockup-edit-mode').addEventListener('change',e=>setEditMode(e.target.checked));
   $('#mockup-color').addEventListener('input',e=>{state.color=e.target.value;applyDesign();persist();});
@@ -2456,14 +2618,21 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   function updateScoreSave(){const form=$('#score-edit-form');if(!form)return;readScoreDraft();$$('button[type="submit"]',form).forEach(button=>button.disabled=JSON.stringify(scoreDraft)===scoreSnapshot);}
   async function saveScoring(confirmed=false){
     readScoreDraft();if(!scoreDraft.title.trim()){$$('[data-score-status]').forEach(status=>status.textContent='템플릿 이름을 입력해 주세요.');const input=$('#score-template-title'),editor=input.closest('.score-title-editor');$('.score-title-text',editor).hidden=true;input.hidden=false;$('.score-title-edit',editor).hidden=true;input.focus();return false;}
-    const newTemplate=aiEmbed==='report-template-new'&&params.has('new');
+    const newTemplate=params.has('new');
     if(editingCommonReport&&(newTemplate||editingReportTemplateIndex!==null)&&LIVE_SCORING.some((template,index)=>index!==editingReportTemplateIndex&&(state.reportTemplateConfigs?.[index]?.title||template.title)===scoreDraft.title.trim())){$$('[data-score-status]').forEach(status=>status.textContent='같은 이름의 리포트 기준이 있어요. 다른 이름을 입력해 주세요.');return false;}
     if(newTemplate){
       if(scoreDraft.domains.length<3||scoreDraft.domains.length>5||scoreDraft.domains.some(domain=>!domain.name.trim()||domain.questions.length<5||domain.questions.length>15||domain.questions.some(q=>!q.trim()))){$$('[data-score-status]').forEach(status=>status.textContent='영역 3~5개와 영역별 문항 5~15개를 채워 주세요.');return false;}
       const template={id:`custom-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,title:scoreDraft.title.trim(),domains:copy(scoreDraft.domains)};
       (state.customReportTemplates||=[]).push(template);if(!await persist()){state.customReportTemplates.pop();return false;}
       LIVE_SCORING.push(template);scoreDraft={...scoreDraft,templateId:template.id};scoreSnapshot=JSON.stringify(scoreDraft);params.delete('new');params.set('template',String(LIVE_SCORING.length-1));editingReportTemplateIndex=LIVE_SCORING.length-1;history.replaceState(null,'','#'+route+'?'+params);updateScoreSave();
-      $$('[data-score-status]').forEach(status=>status.textContent='새 리포트 기준을 저장했어요.');window.parent.postMessage({type:'careit-ai-template-created',template,shared:!!sharedAiBridge},location.protocol==='file:'?'*':location.origin);return true;
+      $$('[data-score-status]').forEach(status=>status.textContent='새 리포트 기준을 저장했어요.');
+      if(aiEmbed&&window.parent!==window)window.parent.postMessage({type:'careit-ai-template-created',template,shared:!!sharedAiBridge},location.protocol==='file:'?'*':location.origin);
+      else if(!aiEmbed&&aiChat.preview?.kind==='report-template-new'){
+        const oldKey=aiFrameKey(aiChat.preview),preview={kind:'report-template',template:LIVE_SCORING.length-1};
+        aiChat.messages.forEach(message=>{if(message.preview&&aiFrameKey(message.preview)===oldKey)message.preview=preview;});aiChat.preview=preview;
+        if(aiChat.flow?.type==='template-editor'){aiChat.flow.kind=preview.kind;aiChat.flow.template=preview.template;}aiReply('새 리포트 기준을 저장했어요. 대상·템플릿에서 선택할 수 있어요.');
+      }
+      return true;
     }
     if(editingCommonReport&&editingReportTemplateIndex!==null&&!confirmed){const affected=reportTemplateRecipients(editingReportTemplateIndex).filter(item=>!item.custom).length;dialog('리포트 템플릿을 저장할까요?',`<p>공통 기준을 사용하는 ${affected}명의 새 리포트에 적용돼요. 기존 리포트와 개별 기준은 그대로 유지돼요.</p>`,'저장',()=>saveScoring(true));return;}
     const previous={configs:copy(state.reportTemplateConfigs||{}),templates:copy(state.reportTemplates),common:copy(state.commonTemplates||{}),scoring:copy(state.scoring)};
@@ -2549,7 +2718,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     else if(action==='common-edit'){if(button.dataset.kind==='journal')routeTo('#/settings/configuration?template=common');else if(button.dataset.kind==='report')openScoring(true);}
     else if(action==='close-modal')closeEditorDialog(button.dataset.modal);
     else if(action==='discard-and-close'){const close=pendingClose;pendingClose=null;confirmAction=null;$('#mockup-dialog').close();close?.();}
-    else if(action==='discard-and-move'){if(aiEmbed&&route==='/journals/new'&&params.has('entry'))window.parent.postMessage({type:'careit-ai-discard-edit'},location.protocol==='file:'?'*':location.origin);if(route==='/ai-chat'){aiTemplateDirty.clear();aiTemplatePendingNavigation=null;}const move=pendingNavigation;pendingNavigation=null;confirmAction=null;$('#mockup-dialog').close();const previous=location.hash;navigationApproved=true;move?.();if(location.hash===previous)navigationApproved=false;}
+    else if(action==='discard-and-move')discardAndMove();
     else if(action==='new-quick-check')openQuickEditor();
     else if(action==='edit-quick-check')openQuickEditor(Number(button.dataset.index));
     else if(action==='quick-toggle'){readQuickDraft();quickDraft.active=!quickDraft.active;drawQuickEditor();}
@@ -2580,17 +2749,6 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       else openConsent();
     }
     else if(action==='accept-consent'){state.aiConsent=true;persist().then(saved=>{if(!saved)return;$('#consent-dialog').close();if(route==='/settings')prepareSettings();toast('AI 기능을 켰어요.');});}
-    else if(action==='ai-preview'){
-      if(!mockupActivePlan(state,currentDate())){dialog('플러스 요금제에서 이용할 수 있어요','<p>AI 문장 정리는 플러스와 팀 요금제에서 이용할 수 있어요.</p>','요금제 보기',()=>routeTo('#/plans'));return;}
-      if(!state.aiConsent){openConsent();return;}
-      if(journalAiComparison){toast('정리된 문장을 확인해 주세요.');$('.journal-memo-card')?.scrollIntoView({behavior:'smooth',block:'start'});return;}
-      const fields=$$('.journal-memo-fields textarea').filter(field=>field.value.trim());
-      if(!fields.length){toast('정리할 일지 기록을 입력해 주세요.');$('#journal-raw').focus();return;}
-      dialog('AI 문장 정리를 사용할까요?','<p>AI 문장 정리는 관리대상별 하루에 한 번 사용할 수 있어요.</p>','문장 정리',()=>{
-        startJournalAiComparison(fields);$('.journal-memo-card')?.scrollIntoView({behavior:'smooth',block:'start'});
-      });
-    }
-    else if(action==='journal-ai-view')setJournalAiView(button.closest('.field').querySelector('textarea').id,button.dataset.aiView);
     else if(action==='account-preview')accountDialog(button);
     else if(action==='reactivate'){const i=Number(button.dataset.index);if(!recipientHasCapacity()){showRecipientLimit();return;}dialog('관리대상을 활성화할까요?',`<p>「${escapeHTML(state.recipients[i].name)}」을 홈과 기록 작성 목록에서 다시 볼 수 있어요.</p>`,'활성화',async()=>{if(!recipientHasCapacity()){showRecipientLimit();return;}const r=state.recipients[i],previous=copy(r);r.active=true;delete r.pausedByPlanLimit;if(!await persist()){Object.assign(r,previous);return;}prepareSettings();});}
     else if(action==='toggle-recipient'){const r=state.recipients[detailRecipient];if(r.active)return;if(!r.active&&!recipientHasCapacity()){showRecipientLimit();return;}dialog(r.active?'관리대상을 비활성화할까요?':'관리대상을 활성화할까요?',`<p>${r.active?'홈과 기록 작성 목록에서 제외돼요. 기존 일지와 리포트는 보관돼요.':'홈과 기록 작성 목록에 다시 표시돼요.'}</p>`,r.active?'비활성화':'활성화',async()=>{if(!r.active&&!recipientHasCapacity()){showRecipientLimit();return;}const previous=copy(r);r.active=!r.active;delete r.pausedByPlanLimit;if(!await persist()){Object.assign(r,previous);return;}$('#recipient-dialog').close();renderRecipients();});}
@@ -2750,46 +2908,19 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       }else if(data.type==='careit-ai-theme'&&(data.theme==='dark'||data.theme==='light')){
         state.sidebarTheme=data.theme;syncSidebarTheme();
       }else if(data.type==='careit-ai-template-command'){
-        const command=data.command||{};let message='';
-        if(route==='/settings/configuration'&&command.action==='replace'){
-          const inputs=$$('#configuration-form input'),matches=inputs.filter(input=>input.value.trim()===command.from);
-          if(matches.length!==1)message='일치하는 일지 항목을 하나 찾지 못했어요. 항목 이름을 정확히 알려주세요.';
-          else if(!command.to||command.to.length>12)message='일지 항목 이름은 12자 이내로 입력해 주세요.';
-          else{matches[0].value=command.to;matches[0].dispatchEvent(new Event('input',{bubbles:true}));message='일지 양식 초안에 반영했어요. 오른쪽에서 확인하고 저장해 주세요.';}
-        }else if(route==='/recipients/scoring'){
-          readScoreDraft();
-          if(command.action==='create'&&params.has('new')){
-            const situation=/식사|간식/.test(command.goal)?'식사':/산책|외출/.test(command.goal)?'산책':/놀이/.test(command.goal)?'놀이':'';
-            scoreDraft={title:situation?`${situation} 관찰 기준`:'관찰 기준 초안',domains:[
-              {name:'의사소통',questions:['원하는 활동이나 물건을 자신의 방식으로 표현한다.','익숙한 사람의 말이나 안내에 반응한다.','도움이 필요할 때 자신의 방식으로 요청한다.','활동을 선택할 때 말이나 몸짓으로 의사를 표현한다.','상대의 표현을 보고 반응을 주고받는다.']},
-              {name:'사회관계',questions:['다른 사람의 놀이에 관심을 보인다.','익숙한 사람과 함께 활동에 참여한다.','놀이 중 다른 사람의 행동을 살펴본다.','도움이나 제안을 받았을 때 반응한다.','함께 사용하는 물건이나 공간을 경험한다.']},
-              {name:'활동 참여',questions:['관심 있는 활동을 선택한다.','활동에 필요한 재료를 살펴본다.','익숙한 활동의 순서를 경험한다.','필요할 때 휴식이나 도움을 표현한다.','활동을 마칠 때 자신의 방식으로 반응한다.']}]};
-            if(situation)scoreDraft.domains.forEach(domain=>domain.questions=domain.questions.map(question=>question.replaceAll('활동',`${situation} 활동`)));
-            scoreCurrentDomain=0;drawScoring();message='고정된 예시 문항을 초안으로 넣었어요. 요청한 상황에 맞게 직접 확인하고 고쳐 주세요.';
-          }else if(command.action==='replace'){
-            const matches=[];scoreDraft.domains.forEach((domain,i)=>{if(domain.name===command.from)matches.push({i,j:-1});domain.questions.forEach((q,j)=>{if(q===command.from)matches.push({i,j});});});
-            if(matches.length!==1)message='같은 이름이나 문항을 하나 찾지 못했어요. 전체 문구를 정확히 알려주세요.';
-            else if(!command.to||command.to.length>(matches[0].j<0?40:80))message='영역 이름은 40자, 문항은 80자 이내로 입력해 주세요.';
-            else{const {i,j}=matches[0];if(j<0)scoreDraft.domains[i].name=command.to;else scoreDraft.domains[i].questions[j]=command.to;scoreCurrentDomain=i;drawScoring();message='리포트 기준 초안에 반영했어요. 오른쪽에서 확인하고 저장해 주세요.';}
-          }else if(command.action==='add-question'){
-            const matches=command.area?scoreDraft.domains.map((domain,i)=>domain.name===command.area?i:-1).filter(i=>i>=0):[scoreCurrentDomain],i=matches[0];
-            if(matches.length!==1)message='추가할 영역을 하나 찾지 못했어요. 영역 이름을 정확히 알려주세요.';
-            else if(!command.text||command.text.length>80)message='문항은 80자 이내로 입력해 주세요.';
-            else if(scoreDraft.domains[i].questions.length>=15)message='한 영역에는 문항을 15개까지 추가할 수 있어요.';
-            else{scoreDraft.domains[i].questions.push(command.text);scoreCurrentDomain=i;drawScoring();message='문항을 초안에 추가했어요. 오른쪽에서 확인하고 저장해 주세요.';}
-          }else if(command.action==='delete-question'){
-            const matches=[];scoreDraft.domains.forEach((domain,i)=>{if(command.area&&domain.name!==command.area)return;domain.questions.forEach((question,j)=>{if(question===command.text)matches.push({i,j});});});
-            if(matches.length!==1)message='삭제할 문항을 하나 찾지 못했어요. 전체 문구와 영역을 정확히 알려주세요.';
-            else{const {i,j}=matches[0];scoreDraft.domains[i].questions.splice(j,1);scoreCurrentDomain=i;drawScoring();message='문항을 초안에서 삭제했어요. 영역당 문항이 5개 이상인지 확인하고 저장해 주세요.';}
-          }
-        }
-        notifyTemplateDirty();window.parent.postMessage({type:'careit-ai-template-result',message:message||'이 편집 화면에서는 해당 요청을 처리할 수 없어요.'},targetOrigin);
+        const message=executeAiTemplateCommand(data.command||{});notifyTemplateDirty();window.parent.postMessage({type:'careit-ai-template-result',message},targetOrigin);
       }else if(data.type==='careit-ai-template-save'&&templateEmbed){
         if(route==='/settings/configuration'){
           const previous={journalTemplates:copy(state.journalTemplates),journalTemplateConfigs:copy(state.journalTemplateConfigs),journalSchemaSnapshots:copy(state.journalSchemaSnapshots),configuration:copy(state.configuration)};
           if(await saveConfigurationForNavigation())window.parent.postMessage({type:'careit-ai-template-saved',shared:!!sharedAiBridge,previous,updated:{journalTemplates:copy(state.journalTemplates),journalTemplateConfigs:copy(state.journalTemplateConfigs),journalSchemaSnapshots:copy(state.journalSchemaSnapshots),configuration:copy(state.configuration)}},targetOrigin);
           else window.parent.postMessage({type:'careit-ai-template-save-cancelled'},targetOrigin);
         }else if(route==='/recipients/scoring'&&await saveScoring()===false)window.parent.postMessage({type:'careit-ai-template-save-cancelled'},targetOrigin);
+      }else if(data.type==='careit-ai-apply-polish'&&route==='/journals/new'){
+        const fields=Array.isArray(data.fields)?data.fields:[],allowed=new Set(aiJournalFields.map(([id])=>id)),seen=new Set();
+        const invalid=!fields.length||fields.some(item=>{const input=document.getElementById(item.id);if(!allowed.has(item.id)||seen.has(item.id)||!input||input.readOnly||input.disabled||typeof item.original!=='string'||typeof item.value!=='string'||input.value!==item.original||item.value.length>input.maxLength)return true;seen.add(item.id);return false;});
+        if(invalid){window.parent.postMessage({type:'careit-ai-polish-conflict'},targetOrigin);return;}
+        fields.forEach(item=>{const input=document.getElementById(item.id);if(input.value!==item.value){input.value=item.value;input.dispatchEvent(new Event('input',{bubbles:true}));}});
+        window.parent.postMessage({type:'careit-ai-polish-applied'},targetOrigin);
       }else if(data.type==='careit-ai-apply'&&route==='/journals/new'){
         const input=$('#journal-raw');if(!input)return;
         if(data.expected!==null&&data.expected!==undefined&&input.value!==data.expected){window.parent.postMessage({type:'careit-ai-apply-conflict'},targetOrigin);return;}
@@ -2799,6 +2930,6 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       }
     });
   }
-  applyDesign();syncSidebarTheme();render();
+  applyDesign();syncSidebarTheme();render();if(!aiEmbed)setAiDock(!!state.aiPanelOpen);
   notifyAiFrameReady?.();
 })();

@@ -10,12 +10,12 @@
 
 @media (prefers-reduced-motion:no-preference) {
   .app-layout .button,
-  .app-layout :is(.dropdown-trigger,.ai-chat-choice,.ai-chat-open-preview,.ai-chat-suggestions button,.ai-chat-input-row button,.journal-ai-controls button,.quick-check-slider-ticks button),
+  .app-layout :is(.dropdown-trigger,.ai-chat-choice,.ai-chat-open-preview,.ai-chat-suggestions button,.ai-chat-input-row button,.quick-check-slider-ticks button),
   .app-layout :is(.record-tabs button,.app-bottom-nav a,.app-bottom-nav button) {
     transition:transform 120ms var(--ease),background-color 150ms var(--ease),color 150ms var(--ease),border-color 150ms var(--ease),box-shadow 150ms var(--ease);
   }
   .app-layout .button:active:not(:disabled),
-  .app-layout :is(.dropdown-trigger,.ai-chat-choice,.ai-chat-open-preview,.ai-chat-suggestions button,.ai-chat-input-row button,.journal-ai-controls button,.quick-check-slider-ticks button,.record-tabs button,.app-bottom-nav a,.app-bottom-nav button):active:not(:disabled) {
+  .app-layout :is(.dropdown-trigger,.ai-chat-choice,.ai-chat-open-preview,.ai-chat-suggestions button,.ai-chat-input-row button,.quick-check-slider-ticks button,.record-tabs button,.app-bottom-nav a,.app-bottom-nav button):active:not(:disabled) {
     transform:scale(.98);
   }
   .journal-choice-chips label:active>span { transform:scale(.98); }

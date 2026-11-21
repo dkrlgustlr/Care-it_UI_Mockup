@@ -62,13 +62,6 @@ html[data-scale-preview="line"] .quick-check-slider-ticks button[aria-pressed="t
 /* 작성 상태와 관련 동작을 하나의 플로팅 영역에 모읍니다. */
 .journal-page > .page-header { align-items:center; gap:20px; }
 .journal-page > .page-header > div:first-child { flex:none; }
-.journal-memo-fields .field-heading:has(.journal-ai-controls) { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
-.journal-memo-fields .field-heading:has(.journal-ai-controls) .field-limit { margin-left:auto; white-space:nowrap; }
-.journal-ai-controls { display:flex; flex:none; gap:4px; padding:4px; border-radius:8px; background:var(--neutral-soft); }
-.journal-ai-controls button { min-height:36px; padding:0 12px; border:0; border-radius:6px; background:transparent; color:var(--muted); font:600 14px/1.4 var(--font-sans); cursor:pointer; }
-.journal-ai-controls button[aria-pressed=true] { background:var(--surface); color:var(--primary-dark); }
-.journal-ai-controls button:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
-.journal-ai-original { box-sizing:border-box; min-height:96px; padding:16px; border-radius:8px; background:var(--neutral-soft); color:var(--text); font:500 16px/1.6 var(--font-sans); white-space:pre-wrap; overflow-wrap:anywhere; }
 .journal-page > .journal-actions { position:static; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:16px; border:1px solid var(--line); }
 .journal-page > .journal-actions > div:first-child { display:grid; flex:1 1 200px; gap:3px; min-width:0; }
 .journal-page > .journal-actions > div:last-child { display:flex; flex:0 0 auto; flex-wrap:wrap; max-width:100%; align-items:center; justify-content:flex-end; }
