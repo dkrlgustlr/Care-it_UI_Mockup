@@ -231,8 +231,9 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const mockupNotice = {title:'돌봄 기록부터 리포트까지, 케어릿과 함께',summary:'일지 작성부터 주간 리포트 확인까지 알아보세요.'};
   const embedded = JSON.parse($('#saved-design').textContent || '{}');
-  const STORAGE = 'careit-ui-mockup-20260923-v1' + (embedded.exportId ? '-'+embedded.exportId : '');
-  const store=createMockupStorage({storage:localStorage,key:STORAGE,locks:navigator.locks,onBlocked:showStorageBlock});
+  const aiEmbed=new URLSearchParams(location.search).get('aiEmbed');
+  const STORAGE = 'careit-ui-mockup-20260923-v1' + (embedded.exportId ? '-'+embedded.exportId : '') + (aiEmbed?'-ai-preview-'+aiEmbed:'');
+  const store=createMockupStorage({storage:aiEmbed?sessionStorage:localStorage,key:STORAGE,locks:aiEmbed?null:navigator.locks,onBlocked:showStorageBlock});
   let state = {...embedded};
   try { state = {...state, ...JSON.parse(store.initial || '{}')}; } catch {}
   if (!state.mockSocialExamplesInitialized) { state.mockSocialLinks = {...state.mockSocialLinks, google:true}; state.mockSocialExamplesInitialized = true; }
@@ -382,6 +383,11 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(!state.scoring[0]||JSON.stringify(state.scoring[0])===JSON.stringify(previousDefault))delete state.scoring[0];
     state.liveReportBaseline='2026-11-08-v3';
   }
+  if(aiEmbed){
+    state.recipients[1].name='그림책 샘플';state.recipients[2].name='산책 샘플';
+    state.journalTemplates[4]={name:'일지 템플릿',quickChecks:6};
+    state.journalTemplateConfigs[4]={labels:['자유 메모','사회 · 정서','학습 · 활동','건강 · 안전','특이사항'],quickChecks:liveBaseQuick()};
+  }
   state.liveAppReplica = true;
   let route = '/', params = new URLSearchParams(), recipient = 0, detailRecipient = 0, recordTab = 'journals', recipientTab = 'recipients';
   const recordRange = {from:'', to:''};
@@ -520,7 +526,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       else {const chosen=mockupJournalRecipient(state,requested);if(chosen<0){routeTo('#/recipients');toast('일지를 작성하려면 활성 관리대상이 필요해요.');return;}if(chosen!==requested||!params.has('recipient')){params.set('recipient',String(chosen));history.replaceState(null,'','#'+route+'?'+params);}}
     }
     if(route==='/records'&&!params.has('recipient'))params.set('recipient','all');
-    const pageTitles={'/':'홈','/guide':'케어릿 이용 방법','/journals/new':'일지 작성','/reports':'리포트','/records':'기록','/recipients':'대상·템플릿','/plans':'요금제','/settings':'설정','/settings/licenses':'오픈소스 라이선스','/privacy':'개인정보처리방침','/terms':'이용약관','/settings/configuration':'일지 편집','/recipients/scoring':'리포트 템플릿 편집','/notifications':'알림','/notices':'공지사항','/coupons':'쿠폰함','/invite':'친구 초대'};document.title=pageTitles[route]?`${pageTitles[route]} · 케어릿`:'케어릿';
+    const pageTitles={'/':'홈','/guide':'케어릿 이용 방법','/journals/new':'일지 작성','/reports':'리포트','/ai-chat':'AI 대화','/records':'기록','/recipients':'대상·템플릿','/plans':'요금제','/settings':'설정','/settings/licenses':'오픈소스 라이선스','/privacy':'개인정보처리방침','/terms':'이용약관','/settings/configuration':'일지 편집','/recipients/scoring':'리포트 템플릿 편집','/notifications':'알림','/notices':'공지사항','/coupons':'쿠폰함','/invite':'친구 초대'};document.title=pageTitles[route]?`${pageTitles[route]} · 케어릿`:'케어릿';
     document.body.dataset.mobileHome=String(route==='/');
     const scrollTitle=$('.mobile-scroll-title');if(scrollTitle){scrollTitle.textContent=route==='/journals/new'&&params.has('entry')?'일지 수정':pageTitles[route]||'';scrollTitle.hidden=true;}
     const allRecords=route==='/records'&&params.get('recipient')==='all';
@@ -536,6 +542,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     $$('.sidebar nav a').filter(a=>['/journals/new','/reports'].includes(a.dataset.route)).forEach(a=>a.href=`#${a.dataset.route}?recipient=${recipient}`);
     $$('[data-options="recipients"] span', $('#screen')).forEach(x => x.textContent = allRecords?'전체':state.recipients[recipient].name);
     if (route === '/') renderHome();
+    if (route === '/ai-chat') renderAiChat();
     if (route === '/notices') {
       $('[data-notice-title]').textContent=mockupNotice.title;
       if ($('[data-notice-summary]')) $('[data-notice-summary]').textContent=mockupNotice.summary;
@@ -571,6 +578,49 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     syncAppNavigation();
     registerEdits(); window.scrollTo(0,0); requestAnimationFrame(()=>{scaleReports();updateMobileScrollTitle();});
     if (route === '/plans' && !mockupActivePlan(state,currentDate()) && ['starter','team','pro'].includes(params.get('plan'))) openPlanCheckout(params.get('plan'));
+  }
+  const aiSuggestions=[
+    ['오늘 일지 작성 도와줘','일지에 담을 오늘의 활동과 관찰 내용을 알려주세요.'],
+    ['이번 주 리포트 확인하고 싶어','리포트를 확인할 관리대상과 기간을 알려주세요.'],
+    ['새 관리대상 추가해 줘','추가할 관리대상의 이름과 사용할 템플릿을 알려주세요.']
+  ];
+  const aiMessages=[],aiPendingFiles=[];
+  let aiPreviewKind='',aiPreviewOpen=false;
+  function renderAiChat(){
+    const page=$('.ai-chat-page');if(!page)return;
+    const content=$('[data-ai-chat-content]',page);
+    content.innerHTML=aiMessages.length?`<div class="ai-chat-messages" aria-live="polite">${aiMessages.map(message=>`<div class="ai-chat-message ${message.role}">${message.role==='assistant'?'<strong>케어릿 AI <span>예시 답변</span></strong>':''}${message.files?.map(name=>`<span class="ai-chat-message-file">${escapeHTML(name)}</span>`).join('')||''}${message.text?`<p>${escapeHTML(message.text)}</p>`:''}${message.preview?`<button type="button" class="ai-chat-open-preview" data-action="ai-preview-open" data-kind="${message.preview}">${message.preview==='journal'?'일지':'리포트'} 보기 <span aria-hidden="true">›</span></button>`:''}</div>`).join('')}</div>`:`<div class="ai-chat-welcome"><img class="ai-chat-mark" src="${escapeHTML($('.brand-mark').getAttribute('src'))}" alt=""><h2>무엇을 도와드릴까요?</h2><p>케어릿 사용부터 돌봄 기록까지, 편하게 요청해 주세요.</p><div class="ai-chat-suggestions">${aiSuggestions.map(([question],i)=>`<button type="button" data-action="ai-chat-suggest" data-index="${i}"><span>${escapeHTML(question)}</span><span aria-hidden="true">›</span></button>`).join('')}</div></div>`;
+    renderAiAttachments();
+    renderAiPreview();
+    if(aiMessages.length)content.scrollTop=content.scrollHeight;
+  }
+  function renderAiPreview(){
+    const panel=$('.ai-chat-preview');if(!panel)return;
+    panel.hidden=!aiPreviewOpen;
+    if(!aiPreviewOpen)return;
+    const journal=aiPreviewKind==='journal';
+    if(!panel.dataset.ready){panel.innerHTML='<header class="ai-preview-header"><button type="button" data-action="ai-preview-close" aria-label="대화로 돌아가기">‹</button><strong></strong><span>시연 화면</span></header><div class="ai-preview-frames"></div>';panel.dataset.ready='true';}
+    $('.ai-preview-header strong',panel).textContent=journal?'일지 작성':'리포트';
+    let frame=$(`iframe[data-kind="${aiPreviewKind}"]`,panel);
+    if(!frame){
+      frame=document.createElement('iframe');frame.dataset.kind=aiPreviewKind;frame.title=journal?'일지 작성 시연 화면':'리포트 시연 화면';
+      const url=new URL(location.href);url.search='';url.searchParams.set('aiEmbed',aiPreviewKind);
+      url.hash=journal?'#/journals/new?recipient=1':`#/reports?recipient=2&report=home-example-${mockupReportWeek(currentDate(),-1).from}`;
+      frame.src=url.href;$('.ai-preview-frames',panel).append(frame);
+    }
+    $$('iframe',panel).forEach(item=>item.hidden=item!==frame);
+  }
+  function renderAiAttachments(){
+    const list=$('[data-ai-attachments]');if(!list)return;
+    list.hidden=!aiPendingFiles.length;
+    list.innerHTML=aiPendingFiles.map((name,i)=>`<span class="ai-chat-attachment"><span>${escapeHTML(name)}</span><button type="button" data-action="ai-chat-remove-file" data-index="${i}" aria-label="${escapeHTML(name)} 첨부 취소">×</button></span>`).join('');
+  }
+  function sendAiChat(text,suggestion=-1){
+    text=text.trim();if(!text&&!aiPendingFiles.length)return;
+    const kind=/(써|작성|만들|생성|보여|확인|열어|도와)/.test(text)?(/리포트/.test(text)?'report':/일지/.test(text)?'journal':''):'';
+    if(kind){aiPreviewKind=kind;aiPreviewOpen=true;}
+    aiMessages.push({role:'user',text,files:aiPendingFiles.splice(0)},{role:'assistant',preview:kind,text:kind?`${kind==='journal'?'일지':'리포트'} 예시 화면을 열었어요.`:suggestion>=0?aiSuggestions[suggestion][1]:'이 화면은 AI 대화의 미리보기예요. 실제 답변은 AI 연결 후 제공돼요.'});
+    renderAiChat();$('#ai-chat-input').value='';
   }
   let journalSavedSnapshot=null,journalSavedRecord=null,journalSaving=false,journalAiComparison=null;
   function setDraftStatus(message){$$('[data-draft-status]').forEach(status=>status.textContent=message);}
@@ -1371,7 +1421,12 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     const button=e.target.closest('[data-action]');if(!button)return;
     const action=button.dataset.action;
     if(handlePopupAction(action,button,e))return;
-    if(action==='coupon-tab'){const tab=button.dataset.tab;$$('[data-action="coupon-tab"]').forEach(item=>item.setAttribute('aria-pressed',String(item.dataset.tab===tab)));$$('[data-coupon-panel]').forEach(panel=>panel.hidden=panel.dataset.couponPanel!==tab);}
+    if(action==='ai-preview-close'){aiPreviewOpen=false;renderAiPreview();}
+    else if(action==='ai-preview-open'){aiPreviewKind=button.dataset.kind;aiPreviewOpen=true;renderAiPreview();}
+    else if(action==='ai-chat-attach')$('#ai-chat-files').click();
+    else if(action==='ai-chat-remove-file'){aiPendingFiles.splice(Number(button.dataset.index),1);renderAiAttachments();}
+    else if(action==='ai-chat-suggest'){const i=Number(button.dataset.index);if(aiSuggestions[i])sendAiChat(aiSuggestions[i][0],i);}
+    else if(action==='coupon-tab'){const tab=button.dataset.tab;$$('[data-action="coupon-tab"]').forEach(item=>item.setAttribute('aria-pressed',String(item.dataset.tab===tab)));$$('[data-coupon-panel]').forEach(panel=>panel.hidden=panel.dataset.couponPanel!==tab);}
     else if(action==='coupon-preview')useCoupon(Number(button.dataset.index));
     else if(action==='edit-journal-title'){const input=document.getElementById(button.getAttribute('aria-controls'));input.focus();input.select();}
     else if(action==='reset-record-dates'){recordRange.from='';recordRange.to='';updateRecordFilters();filterRecords();}
@@ -1428,6 +1483,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   });
   document.addEventListener('submit',async e=>{
     e.preventDefault();
+    if(e.target.id==='ai-chat-form'){sendAiChat($('#ai-chat-input').value);return;}
     if(e.target.id==='quick-edit-form'){saveQuick();return;}
     if(e.target.id==='score-edit-form'){saveScoring();return;}
     if(e.target.id==='configuration-form'){saveConfiguration();return;}
@@ -1450,6 +1506,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   const timeInputValues=new WeakMap();
   document.addEventListener('focusout',e=>{if(e.target.id==='account-name'){if(e.relatedTarget?.matches('[data-action="cancel-account-name"]'))return;saveAccountName(e.target);}else if(e.target.matches('[data-action="cancel-account-name"]')){const row=e.target.closest('.account-profile-row');if(row&&!row.contains(e.relatedTarget)){const input=$('#account-name',row);if(input)saveAccountName(input);}}});
   document.addEventListener('keydown',e=>{
+    if(e.target.id==='ai-chat-input'&&e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();e.target.form.requestSubmit();return;}
     if(!e.altKey||!e.shiftKey||e.ctrlKey||e.metaKey||e.isComposing)return;
     const device={Digit1:'pc',Digit2:'mac',Digit3:'tablet',Digit4:'phone',Digit5:'app'}[e.code];
     if(!device)return;
@@ -1481,7 +1538,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     updateCounter(el);
     if(route==='/journals/new'&&el.closest('#screen')){updateJournalSaveState();if(params.get('entry')===null){captureDraft(false);const saved=await persist();setDraftStatus(saved?'작성 내용은 이 브라우저에 자동 보관돼요.':'자동 보관이 중단됐어요.');updateJournalSaveState();}}
   });
-  document.addEventListener('change',e=>{if(e.target.matches('.timefield input[type="number"]'))syncTimeInput(e.target.closest('.timefield'));if(route==='/journals/new'&&e.target.closest('[data-quick-checks]')){captureDraft();updateJournalSaveState();}if(e.target.name==='quick-type-choice')$$('.quick-check-type-card',$('#quick-type-picker')).forEach(card=>card.classList.toggle('is-selected',!!$('input[name="quick-type-choice"]',card)?.checked));});
+  document.addEventListener('change',e=>{if(e.target.id==='ai-chat-files'){aiPendingFiles.push(...Array.from(e.target.files,file=>file.name));e.target.value='';renderAiAttachments();}if(e.target.matches('.timefield input[type="number"]'))syncTimeInput(e.target.closest('.timefield'));if(route==='/journals/new'&&e.target.closest('[data-quick-checks]')){captureDraft();updateJournalSaveState();}if(e.target.name==='quick-type-choice')$$('.quick-check-type-card',$('#quick-type-picker')).forEach(card=>card.classList.toggle('is-selected',!!$('input[name="quick-type-choice"]',card)?.checked));});
   document.addEventListener('focusin',e=>{if(e.target.matches('.score-question-list textarea'))sizeScoreQuestion(e.target);});
   document.addEventListener('focusout',e=>{if(e.target.matches('.score-question-list textarea'))requestAnimationFrame(()=>{if(e.target.isConnected)sizeScoreQuestion(e.target);});});
   window.addEventListener('resize',()=>{$$('.score-area-panel:not([hidden]) .score-question-list textarea').forEach(sizeScoreQuestion);});
