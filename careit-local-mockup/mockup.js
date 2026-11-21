@@ -535,7 +535,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       else {const chosen=mockupJournalRecipient(state,requested);if(chosen<0){routeTo('#/recipients');toast('일지를 작성하려면 활성 관리대상이 필요해요.');return;}if(chosen!==requested||!params.has('recipient')){params.set('recipient',String(chosen));history.replaceState(null,'','#'+route+'?'+params);}}
     }
     if(route==='/records'&&!params.has('recipient'))params.set('recipient','all');
-    const pageTitles={'/':'홈','/guide':'케어릿 이용 방법','/journals/new':'일지 작성','/reports':'리포트','/ai-chat':'AI 대화','/records':'기록','/recipients':'대상·템플릿','/plans':'요금제','/settings':'설정','/settings/licenses':'오픈소스 라이선스','/privacy':'개인정보처리방침','/terms':'이용약관','/settings/configuration':'일지 편집','/recipients/scoring':'리포트 템플릿 편집','/notifications':'알림','/notices':'공지사항','/coupons':'쿠폰함','/invite':'친구 초대'};document.title=pageTitles[route]?`${pageTitles[route]} · 케어릿`:'케어릿';
+    const pageTitles={'/':'홈','/guide':'케어릿 이용 방법','/journals/new':'일지 작성','/reports':'리포트','/ai-chat':'케어릿 AI','/records':'기록','/recipients':'대상·템플릿','/plans':'요금제','/settings':'설정','/settings/licenses':'오픈소스 라이선스','/privacy':'개인정보처리방침','/terms':'이용약관','/settings/configuration':'일지 편집','/recipients/scoring':'리포트 템플릿 편집','/notifications':'알림','/notices':'공지사항','/coupons':'쿠폰함','/invite':'친구 초대'};document.title=pageTitles[route]?`${pageTitles[route]} · 케어릿`:'케어릿';
     document.body.dataset.mobileHome=String(route==='/');
     const scrollTitle=$('.mobile-scroll-title');if(scrollTitle){scrollTitle.textContent=route==='/journals/new'&&params.has('entry')?'일지 수정':pageTitles[route]||'';scrollTitle.hidden=true;}
     const allRecords=route==='/records'&&params.get('recipient')==='all';
