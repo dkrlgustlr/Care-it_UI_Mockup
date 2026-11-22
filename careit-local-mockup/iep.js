@@ -52,6 +52,7 @@ function createCareitIEP({state,persist,toast,dialog,escapeHTML:esc,registerEdit
   const resultSourceIds=r=>r?.sourceIds||['template','curriculum','dec','iep'];
   const calendar='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
   let root,index=0,view='form',documentView=false,savedPlanId=null,saving=false,starting=false,jobTimer,settling=false;
+  const aiDraftIds=new WeakMap();
   state.iep ||= {drafts:{},plans:[]};
   state.iep.savedDrafts ||= {};
   // 이용권과 작업 상태는 로컬 시연용입니다. 실제 결제·권한 검증은 연결하지 않습니다.
@@ -154,7 +155,7 @@ function createCareitIEP({state,persist,toast,dialog,escapeHTML:esc,registerEdit
   function shell() {
     if(!root)return;
     const count=state.iep.plans.filter(p=>p.recipient===index).length;
-    root.innerHTML=`<header class="page-header"><div class="iep-title"><h1>IEP</h1></div><button type="button" class="button secondary" data-iep-action="new">새 계획</button></header>
+    root.innerHTML=`<header class="page-header"><div class="iep-title"><h1>월간 계획</h1></div><div class="iep-inline-actions"><a class="button tertiary" href="#/iep?recipient=${index}">학기별 IEP</a><button type="button" class="button secondary" data-iep-action="new">새 계획</button></div></header>
       <div class="iep-tabs-row"><div class="record-tabs" aria-label="IEP 화면"><button type="button" data-iep-action="workspace" aria-pressed="${!inSavedTab()}">계획 작성</button><button type="button" data-iep-action="saved" aria-pressed="${inSavedTab()}">저장한 계획 <span>${count}</span></button></div></div>
       <section class="iep-card iep-recipient-bar ${view==='saved'?'':'iep-recipient-bar--period'}" aria-label="IEP 대상 및 기간"><div class="field iep-field"><span>관리대상</span><div class="dropdown"><button type="button" class="dropdown-trigger" data-options="recipients" aria-label="관리대상" aria-haspopup="listbox" aria-expanded="false"><span>${esc(state.recipients[index].name)}</span></button></div></div><div class="field iep-field"><span id="iep-age-label">연령대</span><div class="dropdown"><button id="iep-age-band" type="button" class="dropdown-trigger" data-options="recipient-age-band" data-iep-age data-value="${esc(state.recipients[index].ageBand||'')}" aria-labelledby="iep-age-label iep-age-value" aria-haspopup="listbox" aria-expanded="false"><span id="iep-age-value">${esc(state.recipients[index].ageBand||'연령대 선택')}</span></button></div></div>${view==='saved'?'':rangeField('month','월 계획 기간')}</section>
       <div id="iep-content"></div>`;
@@ -169,7 +170,7 @@ function createCareitIEP({state,persist,toast,dialog,escapeHTML:esc,registerEdit
       ${savedPlanId?'<div class="iep-card-heading"><h2>저장한 계획 수정</h2></div>':''}
 
       <section class="iep-card"><div class="iep-card-heading"><h2>1. 현행수준</h2>${savedPlanId?'':'<button type="button" class="button tertiary" data-iep-action="example">예시 불러오기</button>'}</div><div class="iep-two-col">${field('observation','목표와 관련된 현재 수행 모습',{required:true,placeholder:'예: 도움 요청 그림을 보여 주면 그림을 가리켜요.'})}${field('strength','흥미와 강점 (선택)',{placeholder:'예: 자동차 놀이를 좋아하고, 익숙한 그림으로 원하는 것을 표현해요.'})}</div><details class="iep-optional-context" ${d.input.familyRequest||d.input.participationNeeds?'open':''}><summary>목표에 필요한 추가 정보</summary><div class="iep-two-col">${field('familyRequest','보호자의 교육적 요청 (선택)',{rows:2,placeholder:'예: 가정에서도 그림으로 도움을 요청해 보길 원함'})}${field('participationNeeds','활동 참여·안전에 필요한 지원 (선택)',{rows:2,placeholder:'예: 앉아서 참여할 수 있는 자리 마련, 소음이 적은 공간 사용'})}</div></details></section>
-      <section class="iep-card"><div class="iep-card-heading"><h2>2. 교육목표</h2></div>
+      <section class="iep-card"><div class="iep-card-heading"><h2>2. 교육목표</h2><button type="button" class="button tertiary" data-action="iep-ai-help" data-iep-help="goal">목표 함께 정하기</button></div>
         <div class="iep-two-col">${field('monthGoal','월 목표',{required:true,placeholder:'예: 놀이 중 도움이 필요할 때 그림이나 말로 도움을 요청해요.'})}${field('semesterGoal','연결할 기존 IEP 목표 (선택)',{placeholder:'예: 일상생활에서 자신의 요구를 그림이나 말로 표현해요.'})}</div>
       </section>
       ${generationActions(d)}
@@ -261,17 +262,22 @@ function createCareitIEP({state,persist,toast,dialog,escapeHTML:esc,registerEdit
       <section class="iep-card iep-result-header"><div><div class="iep-card-heading"><h2>${esc(state.recipients[index].name)}의 월간 계획</h2><span class="workflow-badge" data-iep-status>${r.confirmed?'검토 완료':d.editSessionFields?.length?'수정 중':'초안 검토'}</span>${r.proposalMode==='mockup'?'<span class="workflow-badge">제안 예시</span>':r.example?'<span class="workflow-badge">예시</span>':''}</div><p class="iep-help">${period(r.input.month)}</p><p class="iep-help">작성 당시 연령대 · ${esc(r.input.ageBand||'미기록')}</p></div><div class="iep-inline-actions"><button type="button" class="button tertiary" data-iep-action="edit-input">입력 수정</button><button type="button" class="button tertiary" data-iep-action="document">${documentView?'카드로 보기':'계획서 보기'}</button><button type="button" class="button tertiary" data-iep-action="download">계획서 내려받기</button></div></section>
       ${r.migrated?'<p class="iep-demo-note">기존 내용을 새 양식으로 옮겼어요. 추가된 항목을 확인한 뒤 다시 검토 완료해 주세요.</p>':''}
       ${documentView?`<section class="iep-card"><div class="iep-card-heading"><h2>계획서 미리보기</h2><span class="iep-help">HTML 문서 · 인쇄 시 PDF 저장 가능</span></div><div class="iep-table-scroll" tabindex="0" role="region" aria-label="IEP 계획서 표">${planTable(r)}</div></section>`:resultCards(r)}
-      ${historyHTML(r)}<div data-iep-review-notice></div><div data-iep-goal-choice></div>
+      ${historyHTML(r)}${sourceHTML(r)}<div data-iep-review-notice></div><div data-iep-goal-choice></div>
       <div class="iep-card iep-action-bar" data-iep-savebar><div><strong data-iep-save-message>${r.confirmed?'저장한 계획이에요':'수정한 내용을 확인하고 저장해 주세요'}</strong></div><button type="button" class="button primary" data-iep-action="save" ${r.confirmed?'disabled':''}>${r.confirmed?'저장 완료':savedPlanId?'변경 내용 저장':'검토 완료하고 저장'}</button></div>`;
     refreshReviewUI();
   }
+  function sourceHTML(r){
+    const sources=resultSourceIds(r).map(id=>[...SOURCES,...RETIRED_SOURCES].find(source=>source.id===id)).filter(Boolean);
+    if(!sources.length)return '';
+    return `<details class="iep-card iep-sources"><summary>계획 구성에 참고한 자료</summary><ul>${sources.map(source=>`<li>${source.url?`<a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${esc(source.title)}</a>`:esc(source.title)} <span>${esc(source.meta||'')}</span>${source.principle?`<p>${esc(source.principle)}</p>`:''}</li>`).join('')}</ul><p class="iep-help">교육과정 연결과 계획 내용은 작성자가 확인해 주세요.</p></details>`;
+  }
   function resultCards(r){
     const fieldHTML=keys=>keys.map(key=>{const s=r.sections.find(s=>s.fields.some(f=>f[0]===key));return resultField(s,s.fields.find(f=>f[0]===key));}).join('');
-    const group=(title,keys,{collapsed=false,summary='',review=''}={})=>`<${collapsed?'details':'section'} class="iep-card iep-result-group" ${review?`data-review-group="${review}"`:''}>${collapsed?`<summary><strong>${title}</strong>${summary?`<span class="iep-summary">${esc(summary)}</span>`:''}</summary>`:`<div class="iep-card-heading"><h2>${title}</h2>${review?`<span data-review-label="${review}"></span>`:''}</div>`}<div class="iep-result-fields iep-two-col">${fieldHTML(keys)}</div>${review?`<button type="button" class="button tertiary iep-review-button" data-iep-action="reviewed" data-section="${review}" hidden>내용 확인 완료</button>`:''}</${collapsed?'details':'section'}>`;
+    const group=(title,keys,{collapsed=false,summary='',review='',help=''}={})=>`<${collapsed?'details':'section'} class="iep-card iep-result-group" ${review?`data-review-group="${review}"`:''}>${collapsed?`<summary><strong>${title}</strong>${summary?`<span class="iep-summary">${esc(summary)}</span>`:''}</summary>`:`<div class="iep-card-heading"><h2>${title}</h2>${review?`<span data-review-label="${review}"></span>`:''}${help?`<button type="button" class="button tertiary" data-action="iep-ai-help" data-iep-help="${help}">케어릿 AI에 요청</button>`:''}</div>`}<div class="iep-result-fields iep-two-col">${fieldHTML(keys)}</div>${review?`<button type="button" class="button tertiary iep-review-button" data-iep-action="reviewed" data-section="${review}" hidden>내용 확인 완료</button>`:''}</${collapsed?'details':'section'}>`;
     return group('현행수준·교육목표',['baseline','strength','monthGoal','semesterGoal','familyRequest','connection'],{collapsed:true,summary:valueOf(r,'monthGoal')||'월 목표 미작성'})+
-      group('활동 계획',['activity','content'],{review:'content'})+
+      group('활동 계획',['activity','content'],{review:'content',help:'activity'})+
       group('진행 방법·교사 지원',['steps','support','participationNeeds','responseSupport'],{review:'method'})+
-      group('평가방법·평가초점',['evaluationMethod','criterion','observe'],{review:'evaluation'})+
+      group('평가방법·평가초점',['evaluationMethod','criterion','observe'],{review:'evaluation',help:'evaluation'})+
       group('교육과정 연결·세부 준비',['nuri','materials','prepare'],{collapsed:true,summary:'교육과정 연결, 준비할 자료와 환경'})+
       group('실제 관찰·다음 달 검토',['evaluationResult','adjust'],{collapsed:!valueOf(r,'evaluationResult').trim(),summary:valueOf(r,'evaluationResult').trim()?'관찰 기록 있음':'실제 관찰 미기록'});
   }
@@ -529,6 +535,13 @@ function createCareitIEP({state,persist,toast,dialog,escapeHTML:esc,registerEdit
     document.getElementById('iep-mock-cycle').disabled=q.busy||starting||settling;
   }
   return {
+    aiContext(kind){
+      if(!root?.isConnected||view==='saved')return null;
+      const d=draft();if(!aiDraftIds.has(d))aiDraftIds.set(d,crypto.randomUUID());
+      const target=kind==='goal'?(view==='form'?'iep-monthGoal':'iep-result-monthGoal'):view==='result'?(kind==='activity'?'iep-result-activity':kind==='evaluation'?'iep-result-evaluationMethod':''):'';
+      const control=target&&document.getElementById(target);if(!control)return null;
+      return {draftId:aiDraftIds.get(d),recipient:index,target,original:control.value,observation:d.input.observation,goal:d.input.monthGoal,month:JSON.stringify(d.input.month)};
+    },
     mount(element,recipient) {
       root=element;index=recipient;
       if(savedPlanId&&!state.iep.plans.some(p=>p.id===savedPlanId&&p.recipient===index)){savedPlanId=null;view='saved';}
@@ -564,6 +577,325 @@ function createCareitIEP({state,persist,toast,dialog,escapeHTML:esc,registerEdit
       if(view==='result'&&d.result){d.result.input[key]=clone(d.input[key]);d.result.confirmed=false;renderResult();registerEdits();}
       else d.dirtyInput=true;
       persist();
+    }
+  };
+}
+
+/* 학기별 IEP는 기존 월간 계획과 별도로 보관합니다. 외부 AI 호출은 없습니다. */
+function createCareitSemesterIEP({state,persist,toast,dialog,escapeHTML:esc,registerEdits,journalRows,reportRecords,reportSummary,currentDate}) {
+  const $=(selector,scope=root)=>scope?.querySelector(selector);
+  const $$=(selector,scope=root)=>[...(scope?.querySelectorAll(selector)||[])];
+  const uid=()=>crypto.randomUUID();
+  const areas=['신체운동·건강','의사소통','사회관계','예술경험','자연탐구'];
+  const goalLimit=10;
+  const goal=()=>({id:uid(),text:'',period:'',supportLevel:'',criterion:'',activity:'',method:'',evaluation:'',months:{},observations:[]});
+  const newObservation=()=>({id:uid(),date:'',situation:'',behavior:'',support:'',evidence:''});
+  const observationDrafts=new Map();
+  function observationState(g){
+    if(!observationDrafts.has(g.id))observationDrafts.set(g.id,{drafts:[],order:g.observations.map(item=>item.id)});
+    const state=observationDrafts.get(g.id);
+    if(!state.order.length){const draft=newObservation();state.drafts.push(draft);state.order.push(draft.id);}
+    return state;
+  }
+  const domain=name=>({id:uid(),name,strength:'',needs:'',current:'',longGoal:'',goals:[goal()]});
+  const planFor=(recipient,year,term)=>({id:uid(),recipient,year,term,domains:areas.map(domain),support:{},meeting:{},references:[],revision:0,savedRevision:null});
+  let root,index,plan,section='personal',recordsFrom='personal',domainId,goalId,month,saving=false;
+  state.iep.semesterPlans ||= [];
+  const activeDomain=()=>plan.domains.find(item=>item.id===domainId)||plan.domains[0];
+  const activeGoal=()=>activeDomain()?.goals.find(item=>item.id===goalId)||activeDomain()?.goals[0];
+  const months=()=>plan.term===1?[3,4,5,6,7,8]:[9,10,11,12,1,2];
+  function choose(year,term){
+    plan=state.iep.semesterPlans.find(p=>p.recipient===index&&p.year===year&&p.term===term);
+    if(!plan){plan=planFor(index,year,term);state.iep.semesterPlans.push(plan);}
+    plan.personal ||= {};plan.support ||= {};plan.meeting ||= {};plan.references ||= [];
+    state.iep.selectedSemester ||= {};state.iep.selectedSemester[index]={year,term};persist();
+    domainId=plan.domains[0]?.id;goalId=activeDomain()?.goals[0]?.id;month=months()[0];
+  }
+  const status=()=>plan.savedRevision===plan.revision?'저장됨':plan.savedRevision==null?'':'수정 중';
+  const isDirty=()=>!!plan&&plan.revision>0&&plan.revision!==plan.savedRevision;
+  function syncSave(){const label=$('[data-iew-status]'),button=$('[data-iew-action="save"]');if(label)label.textContent=status();if(button)button.disabled=saving||!isDirty();}
+  function touch(){plan.revision++;syncSave();persist();}
+  async function saveSemester(){
+    if(saving)return false;
+    if(!isDirty())return true;
+    const savingPlan=plan,previous=savingPlan.savedRevision,previousAt=savingPlan.savedAt;
+    saving=true;savingPlan.savedRevision=savingPlan.revision;savingPlan.savedAt=new Date().toISOString();syncSave();
+    let saved=false;try{saved=await persist();}catch{}
+    if(!saved){savingPlan.savedRevision=previous;savingPlan.savedAt=previousAt;}
+    saving=false;syncSave();
+    if(saved)toast('IEP를 저장했어요.');
+    return !!saved;
+  }
+  const value=(obj,key)=>esc(obj?.[key]||'');
+  const guidance={
+    personal:{birth:'연월일 8자리',className:'예: 햇살반',placement:'예: 지적장애',disability:'예: 지적장애',degree:'예: 정도가 심한 장애'},
+    support:{special:'예: 소집단에서 그림 카드로 의사표현 연습',integrated:'예: 모둠 놀이에 함께 참여하도록 지원',specialTeacher:'예: 특수교사',integratedTeacher:'예: 통합학급 교사',therapy:'예: 주 1회 언어치료',therapyDetails:'예: 언어치료 · 교내 치료실 · 주 1회',afterSchool:'예: 방과후 미술활동에 참여',transport:'예: 보호자와 함께 등하원',personnel:'예: 활동 전환 시 지원인력 도움',assistive:'예: 그림 의사소통판 사용',family:'예: 가정에 그림 카드 사용 방법 안내'},
+    meeting:{notes:'예: 보호자와 도움 요청 방법을 논의함',place:'예: 특수학급 교실',participants:'예: 보호자, 특수교사, 통합학급 교사',parent:'예: 가정에서도 도움을 요청하길 바람',teacher:'예: 익숙한 그림을 제시하면 선택함',services:'예: 치료 시간에 같은 그림 카드 사용',strength:'예: 그림 자료에 관심을 보임',needs:'예: 도움 요청 시 시각적 단서 필요',placement:'예: 자유놀이 시간에 통합학급 참여',agreement:'예: 그림으로 도움을 요청하는 연습',home:'예: 가정에서도 같은 그림 카드 활용',decisions:'예: 교실과 가정에 그림 카드 비치',followup:'예: 한 달 뒤 관찰 내용을 함께 확인'},
+    domain:{strength:'예: 그림책과 자동차 놀이를 좋아함',needs:'예: 선택할 때 그림 단서가 필요함',current:'예: 그림을 보여주면 원하는 것을 가리킴',longGoal:'예: 일상에서 필요한 도움을 요청한다',cumulative:'예: 놀이 상황에서 그림 선택이 늘어남',semesterEvaluation:'예: 도움을 요청한 상황과 지원을 정리함'},
+    goal:{text:'예: 놀이 중 그림으로 도움을 요청한다',criterion:'예: 그림 단서로 3번 중 2번 요청한다',period:'예: 3월~5월',supportLevel:'예: 그림 단서를 제공',activity:'예: 놀이 중 도움 요청 카드 사용',method:'예: 카드를 보여주고 선택을 기다림',evaluation:'예: 요청한 상황과 지원 정도를 기록'},
+    month:{plan:'예: 놀이마다 도움 요청 카드 제시',evaluation:'예: 관찰한 요청과 지원을 기록'}
+  };
+  const requiredFields={domain:['current','longGoal'],goal:['text','criterion','activity','method','evaluation']};
+  const fieldMark=required=>`<span class="${required?'iew-required':'iew-optional'}">(${required?'필수':'선택'})</span>`;
+  function dateControl(id,label,saved,attrs,required=false){
+    const valid=/^\d{4}-\d{2}-\d{2}$/.test(saved)&&!Number.isNaN(Date.parse(saved))&&new Date(saved).toISOString().slice(0,10)===saved;
+    const shown=valid?`${saved.slice(0,4)}년 ${Number(saved.slice(5,7))}월 ${Number(saved.slice(8,10))}일`:saved||'날짜 선택';
+    return `<div class="datefield iew-datefield"><input type="hidden" ${attrs} value="${esc(saved)}"><button id="${esc(id)}" type="button" class="datefield-trigger" data-action="date" data-iep-single-date data-value="${esc(saved)}" aria-label="${esc(label)}${required?' (필수)':''}" aria-haspopup="dialog" aria-expanded="false"><span>${esc(shown)}</span><svg viewBox="30 -930 900 900" fill="currentColor" aria-hidden="true"><path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Z"/></svg></button></div>`;
+  }
+  function field(label,obj,key,extra='',valueKey=key,type='textarea',placeholder=''){
+    const id=`iew-${key}`;
+    const scope=extra.match(/data-iew-scope="([^"]+)"/)?.[1],required=requiredFields[scope]?.includes(valueKey)||false;
+    placeholder=guidance[scope]?.[valueKey]||placeholder;
+    const saved=String(obj?.[valueKey]||'');
+    if(type==='text'&&/[\r\n]/.test(saved))type='textarea';
+    if(type==='birthday')type=/[\r\n]/.test(saved)?'textarea':'birthday';
+    const attrs=`${extra} ${required?'aria-required="true"':''}`;
+    const hint=placeholder?`placeholder="${esc(placeholder)}"`:'';
+    const control=type==='date'?dateControl(id,label,saved,attrs,required):type==='textarea'?`<textarea id="${id}" maxlength="2400" rows="3" ${hint} ${attrs}>${value(obj,valueKey)}</textarea>`:`<input id="${id}" type="${type==='birthday'?'text':type}" ${type==='birthday'?'inputmode="numeric" autocomplete="bday"':type==='text'?'maxlength="2400"':''} ${hint} value="${value(obj,valueKey)}" ${attrs}>`;
+    const heading=`<label for="${id}">${label} ${fieldMark(required)}</label>`;
+    return `<div class="field iep-field">${heading}${control}</div>`;
+  }
+  function contextFields(kind){
+    const s=plan.support,m=plan.meeting;
+    const personalFields=[['sex','성별','sex'],['birth','생년월일','birthday','연월일 8자리'],['className','학급명','text','학급명을 입력해 주세요'],['placement','선정·배치 영역','text','선정·배치 영역을 입력해 주세요'],['disability','장애 정보','text','장애 정보를 입력해 주세요'],['degree','장애 정도','text','장애 정도를 입력해 주세요']];
+    const placementFields=[['special','특수학급 활동 내용·방법'],['integrated','통합학급 활동 내용·방법'],['specialTeacher','특수학급 담당 교사','text'],['integratedTeacher','통합학급 담당 교사','text']];
+    const supportFields=[['therapy','치료지원'],['therapyDetails','치료지원 영역·기관·시간·기간·장소'],['afterSchool','방과후과정'],['transport','통학지원'],['personnel','지원인력'],['assistive','보조공학'],['family','가족·상담·정보접근']];
+    const meetingFields=[['date','회의 날짜','date'],['place','회의 장소','text'],['notes','원문 메모'],['participants','참석자 역할'],['parent','보호자 의견'],['teacher','교사 의견'],['services','관련서비스 의견'],['strength','논의한 강점'],['needs','논의한 지원 요구'],['placement','배치·통합 지원'],['agreement','합의 목표'],['home','가정 연계'],['decisions','결정 사항'],['followup','후속 조치']];
+    const fields=(items,obj,scope)=>items.map(([key,label,type,placeholder])=>{
+      const attrs=`data-iew-scope="${scope}" data-iew-key="${key}"`;
+      if(type==='sex'&&!/[\r\n]/.test(obj[key]||'')){
+        const options=['남성','여성'],saved=obj[key]||'';
+        if(saved&&saved!=='기타'&&!options.includes(saved))options.push(saved);
+        return `<div class="field iep-field"><label for="iew-sex">${label} ${fieldMark(false)}</label><div class="iew-select"><select id="iew-sex" ${attrs}><option value="">선택해 주세요</option>${saved==='기타'?'<option value="기타" selected hidden>기타</option>':''}${options.map(option=>`<option value="${esc(option)}" ${option===saved?'selected':''}>${esc(option)}</option>`).join('')}</select></div></div>`;
+      }
+      return field(label,obj,key,attrs,key,type==='sex'?'textarea':type,placeholder);
+    }).join('');
+    const configs={personal:['인적사항',plan.personal,personalFields,'personal','관리대상: '+state.recipients[index].name],placement:['배치·지원계획',s,placementFields,'support','필요한 내용을 선택해 작성해 주세요.'],services:['관련서비스',s,supportFields,'support','필요한 지원을 작성해 주세요.'],meeting:['지원팀 회의록',m,meetingFields,'meeting','참석자는 이름 대신 역할로 적을 수 있어요.']};
+    const [title,obj,items,scope,help]=configs[kind];
+    if(kind==='meeting')return `<section class="iep-card"><div class="iep-card-heading"><div><h2>${title}</h2><p class="iep-help">${esc(help)}</p></div></div><div class="iep-two-col">${fields(items.slice(0,4),obj,scope)}</div></section><section class="iep-card"><div class="iep-card-heading"><h2>의견과 논의</h2></div><div class="iep-two-col">${fields(items.slice(4,10),obj,scope)}</div></section><section class="iep-card"><div class="iep-card-heading"><h2>합의와 후속 조치</h2></div><div class="iep-two-col">${fields(items.slice(10),obj,scope)}</div></section>`;
+    return `<section class="iep-card"><div class="iep-card-heading"><div><h2>${title}</h2><p class="iep-help">${esc(help)}</p></div>${['placement','services'].includes(kind)?`<button type="button" class="button tertiary" data-action="iep-ai-help" data-iep-help="${kind}">AI에게 작성 요청</button>`:''}</div><div class="iep-two-col${kind==='personal'?' iew-personal-fields':kind==='placement'?' iew-placement-fields':''}">${fields(items,obj,scope)}</div></section>`;
+  }
+  function observationHTML(observation,single=false){
+    const f=(key,label,placeholder='')=>{const required=key==='behavior',id=`iew-observation-${key}-${observation.id}`,attrs=`data-iew-scope="observation" data-iew-observation="${esc(observation.id)}" data-iew-key="${key}"`;return `<div class="iew-observation-field"><label for="${esc(id)}" class="iew-observation-label">${label} ${fieldMark(required)}</label><textarea id="${esc(id)}" rows="2" maxlength="1200" ${attrs} ${required?'aria-required="true"':''} placeholder="${esc(placeholder)}">${value(observation,key)}</textarea></div>`;};
+    return `<article class="iew-observation">${single?'':`<div class="iew-row iew-observation-header"><strong>관찰 기록</strong><button type="button" class="button danger" data-iew-action="remove-observation" data-iew-id="${esc(observation.id)}">삭제</button></div>`}<div class="iep-two-col">${f('situation','어떤 상황이었나요?','예: 블록 놀이 중')}${f('behavior','실제 행동','예: 도움 그림을 손가락으로 가리킴')}${f('support','제공한 도움','예: 교사가 그림 카드를 보여줌')}${f('evidence','근거 또는 메모','예: 관찰한 일지 확인')}</div></article>`;
+  }
+  function workspaceHTML(kind){
+    const d=activeDomain(),g=activeGoal();if(!d||!g)return '<section class="iep-card">영역을 추가해 주세요.</section>';
+    const options=d.goals.length>1?d.goals.map((item,i)=>`<button type="button" class="iew-goal-tab ${item.id===g.id?'active':''}" data-iew-action="goal" data-iew-id="${esc(item.id)}" aria-pressed="${item.id===g.id}">${esc(item.text.trim()||`목표 ${i+1}`)}</button>`).join(''):'';
+    const monthsHTML=months().map(n=>`<option value="${n}" ${n===month?'selected':''}>${n}월</option>`).join('');
+    const monthly=g.months?.[month]||{};
+    const sectionButton=(label,kind)=>`<button type="button" class="button tertiary" data-action="iep-ai-help" data-iep-help="${kind}">${label}</button>`;
+    const areasNav=`<aside class="iep-card iew-domains"><div class="iew-row"><h2>영역</h2></div><div class="iew-domain-list">${plan.domains.map(item=>`<button type="button" class="iew-domain ${item.id===d.id?'active':''}" data-iew-action="domain" data-iew-id="${esc(item.id)}" aria-pressed="${item.id===d.id}"><span>${esc(item.name)}</span></button>`).join('')}</div><button type="button" class="button secondary iew-add-area" data-iew-action="add-domain">영역 추가</button></aside>`;
+    const current=`<section class="iep-card"><div class="iep-card-heading"><h2>${esc(d.name)}</h2><div class="iep-inline-actions">${sectionButton('AI에게 작성 요청','current')}<button type="button" class="button secondary" data-iew-action="rename-domain">이름 수정</button><button type="button" class="button danger" data-iew-action="remove-domain">영역 삭제</button></div></div><h3>현재 모습</h3><p class="iep-help iep-before-fields">필수 항목은 작성하는 영역의 계획을 완성할 때 필요해요. 작성 중에도 저장할 수 있어요.</p><div class="iep-two-col">${field('강점과 흥미',d,'strength','data-iew-scope="domain" data-iew-key="strength"')}${field('필요한 지원',d,'needs','data-iew-scope="domain" data-iew-key="needs"')}${field('현재 수행 모습',d,'current','data-iew-scope="domain" data-iew-key="current"')}</div></section>`;
+    const planning=`<section class="iep-card"><div class="iep-card-heading"><div><h2>${esc(d.name)} · 학기별 IEP</h2><p class="iep-help">필수 항목은 작성하는 영역의 계획을 완성할 때 필요해요. 작성 중에도 저장할 수 있어요.</p></div></div><div class="iew-section-divider">${field('장기목표',d,'longGoal','data-iew-scope="domain" data-iew-key="longGoal"')}</div></section>
+      <section class="iep-card"><div class="iep-card-heading"><h2>단기목표</h2><div class="iep-inline-actions"><button type="button" class="button secondary iew-secondary" data-iew-action="add-goal" ${d.goals.length>=goalLimit?'disabled':''}>목표 추가 (${d.goals.length}/${goalLimit})</button>${sectionButton('AI에게 목표 작성 요청','goal')}${options?'<button type="button" class="button danger" data-iew-action="remove-goal">삭제</button>':''}</div></div>${options?`<div class="iew-goals">${options}</div>`:''}<div class="iep-two-col iew-goal-fields">${field('단기목표',g,'goal-text','data-iew-scope="goal" data-iew-key="text"','text')}${field('평가 기준',g,'criterion','data-iew-scope="goal" data-iew-key="criterion"')}${field('기간',g,'period','data-iew-scope="goal" data-iew-key="period"','period','text','예: 3월~5월')}${field('지원 수준',g,'supportLevel','data-iew-scope="goal" data-iew-key="supportLevel"','supportLevel','text')}</div></section>
+      <section class="iep-card"><div class="iep-card-heading"><h2>교육계획</h2>${sectionButton('AI에게 교육계획 작성 요청','education')}</div><div class="iep-two-col">${field('교육내용과 활동',g,'activity','data-iew-scope="goal" data-iew-key="activity"')}${field('교육방법과 지원',g,'method','data-iew-scope="goal" data-iew-key="method"')}</div><div class="iew-evaluation-field">${field('평가계획',g,'evaluation','data-iew-scope="goal" data-iew-key="evaluation"')}</div></section>
+      `;
+    const observationView=kind==='assessment'?observationState(g):null,singleObservation=observationView?.order.length===1?observationView.order[0]:null;
+    const assessment=kind==='assessment'?`<section class="iep-card"><div class="iep-card-heading iew-assessment-heading"><h2>${esc(d.name)} · 학기별 평가</h2></div>${options?`<div class="iew-goals">${options}</div>`:''}</section><section class="iep-card"><div class="iep-card-heading"><h2>평가 계획</h2>${sectionButton('AI에게 평가 계획 작성 요청','assessment')}</div><div class="iep-two-col">${field('평가 방법',g,'assessment-method','data-iew-scope="goal" data-iew-key="evaluation"','evaluation')}${field('평가 기준',g,'assessment-criterion','data-iew-scope="goal" data-iew-key="criterion"','criterion')}${field('평가 기간',g,'assessment-period','data-iew-scope="goal" data-iew-key="period"','period','text')}</div></section><section class="iep-card"><div class="iep-card-heading"><h2>월별 계획과 평가</h2><label class="iew-month"><span class="sr-only">월 선택</span><select data-iew-switch="month">${monthsHTML}</select></label></div><div class="iep-two-col">${field('월 실행계획',monthly,'monthly-plan','data-iew-scope="month" data-iew-key="plan"','plan')}${field('월 평가',monthly,'monthly-evaluation','data-iew-scope="month" data-iew-key="evaluation"','evaluation')}</div></section>
+      <section class="iep-card"><div class="iep-card-heading"><h2>목표별 관찰</h2><div class="iep-inline-actions"><button type="button" class="button secondary iew-secondary" data-iew-action="add-observation">관찰 추가</button>${singleObservation?`<button type="button" class="button danger" data-iew-action="remove-observation" data-iew-id="${esc(singleObservation)}" ${observationView.drafts.some(item=>item.id===singleObservation)?'hidden':''}>삭제</button>`:''}</div></div>${observationView.order.map(id=>{const item=g.observations.find(row=>row.id===id)||observationView.drafts.find(row=>row.id===id);return item?observationHTML(item,!!singleObservation):'';}).join('')}</section><section class="iep-card"><div class="iep-card-heading"><h2>학기말 평가</h2></div><div class="iep-two-col">${field('영역별 누가기록',d,'cumulative','data-iew-scope="domain" data-iew-key="cumulative"')}${field('학기말 평가 보고',d,'semesterEvaluation','data-iew-scope="domain" data-iew-key="semesterEvaluation"')}</div></section>`:'';
+    return `<div class="iew-layout">${areasNav}<div class="iew-content">${kind==='current'?current:kind==='assessment'?assessment:planning}</div></div>`;
+  }
+  function hash(text){let a=2166136261,b=5381;for(const c of String(text)){const n=c.charCodeAt(0);a=Math.imul(a^n,16777619);b=Math.imul(b^n,33);}return `${a>>>0}-${b>>>0}`;}
+  function records(){
+    const reports=reportRecords(index).map(item=>{const summary=reportSummary(index,item);return {kind:'report',key:`report:${item.id}`,title:`리포트 · ${item.from} ~ ${item.to}`,meta:`작성일 ${item.generated||'확인 불가'}`,text:`작성일 ${item.generated}${summary?'\n'+summary:'\n확인할 수 있는 분석 내용이 없어요.'}`,summary,fingerprint:hash(JSON.stringify([item.id,item.from,item.to,item.generated,item.version,summary])),href:`#/reports?recipient=${index}&report=${encodeURIComponent(item.id)}&from=${item.from}`};});
+    return reports;
+  }
+  function recordsHTML(){
+    const available=records(),attached=(plan.references||[]).filter(ref=>ref.kind==='report');
+    const currentGoal=activeGoal(),currentDomain=activeDomain();
+    const selected=attached.map(ref=>{
+      const record=available.find(item=>item.key===ref.key),changed=record&&record.fingerprint!==ref.fingerprint;
+      const linkedDomain=plan.domains.find(item=>item.id===ref.domainId),linkedGoal=linkedDomain?.goals.find(item=>item.id===ref.goalId);
+      const location=linkedDomain?`${esc(linkedDomain.name)}${linkedGoal?' · '+esc(linkedGoal.text||'단기목표'):''}`:'계획 전체';
+      return `<article class="iew-reference"><div class="iew-linked-row"><div class="iew-linked-copy"><strong>${esc(ref.title.replace(/^리포트 · /,''))}</strong><p class="iep-help iew-linked-meta">${record?`<span>${esc(record.meta)}</span>`:''}<span>${location}</span></p>${!record?'<p class="iep-help">원본이 변경되었거나 삭제되어 확인할 수 없어요</p>':changed?'<p class="iep-help">원본이 변경되었어요. 현재 내용을 확인해 주세요.</p>':''}</div><button type="button" class="button secondary iew-secondary" data-iew-action="detach" data-iew-id="${esc(ref.id)}">연결 해제</button></div>${record?`<details><summary>내용 보기</summary><div class="iew-record-details"><p>${esc(record.summary||'확인할 수 있는 분석 내용이 없어요.')}</p><a href="${esc(record.href)}">원본 화면 열기</a></div></details>`:''}</article>`;
+    }).join('');
+    const selectable=available.filter(item=>!attached.some(ref=>ref.key===item.key));
+    const candidates=selectable.map(item=>`<article class="iew-reference" data-iew-record-type="${item.kind}"><label class="iew-record-choice"><input type="checkbox" data-iew-record="${esc(item.key)}"><span><strong>${esc(item.title.replace(/^리포트 · /,''))}</strong><small>${esc(item.meta)}</small></span></label><details><summary>내용 보기</summary><div class="iew-record-details"><p>${esc(item.summary||'확인할 수 있는 분석 내용이 없어요.')}</p><a href="${esc(item.href)}">원본 화면 열기</a></div></details></article>`).join('');
+    return `<section class="iep-card iew-linked-reports"><div class="iep-card-heading"><h2>연결한 리포트</h2></div>${selected||'<p class="iep-help">연결한 리포트가 없어요.</p>'}</section><section class="iep-card iew-report-picker"><div class="iep-card-heading"><h2>리포트 선택</h2><button type="button" class="button primary" data-iew-action="attach" disabled>선택한 기록 연결 <span data-iew-selected-count>0</span></button></div><div class="iew-record-filters"><div class="iew-target"><label for="iew-reference-target">연결할 위치</label><select id="iew-reference-target"><option value="plan">계획 전체</option><option value="goal">${esc(currentDomain?.name||'영역')} · ${esc(currentGoal?.text||'선택한 목표')}</option></select></div><label class="iew-search">검색<input type="search" data-iew-filter="query" placeholder="날짜나 내용 검색"></label></div>${selectable.length?`<div class="iew-record-list-toolbar"><label><input type="checkbox" data-iew-select-all> 표시된 리포트 전체 선택</label><span aria-live="polite"><span data-iew-selected-count>0</span>개 선택</span></div><p class="iep-help iew-hidden-selection" data-iew-hidden-selection hidden>검색으로 가려진 리포트의 선택도 유지돼요.</p><div class="iew-record-list">${candidates}</div><p class="iep-help iew-record-empty" data-iew-no-results hidden>검색 결과가 없어요.</p>`:`<p class="iep-help">${available.length?'모든 리포트가 연결되었어요.':'선택할 수 있는 저장된 리포트가 없어요.'}</p>`}</section>`;
+  }
+  function domainText(d){
+    const lines=[d.name,`현재 모습: ${d.current||'미작성'}`,`강점: ${d.strength||'미작성'}`,`지원요구: ${d.needs||'미작성'}`,`장기목표: ${d.longGoal||'미작성'}`,`영역별 누가기록: ${d.cumulative||'미기록'}`,`학기말 평가: ${d.semesterEvaluation||'미기록'}`];
+    d.goals.forEach((g,i)=>{lines.push(`\n단기목표 ${i+1}: ${g.text||'미작성'}`,`기간: ${g.period||'미작성'}`,`지원 수준: ${g.supportLevel||'미작성'}`,`평가 기준: ${g.criterion||'미작성'}`,`교육내용: ${g.activity||'미작성'}`,`교육방법: ${g.method||'미작성'}`,`평가계획: ${g.evaluation||'미작성'}`);for(const [n,m] of Object.entries(g.months||{}))lines.push(`${n}월 계획: ${m.plan||'미작성'} / 평가: ${m.evaluation||'미기록'}`);lines.push(`실제 관찰: ${g.observations.length?g.observations.map(o=>[o.date,o.situation,o.behavior,o.support,o.evidence].filter(Boolean).join(' · ')).join('\n'):'미기록'}`);});
+    return lines.join('\n');
+  }
+  function documentHTML(){
+    const hasValue=value=>value!=null&&String(value).trim()!=='';
+    const rows=items=>{const present=items.filter(([,value,required])=>required||hasValue(value));return present.length?`<dl class="iew-report-rows">${present.map(([label,value])=>`<div><dt>${esc(label)}</dt><dd${hasValue(value)?'':' class="iew-report-empty"'}>${esc(hasValue(value)?String(value):'미작성')}</dd></div>`).join('')}</dl>`:'';};
+    const goalHasContent=g=>[g.text,g.period,g.supportLevel,g.criterion,g.activity,g.method,g.evaluation].some(hasValue)||Object.values(g.months||{}).some(m=>hasValue(m.plan)||hasValue(m.evaluation))||g.observations.some(o=>Object.entries(o).some(([key,value])=>key!=='id'&&hasValue(value)));
+    const domainHasContent=d=>[d.current,d.strength,d.needs,d.longGoal,d.cumulative,d.semesterEvaluation].some(hasValue)||d.goals.some(goalHasContent);
+    const started=plan.domains.filter(domainHasContent),empty=plan.domains.filter(d=>!domainHasContent(d)),missing=[];
+    const review=(d,g,section,items)=>{const absent=items.filter(([,value])=>!hasValue(value));if(absent.length)missing.push({d,g,section,names:absent.map(([name])=>name),target:absent[0][2]});};
+    started.forEach(d=>{
+      review(d,null,'current',[['현재 수행 모습',d.current,'iew-current']]);
+      d.goals.forEach((g,i)=>{
+        review(d,g,'plan',[...(i===0?[['장기목표',d.longGoal,'iew-longGoal']]:[]),['단기목표',g.text,'iew-goal-text'],['평가 기준',g.criterion,'iew-criterion'],['교육내용과 활동',g.activity,'iew-activity'],['교육방법과 지원',g.method,'iew-method'],['평가계획',g.evaluation,'iew-evaluation']]);
+        g.observations.filter(o=>Object.entries(o).some(([key,value])=>key!=='id'&&hasValue(value))).forEach(o=>review(d,g,'assessment',[['실제 행동',o.behavior,`iew-observation-behavior-${o.id}`]]));
+      });
+    });
+    const block=(heading,items)=>{const content=rows(items);return content?`<div class="iew-report-block"><h3>${heading}</h3>${content}</div>`:'';};
+    const ds=started.map(d=>{
+      const current=block('현재 모습',[['현재 수행 모습',d.current,true],['강점과 흥미',d.strength],['필요한 지원',d.needs]]);
+      const goalSections=d.goals.map((g,i)=>{
+        const order=months(),monthRows=Object.entries(g.months||{}).sort(([a],[b])=>(order.indexOf(Number(a))<0?12:order.indexOf(Number(a)))-(order.indexOf(Number(b))<0?12:order.indexOf(Number(b)))).flatMap(([n,m])=>[[`${n}월 실행계획`,m.plan],[`${n}월 평가`,m.evaluation]]);
+        const observations=g.observations.map((o,j)=>[`관찰 ${j+1}`,[o.date,o.situation&&`상황: ${o.situation}`,o.behavior&&`행동: ${o.behavior}`,o.support&&`지원: ${o.support}`,o.evidence&&`근거: ${o.evidence}`].filter(Boolean).join('\n')]);
+        return `<div class="iew-report-goal"><h3>단기목표 ${i+1}</h3>${rows([['목표',g.text,true],['평가 기준',g.criterion,true],['기간',g.period],['지원 수준',g.supportLevel]])}${block('교육계획',[['교육내용과 활동',g.activity,true],['교육방법과 지원',g.method,true],['평가계획',g.evaluation,true]])}${block('월별 계획과 관찰',[...monthRows,...observations])}</div>`;
+      }).join('');
+      const goals=block('목표',[['장기목표',d.longGoal,true]])+goalSections;
+      const evaluation=block('학기말 평가',[['영역별 누가기록',d.cumulative],['학기말 평가 보고',d.semesterEvaluation]]);
+      return `<section class="iep-card iew-report-section iew-report-domain is-collapsed"><div class="iep-card-heading"><h2>${esc(d.name)}</h2><div class="iep-inline-actions"><button type="button" class="button secondary iew-secondary" data-iew-action="copy-domain" data-iew-id="${esc(d.id)}">영역 내용 복사</button><button type="button" class="iew-report-toggle" data-iew-action="toggle-report" aria-expanded="false" aria-label="${esc(d.name)} 내용 펼치기">펼치기 <span aria-hidden="true">⌄</span></button></div></div><div class="iew-report-body">${current}${goals}${evaluation}</div></section>`;
+    }).join('')+(empty.length?`<section class="iep-card iew-report-section iew-empty-domains"><h2>미작성 영역</h2><p class="iep-help">${empty.map(d=>esc(d.name)).join(' · ')}</p></section>`:'');
+    const labels={sex:'성별',birth:'생년월일',className:'학급명',disability:'장애 정보',degree:'장애 정도',special:'특수학급 활동·지원',specialTeacher:'특수학급 담당 교사',integrated:'통합학급 활동·지원',integratedTeacher:'통합학급 담당 교사',therapy:'치료지원',therapyDetails:'치료지원 세부사항',afterSchool:'방과후과정',transport:'통학지원',personnel:'지원인력',assistive:'보조공학',family:'가족·상담·정보접근',notes:'원문 메모',date:'회의 날짜',place:'회의 장소',participants:'참석자 역할',parent:'보호자 의견',teacher:'교사 의견',services:'관련서비스 의견',strength:'논의한 강점',needs:'논의한 지원 요구',agreement:'합의 목표',home:'가정 연계',decisions:'결정 사항',followup:'후속 조치'};
+    const groups=[['인적사항',plan.personal,'선정·배치 영역'],['배치와 지원·관련서비스',plan.support,'선정·배치 영역'],['지원팀 회의록',plan.meeting,'배치·통합 지원']].map(([label,items,placement])=>{const content=rows(Object.entries(items).map(([key,value])=>[key==='placement'?placement:labels[key]||key,value]));return content?`<section class="iep-card iew-report-section"><div class="iep-card-heading"><h2>${label}</h2></div>${content}</section>`:'';}).join('');
+    const available=records(),reportReferences=plan.references.filter(ref=>ref.kind==='report'),refs=reportReferences.length?`<section class="iep-card iew-report-section"><div class="iep-card-heading"><h2>참고 리포트</h2></div><dl class="iew-report-rows">${reportReferences.map(ref=>{const source=available.find(item=>item.key===ref.key),status=!source?'원본을 확인할 수 없음':source.fingerprint!==ref.fingerprint?'원본 변경됨 · 확인 필요':'연결됨';return `<div><dt>${esc(ref.title)}</dt><dd>${esc(status)}${source?`<span class="iew-report-link"> · <a href="${esc(source.href)}">원본 보기</a></span>`:''}</dd></div>`;}).join('')}</dl></section>`:'';
+    const reviewSummary=missing.length?`<section class="iep-card iew-review-summary"><div class="iep-card-heading"><h2>필수 항목 확인</h2></div><p class="iep-help">작성 중인 영역에서 비어 있는 필수 항목이에요.</p><div class="iew-missing-list">${missing.map(item=>`<button type="button" data-iew-action="review-missing" data-iew-section="${esc(item.section)}" data-iew-domain="${esc(item.d.id)}" data-iew-goal="${esc(item.g?.id||'')}" data-iew-focus="${esc(item.target)}"><span><strong>${esc(item.d.name)}${item.g&&item.d.goals.length>1?` · 단기목표 ${item.d.goals.indexOf(item.g)+1}`:''}</strong><small>${esc(item.names.join(' · '))}</small></span><span aria-hidden="true">›</span></button>`).join('')}</div></section>`:'';
+    return `<section class="iep-card iew-document-view"><div class="iep-card-heading"><div><h2>종합보고서·내보내기</h2><p class="iep-help">${esc(state.recipients[index].name)} · ${plan.year}년 ${plan.term}학기</p><p class="iep-help iew-download-hint">인쇄 화면에서 PDF로 저장할 수 있어요.</p></div><div class="iep-inline-actions"><button type="button" class="button secondary iew-secondary" data-iew-action="download">HTML 내려받기</button><button type="button" class="button primary" data-iew-action="print">인쇄 · PDF 저장</button></div></div></section>${reviewSummary}${groups}${ds}${refs}`;
+  }
+  function shell(){
+    if(!root?.isConnected)return;
+    const availableYears=[...new Set([plan.year-1,plan.year,plan.year+1,...state.iep.semesterPlans.filter(p=>p.recipient===index).map(p=>p.year)])].sort((a,b)=>a-b);
+    const previousScroll=$('.iew-tabs')?.scrollLeft||0,previousGoalScroll=$('.iew-goals')?.scrollLeft||0;
+    const tabs=[['personal','인적사항'],['placement','배치·지원계획'],['services','관련서비스'],['current','현재학습수행수준'],['plan','학기별 IEP'],['meeting','지원팀 회의록'],['assessment','학기별 평가'],['document','종합보고서·내보내기']];
+    const currentStep=tabs.findIndex(([id])=>id===(section==='records'?recordsFrom:section));
+    const returnLabel=tabs.find(([id])=>id===recordsFrom)?.[1]||'인적사항';
+    root.innerHTML=`<header class="page-header"><div class="iep-title"><h1>IEP</h1></div></header><section class="iep-card iew-toolbar"><div class="field iep-field"><span>관리대상</span><div class="dropdown"><button type="button" class="dropdown-trigger" data-options="recipients" aria-label="관리대상" aria-haspopup="listbox" aria-expanded="false"><span>${esc(state.recipients[index].name)}</span></button></div></div><div class="field iep-field"><label for="iew-year">학년도</label><div class="iew-select"><select id="iew-year" data-iew-switch="year">${availableYears.map(y=>`<option value="${y}" ${y===plan.year?'selected':''}>${y}년</option>`).join('')}</select></div></div><div class="field iep-field"><label for="iew-term">학기</label><div class="iew-select"><select id="iew-term" data-iew-switch="term"><option value="1" ${plan.term===1?'selected':''}>1학기</option><option value="2" ${plan.term===2?'selected':''}>2학기</option></select></div></div><div class="iew-save"><span data-iew-status>${status()}</span><div class="iew-toolbar-actions"><button type="button" class="button secondary iew-secondary" data-iew-action="section" data-iew-id="records">리포트 연결${plan.references.filter(ref=>ref.kind==='report').length?' '+plan.references.filter(ref=>ref.kind==='report').length:''}</button><button type="button" class="button primary" data-iew-action="save" ${saving||!isDirty()?'disabled':''}>저장</button></div></div></section><div class="record-tabs iew-tabs" aria-label="IEP 단계">${tabs.map(([id,label],i)=>`<button type="button" data-iew-action="section" data-iew-id="${id}" data-iew-reached="${i<=currentStep}" aria-pressed="${i===currentStep}">${i+1}. ${label}</button>`).join('')}</div><div id="iew-content">${['plan','current','assessment'].includes(section)?workspaceHTML(section):['personal','placement','services','meeting'].includes(section)?contextFields(section):section==='records'?`<button type="button" class="button tertiary iew-record-back" data-iew-action="section" data-iew-id="${recordsFrom}">← ${esc(returnLabel)}</button>${recordsHTML()}`:documentHTML()}</div>`;
+    registerEdits();enhanceSelects();
+    const tabBar=$('.iew-tabs'),activeTab=$('button[aria-pressed="true"]',tabBar);tabBar.scrollLeft=previousScroll;
+    if(activeTab){const bar=tabBar.getBoundingClientRect(),tab=activeTab.getBoundingClientRect();if(tab.right>bar.right)tabBar.scrollLeft+=tab.right-bar.right;else if(tab.left<bar.left)tabBar.scrollLeft-=bar.left-tab.left;}
+    const goalBar=$('.iew-goals'),activeGoalTab=$('button[aria-pressed="true"]',goalBar);
+    if(goalBar&&activeGoalTab){goalBar.scrollLeft=previousGoalScroll;const bar=goalBar.getBoundingClientRect(),tab=activeGoalTab.getBoundingClientRect();if(tab.right>bar.right)goalBar.scrollLeft+=tab.right-bar.right;else if(tab.left<bar.left)goalBar.scrollLeft-=bar.left-tab.left;}
+  }
+  function enhanceSelects(){
+    $$('select').forEach((select,i)=>{
+      if(!select.id)select.id=`iew-select-${i}`;
+      const label=$(`label[for="${select.id}"]`)||select.closest('label');
+      const name=label?.childNodes[0]?.textContent.trim()||'항목 선택';
+      const wrapper=document.createElement('div');wrapper.className='dropdown iew-custom-dropdown';
+      const trigger=document.createElement('button');trigger.type='button';trigger.className='dropdown-trigger';trigger.dataset.options='iep-select';trigger.dataset.iepSelect=select.id;trigger.setAttribute('aria-haspopup','listbox');trigger.setAttribute('aria-expanded','false');trigger.setAttribute('aria-label',name);
+      const text=document.createElement('span');text.textContent=select.selectedOptions[0]?.textContent||'선택해 주세요';trigger.append(text);
+      select.before(wrapper);wrapper.append(select,trigger);select.hidden=true;
+    });
+  }
+  function edit(e){
+    if(document.body.classList.contains('mockup-editing'))return;
+    if(e.target.dataset.iewFilter){filterRecords();return;}
+    if(e.target.hasAttribute('data-iew-select-all')){$$('[data-iew-record-type]:not([hidden]) [data-iew-record]').forEach(box=>box.checked=e.target.checked);syncRecordSelection();return;}
+    if(e.target.dataset.iewRecord){syncRecordSelection();return;}
+    const el=e.target,scope=el.dataset.iewScope,key=el.dataset.iewKey;if(!scope||!key)return;
+    const d=activeDomain(),g=activeGoal();let object;
+    if(scope==='domain')object=d;else if(scope==='goal')object=g;else if(scope==='personal'||scope==='support'||scope==='meeting')object=plan[scope];
+    else if(scope==='month'){g.months ||= {};object=g.months[month] ||= {};}
+    else if(scope==='observation'){
+      object=g.observations.find(item=>item.id===el.dataset.iewObservation);
+      if(!object&&el.value.trim()){
+        const state=observationState(g),draft=state.drafts.find(item=>item.id===el.dataset.iewObservation);
+        if(draft){const position=state.order.indexOf(draft.id),savedBefore=state.order.slice(0,position).filter(id=>g.observations.some(item=>item.id===id)).length;object=draft;g.observations.splice(savedBefore,0,draft);state.drafts=state.drafts.filter(item=>item!==draft);const remove=$$('[data-iew-action="remove-observation"]').find(button=>button.dataset.iewId===draft.id);if(remove)remove.hidden=false;}
+      }
+    }
+    if(!object)return;
+    if(scope==='personal'&&key==='birth'&&/^\d{8}$/.test(el.value))el.value=el.value.replace(/^(\d{4})(\d{2})(\d{2})$/,'$1-$2-$3');
+    object[key]=el.value;
+    if(scope==='goal'&&key==='text'){$$('.iew-goal-tab').find(button=>button.dataset.iewId===g.id)?.replaceChildren(document.createTextNode(g.text.trim()||`목표 ${d.goals.indexOf(g)+1}`));}
+    touch();
+  }
+  function change(e){
+    if(e.target.dataset.iewFilter){filterRecords();return;}
+    const kind=e.target.dataset.iewSwitch;if(!kind)return;
+    if(kind==='month'){month=Number(e.target.value);shell();return;}
+    const year=kind==='year'?Number(e.target.value):plan.year,term=kind==='term'?Number(e.target.value):plan.term;
+    if(Number.isInteger(year)&&year>=1900&&year<=2100&&[1,2].includes(term)){choose(year,term);shell();}
+  }
+  function filterRecords(){
+    const kind=$('[data-iew-filter="type"]')?.value||'all',query=($('[data-iew-filter="query"]')?.value||'').trim().toLocaleLowerCase();
+    $$('[data-iew-record-type]').forEach(card=>{card.hidden=(kind!=='all'&&card.dataset.iewRecordType!==kind)||!!query&&!card.textContent.toLocaleLowerCase().includes(query);});
+    const empty=$('[data-iew-no-results]');if(empty)empty.hidden=$$('[data-iew-record-type]:not([hidden])').length>0;
+    syncRecordSelection();
+  }
+  function syncRecordSelection(){
+    const checked=$$('[data-iew-record]:checked').length,visible=$$('[data-iew-record-type]:not([hidden]) [data-iew-record]'),selected=visible.filter(box=>box.checked).length;
+    $$('[data-iew-selected-count]').forEach(count=>count.textContent=String(checked));
+    const note=$('[data-iew-hidden-selection]');if(note)note.hidden=checked===selected;
+    const button=$('[data-iew-action="attach"]');if(button)button.disabled=!checked;
+    const all=$('[data-iew-select-all]');if(all){all.checked=visible.length>0&&selected===visible.length;all.indeterminate=selected>0&&selected<visible.length;all.disabled=!visible.length;}
+  }
+  async function click(e){
+    if(document.body.classList.contains('mockup-editing'))return;
+    const button=e.target.closest('[data-iew-action]');if(!button)return;
+    const action=button.dataset.iewAction,id=button.dataset.iewId,d=activeDomain(),g=activeGoal();
+    if(action==='section'){if(id==='records'&&section!=='records')recordsFrom=section;section=id;shell();}
+    else if(action==='review-missing'){
+      const selectedDomain=plan.domains.find(item=>item.id===button.dataset.iewDomain);if(!selectedDomain)return;
+      domainId=selectedDomain.id;goalId=selectedDomain.goals.find(item=>item.id===button.dataset.iewGoal)?.id||selectedDomain.goals[0]?.id;section=button.dataset.iewSection;shell();
+      document.getElementById(button.dataset.iewFocus)?.focus();
+    }
+    else if(action==='toggle-report'){
+      const card=button.closest('.iew-report-domain'),collapsed=card.classList.toggle('is-collapsed');
+      button.setAttribute('aria-expanded',String(!collapsed));button.setAttribute('aria-label',`${card.querySelector('h2').textContent} 내용 ${collapsed?'펼치기':'접기'}`);button.innerHTML=`${collapsed?'펼치기':'접기'} <span aria-hidden="true">${collapsed?'⌄':'⌃'}</span>`;
+    }
+    else if(action==='domain'){domainId=id;goalId=activeDomain()?.goals[0]?.id;shell();}
+    else if(action==='goal'){goalId=id;shell();}
+    else if(action==='add-goal'){if(d.goals.length>=goalLimit){toast(`영역별 단기목표는 최대 ${goalLimit}개예요.`);return;}const item=goal();d.goals.push(item);goalId=item.id;touch();shell();$('#iew-goal-text')?.focus();}
+    else if(action==='add-domain'){
+      const name='새 영역';const item=domain(name);plan.domains.push(item);domainId=item.id;goalId=item.goals[0].id;touch();shell();
+    }
+    else if(action==='rename-domain'){
+      dialog('영역 이름 수정',`<label class="iep-field">영역 이름<input id="iew-domain-name" maxlength="40" value="${esc(d.name)}"></label>`,'변경',()=>{const name=document.getElementById('iew-domain-name')?.value.trim();if(!name){toast('영역 이름을 입력해 주세요.');return;}d.name=name;touch();shell();});
+    }
+    else if(action==='remove-domain'){
+      if(plan.domains.length===1){toast('영역을 하나 이상 남겨 주세요.');return;}
+      dialog('영역을 삭제할까요?',`<p>${esc(d.name)}의 목표와 관찰도 함께 삭제돼요. 연결한 기록은 계획 전체에 남아요.</p>`,'삭제',()=>{plan.references.forEach(ref=>{if(ref.domainId===d.id){delete ref.domainId;delete ref.goalId;}});plan.domains=plan.domains.filter(item=>item!==d);domainId=plan.domains[0].id;goalId=plan.domains[0].goals[0]?.id;touch();shell();},true);
+    }
+    else if(action==='remove-goal'){
+      if(d.goals.length===1){toast('단기목표를 하나 이상 남겨 주세요.');return;}
+      dialog('목표를 삭제할까요?','<p>이 목표의 관찰 기록도 함께 삭제돼요. 연결한 기록은 계획 전체에 남아요.</p>','삭제',()=>{const removedIndex=d.goals.indexOf(g);plan.references.forEach(ref=>{if(ref.goalId===g.id){delete ref.domainId;delete ref.goalId;}});d.goals=d.goals.filter(item=>item!==g);goalId=d.goals[Math.min(removedIndex,d.goals.length-1)].id;touch();shell();},true);
+    }
+    else if(action==='add-observation'){const state=observationState(g),draft=newObservation();state.drafts.push(draft);state.order.push(draft.id);shell();}
+    else if(action==='remove-observation'){
+      const state=observationState(g),draft=state.drafts.find(item=>item.id===id);
+      if(draft){state.drafts=state.drafts.filter(item=>item!==draft);state.order=state.order.filter(item=>item!==id);shell();}
+      else dialog('관찰을 삭제할까요?','<p>이 목표에 작성한 관찰 기록이 삭제돼요.</p>','삭제',()=>{g.observations=g.observations.filter(item=>item.id!==id);state.order=state.order.filter(item=>item!==id);touch();shell();},true);
+    }
+    else if(action==='attach'){
+      const keys=$$('[data-iew-record]:checked').map(el=>el.dataset.iewRecord),available=records(),target=$('#iew-reference-target')?.value;
+      if(!keys.length){toast('연결할 기록을 선택해 주세요.');return;}
+      const selected=keys.map(key=>available.find(item=>item.key===key)).filter(Boolean);
+      if(selected.length!==keys.length){toast('기록이 바뀌었어요. 다시 확인해 주세요.');shell();return;}
+      let added=0;for(const item of selected)if(!plan.references.some(ref=>ref.kind==='report'&&ref.key===item.key)){plan.references.push({id:uid(),key:item.key,kind:item.kind,title:item.title,fingerprint:item.fingerprint,...(target==='goal'?{domainId:d.id,goalId:g.id}:{})});added++;}
+      if(!added){toast('이미 연결된 리포트예요.');return;}
+      touch();shell();toast('선택한 기록을 연결했어요.');
+    }
+    else if(action==='detach'){plan.references=plan.references.filter(ref=>ref.id!==id);touch();shell();toast('기록 연결을 해제했어요.');}
+    else if(action==='save')await saveSemester();
+    else if(action==='copy-domain'){const item=plan.domains.find(domain=>domain.id===id);if(!item)return;try{await navigator.clipboard.writeText(domainText(item));toast('영역 내용을 복사했어요.');}catch{toast('복사하지 못했어요. 내용을 직접 선택해 주세요.');}}
+    else if(action==='download'){
+      const content=$('#iew-content').cloneNode(true);content.querySelectorAll('button,.iew-download-hint,.iew-review-summary,.iew-report-link').forEach(el=>el.remove());content.querySelectorAll('.is-collapsed').forEach(el=>el.classList.remove('is-collapsed'));
+      const html=`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>IEP 계획서</title><style>body{font:16px/1.7 sans-serif;max-width:900px;margin:40px auto;padding:0 20px}section{margin:28px 0}h2{font-size:20px}h3{font-size:16px;margin:24px 0 8px}.iew-report-rows{margin:0}.iew-report-rows>div{display:grid;grid-template-columns:160px 1fr;gap:16px;padding:10px 0;border-bottom:1px solid #ddd}dt{font-weight:600}dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.iew-report-empty,.iep-help{color:#666}@media(max-width:540px){.iew-report-rows>div{grid-template-columns:1fr;gap:2px}}</style></head><body>${content.innerHTML}</body></html>`;
+      const url=URL.createObjectURL(new Blob(['\ufeff'+html],{type:'text/html;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download=`케어릿-IEP-${plan.year}-${plan.term}학기.html`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('계획서를 내려받았어요.');
+    }
+    else if(action==='print')window.print();
+  }
+  return {
+    mount(element,recipient){root=element;index=recipient;const date=currentDate().split('-').map(Number),term=date[1]>=3&&date[1]<=8?1:2,year=date[1]<=2?date[0]-1:date[0],selected=state.iep.selectedSemester?.[index];choose(selected?.year||year,selected?.term||term);section='personal';recordsFrom='personal';root.addEventListener('input',edit);root.addEventListener('change',change);root.addEventListener('click',click);shell();},
+    isDirty(){return isDirty();},
+    save(){return saveSemester();},
+    assistanceContext(){
+      if(!root?.isConnected||!['placement','services','current','plan','assessment'].includes(section))return null;
+      const d=activeDomain(),g=activeGoal(),available=section==='current'||section==='plan'?records():[];
+      const refs=section==='current'||section==='plan'?plan.references.filter(ref=>ref.kind==='report'&&(!ref.domainId||ref.domainId===d?.id)&&(!ref.goalId||ref.goalId===g?.id)):[];
+      const sources=refs.map(ref=>{const item=available.find(row=>row.key===ref.key);return item&&item.fingerprint===ref.fingerprint?{title:item.title,summary:(item.summary||'').slice(0,500),summaryTruncated:(item.summary||'').length>500}:null;}).filter(Boolean);
+      return {selection:`${plan.id}:${section}:${d?.id||''}:${g?.id||''}`,revision:plan.revision,section,year:plan.year,term:plan.term,
+        personal:section==='assessment'?{}:{...plan.personal},support:section==='assessment'?{}:{...plan.support},domain:d?{name:d.name,strength:d.strength,needs:d.needs,current:d.current,longGoal:d.longGoal}:null,
+        goal:g?{text:g.text,period:g.period,supportLevel:g.supportLevel,criterion:g.criterion,activity:g.activity,method:g.method,evaluation:g.evaluation}:null,
+        sources:sources.slice(0,26),omittedSources:Math.max(0,sources.length-26),unavailableSources:refs.length-sources.length};
+    },
+    aiContext(kind){
+      if(!root?.isConnected||section!=='plan')return null;
+      const d=activeDomain(),g=activeGoal(),target={goal:'iew-goal-text',activity:'iew-activity',evaluation:'iew-evaluation',education:'iew-activity'}[kind],control=document.getElementById(target);
+      if(!control||!d||!g)return null;
+      const targets=kind==='education'?['iew-activity','iew-method','iew-evaluation']:null;
+      if(targets?.some(id=>!document.getElementById(id)))return null;
+      const available=records(),seen=new Set(),sources=plan.references.filter(ref=>ref.kind==='report'&&(!ref.goalId||ref.goalId===g.id)).map(ref=>{const record=available.find(item=>item.key===ref.key);if(!record||record.fingerprint!==ref.fingerprint||seen.has(ref.key))return null;seen.add(ref.key);return {kind:record.kind,title:record.title,text:(record.summary||'').slice(0,500)};}).filter(Boolean);
+      return {draftId:`${plan.id}:${d.id}:${g.id}`,recipient:index,target,original:control.value,...(targets?{targets,originals:targets.map(id=>document.getElementById(id).value)}:{}),observation:d.current||'',goal:g.text,month:`${plan.year}-${plan.term}`,sources};
     }
   };
 }

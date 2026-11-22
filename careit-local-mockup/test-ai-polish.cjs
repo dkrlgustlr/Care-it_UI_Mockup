@@ -1,73 +1,49 @@
-const assert = require('node:assert/strict');
-const path = require('node:path');
-const {pathToFileURL} = require('node:url');
-const {chromium} = require('playwright');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const {chromium}=require('playwright');
 
-(async () => {
+(async()=>{
   const browser=await chromium.launch({channel:'chrome',headless:true});
-  const base=pathToFileURL(path.join(__dirname,'careit-mockup.html')).href;
-  const page=await browser.newPage({viewport:{width:1440,height:900}});
-  page.setDefaultTimeout(8000);
-  const send=async text=>{await page.locator('#ai-chat-input').fill(text);await page.locator('#ai-chat-input').press('Enter');};
-  try {
-    await page.goto(base+'#/ai-chat');
-    const name=await page.evaluate(async()=>{
-      const bridge=window.__careitAiBridge,s=bridge.state,index=2;
-      s.subscription={plan:'starter',nextBillingOn:'2099.01.01',autoRenew:true};s.aiConsent=true;
-      s.recipients[index].active=true;
-      s.drafts[index]={'journal-raw':'오늘  그림책을 읽었어요.','journal-finalLearningActivity':'블록을  쌓았어요.','quick-0':'퀵체크 비밀 값'};
-      const d=new Date(),date=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
-      s.draftDates[index]=date;await bridge.store.save(JSON.stringify(s));return s.recipients[index].name;
-    });
-    await send(`${name} 오늘 일지 문장 다듬어줘`);
-    const journal=page;
-    await journal.locator('#journal-raw').waitFor();
-    await page.getByText(/공백만 정리한 예시/).waitFor();
-    assert.equal(await journal.locator('[data-action="ai-preview"]').count(),0);
-    assert.equal(await journal.locator('#journal-raw').inputValue(),'오늘  그림책을 읽었어요.');
-    assert.ok(!(await page.locator('.ai-chat-messages').innerText()).includes('퀵체크 비밀 값'));
-    await journal.locator('#journal-raw').fill('직접 바꾼 원문');
-    await page.getByRole('button',{name:'변경 내용 적용',exact:true}).last().click();
-    await page.getByText(/일지 내용이 바뀌었거나 수정할 수 없어요/).waitFor();
-    assert.equal(await journal.locator('#journal-raw').inputValue(),'직접 바꾼 원문');
-    await journal.locator('#journal-raw').fill('다시  그림책을 읽었어요.');
-    await send('문장 정리해줘');
-    await page.getByRole('button',{name:'변경 내용 적용',exact:true}).last().click();
-    await page.getByText(/일지에 반영했어요. 내용을 확인한 뒤 직접 저장/).waitFor();
-    assert.equal(await journal.locator('#journal-raw').inputValue(),'다시 그림책을 읽었어요.');
-    assert.equal(await journal.locator('#journal-finalLearningActivity').inputValue(),'블록을 쌓았어요.');
-    assert.equal(await page.evaluate(()=>window.__careitAiBridge.state.savedJournals.some(row=>row.text==='다시 그림책을 읽었어요.')),false);
-    for(const mode of ['free','no-consent']){
-      const other=await browser.newPage({viewport:{width:1440,height:900}});other.setDefaultTimeout(8000);
-      await other.goto(base+'#/ai-chat');
-      await other.evaluate(async mode=>{
-        const bridge=window.__careitAiBridge,s=bridge.state;
-        s.recipients.forEach((person,i)=>person.active=i===0);
-        s.subscription=mode==='free'?null:{plan:'starter',nextBillingOn:'2099.01.01',autoRenew:true};
-        s.couponPlusFrom='';s.couponPlusUntil='';s.aiConsent=mode==='free';
-        const d=new Date();s.draftDates[0]=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
-        s.drafts[0]={'journal-raw':'실제 관찰 내용'};await bridge.store.save(JSON.stringify(s));
-      },mode);
-      await other.locator('#ai-chat-input').fill('문장 정리해줘');await other.locator('#ai-chat-input').press('Enter');
-      await other.getByText(mode==='free'?/문장 정리는 플러스와 팀 요금제/:/문장 정리 전에 AI 기능 동의/).waitFor();
-      assert.equal(await other.getByRole('button',{name:'변경 내용 적용'}).count(),0);
-      await other.close();
-    }
-    const mobile=await browser.newPage({viewport:{width:390,height:844}});mobile.setDefaultTimeout(8000);
-    await mobile.goto(base+'?previewMode=app#/ai-chat');
-    await mobile.evaluate(async()=>{
-      const bridge=window.__careitAiBridge,s=bridge.state;s.recipients.forEach((person,i)=>person.active=i===0);
-      s.subscription={plan:'starter',nextBillingOn:'2099.01.01',autoRenew:true};s.aiConsent=true;
-      const d=new Date();s.draftDates[0]=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
-      s.drafts[0]={'journal-raw':'오늘  산책했어요.'};await bridge.store.save(JSON.stringify(s));
-    });
-    await mobile.locator('#ai-chat-input').fill('문장 정리해줘');await mobile.locator('#ai-chat-input').press('Enter');
-    await mobile.getByText(/공백만 정리한 예시/).waitFor();
-    await mobile.getByRole('button',{name:'변경 내용 적용',exact:true}).click();
-    await mobile.getByRole('button',{name:'케어릿 AI 닫기'}).click();
-    await mobile.locator('#journal-raw').waitFor({state:'visible'});
-    await mobile.waitForFunction(()=>document.querySelector('#journal-raw')?.value==='오늘 산책했어요.');
-    await mobile.close();
-    console.log('AI conversation polish, review and conflict protection: passed');
-  } finally {await browser.close();}
+  const page=await browser.newPage({viewport:{width:1600,height:900}});
+  let step=0,readResult,fillResults=[],mode='normal';
+  const ids=['#journal-raw','#journal-finalSocialEmotional','#journal-finalLearningActivity','#journal-finalHealthSafety','#journal-finalSpecialNotes'];
+  const labels=['자유 메모 ! _ ?＆','사회 · 정서','학습 · 활동','건강 · 안전','특이사항'];
+  const call=(name,args)=>({type:'function_call',name,call_id:`call_${step}`,arguments:JSON.stringify(args)});
+  await page.route('**/careit-mockup.html',route=>route.fulfill({status:200,contentType:'text/html',body:fs.readFileSync(path.join(__dirname,'careit-mockup.html'))}));
+  await page.route('**/api/local-ai/**',async route=>{
+    const url=route.request().url();let body;
+    if(url.endsWith('/status'))body={connected:true};
+    else if(url.endsWith('/models'))body={models:[{slug:'gpt-6-luna'}]};
+    else if(url.endsWith('/respond')){
+      const sent=route.request().postDataJSON(),last=sent.turn.filter(item=>item.type==='function_call_output').at(-1);
+      if(last){const output=JSON.parse(last.output);if(!readResult)readResult=output;else fillResults.push(output);}
+      if(step===0){step++;body={text:'',output:[call('read_field',{target:'일지 기록 전체'})]};}
+      else if(mode==='conflict'&&step===1){await page.locator(ids[0]).fill('사용자가 중간에 직접 수정한 내용');step++;body={text:'',output:[call('interact',{action:'fill',target:labels[0],value:'AI가 다시 쓴 내용'})]};}
+      else if(mode==='normal'&&step<=5){const i=step-1;step++;body={text:'',output:[call('interact',{action:'fill',target:labels[i],value:`가상으로 다듬은 내용 ${i+1}`})]};}
+      else body={text:'일지 기록을 다듬었어요.',output:[]};
+    }else body={};
+    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)});
+  });
+  try{
+    await page.goto('http://127.0.0.1:8767/careit-mockup.html#/journals/new?recipient=0');
+    for(let i=0;i<ids.length;i++)await page.locator(ids[i]).fill(`가상 원문 ${i+1}`);
+    await page.locator('.sidebar [data-action="ai-toggle"]').click();
+    await page.waitForTimeout(500);
+    await page.locator('#ai-chat-input').fill('일지기록에 적어둔 멘트들 다듬어줘');
+    await page.locator('#ai-chat-form').evaluate(form=>form.requestSubmit());
+    await page.getByText('일지 기록을 다듬었어요.',{exact:true}).waitFor({timeout:15000});
+    assert.equal(readResult.fields.length,5);
+    assert.deepEqual(readResult.fields.map(field=>field.value),ids.map((_,i)=>`가상 원문 ${i+1}`));
+    assert.equal(fillResults.length,5);
+    assert(fillResults.every(result=>result.ok),JSON.stringify(fillResults));
+    for(let i=0;i<ids.length;i++)assert.equal(await page.locator(ids[i]).inputValue(),`가상으로 다듬은 내용 ${i+1}`);
+    step=0;readResult=null;fillResults=[];mode='conflict';
+    await page.locator('#ai-chat-input').fill('일지기록에 적어둔 멘트들 다듬어줘');
+    await page.locator('#ai-chat-form').evaluate(form=>form.requestSubmit());
+    await page.waitForFunction(()=>!document.querySelector('.ai-chat-loading'));
+    assert.equal(await page.locator(ids[0]).inputValue(),'사용자가 중간에 직접 수정한 내용');
+    assert.equal(fillResults[0].ok,false);
+    console.log('AI reads and updates all five current journal fields: passed');
+  }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});
