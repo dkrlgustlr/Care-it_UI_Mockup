@@ -964,9 +964,10 @@ body[data-theme=dark] .home-status-link:hover .home-status-value:not(.is-ready):
 }
 @media (min-width:1024px) {
   .app-layout > .nav-handle,.app-layout.mockup-nav-collapsed > .nav-handle { top:18px; left:180px; right:auto; width:40px; height:40px; transform:none; background:transparent; box-shadow:none; }
-  .app-layout > .nav-handle:hover { background:transparent; }
-  .app-layout.mockup-nav-collapsed > .nav-handle { left:48px; }
+  .app-layout > .nav-handle:hover { background:var(--neutral-soft); }
+  .app-layout.mockup-nav-collapsed > .nav-handle { top:60px; left:14px; }
   .app-layout.mockup-nav-collapsed .sidebar { display:flex; width:88px; padding-inline:20px; }
+  .app-layout.mockup-nav-collapsed .sidebar nav { margin-top:40px; }
   .app-layout.mockup-nav-collapsed .sidebar .brand>div,.app-layout.mockup-nav-collapsed .sidebar nav a>span,.app-layout.mockup-nav-collapsed .sidebar .account-summary>div { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
   .app-layout.mockup-nav-collapsed .sidebar nav a { width:44px; margin-left:-8px; padding-left:8px; }
   .app-layout.mockup-nav-collapsed .sidebar .sidebar-tools { flex-direction:column; align-items:flex-start; }
