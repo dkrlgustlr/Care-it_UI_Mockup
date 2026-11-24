@@ -1,0 +1,70 @@
+const assert = require('node:assert/strict');
+const path = require('node:path');
+const { pathToFileURL } = require('node:url');
+const { chromium } = require('playwright');
+
+(async () => {
+  const browser = await chromium.launch({ channel: 'chrome', headless: true });
+  const url = pathToFileURL(path.join(__dirname, 'careit-mockup.html')).href + '#/iep';
+  try {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.goto(url);
+    await page.getByRole('button', { name: '양식 편집', exact: true }).click();
+    const card = page.locator('section[data-builder-section="builtin:personal:main"]');
+    const items = card.locator('[data-builder-item]');
+    const id = await items.first().getAttribute('data-builder-item');
+    const from = await items.first().locator('[data-builder-drag]').boundingBox();
+    const to = await items.nth(2).boundingBox();
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(to.x + to.width - 12, to.y + 10, { steps: 15 });
+    assert.ok(Number(await items.first().evaluate(el => getComputedStyle(el).order)) > 0);
+    assert.equal(await card.locator('.iew-drag-placeholder').count(), 1);
+    assert.equal(await page.locator('.iew-drag-ghost').evaluate(el => getComputedStyle(el).opacity), '1');
+    await page.keyboard.press('Escape');
+    await page.mouse.up();
+    assert.equal(await items.first().getAttribute('data-builder-item'), id);
+    assert.equal(await card.locator('.iew-drag-placeholder').count(), 0);
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(to.x + to.width - 12, to.y + 10, { steps: 15 });
+    await page.mouse.up();
+    assert.notEqual(await items.first().getAttribute('data-builder-item'), id);
+    await page.locator('[data-iew-action="save"]').click();
+    await page.reload();
+    await page.getByRole('button', { name: '양식 편집', exact: true }).click();
+    assert.notEqual(await card.locator('[data-builder-item]').first().getAttribute('data-builder-item'), id);
+    assert.deepEqual(errors, []);
+    await page.close();
+
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+    const mobile = await context.newPage();
+    const mobileErrors = [];
+    mobile.on('pageerror', error => mobileErrors.push(error.message));
+    await mobile.goto(url);
+    await mobile.getByRole('button', { name: '양식 편집', exact: true }).click();
+    const mobileCard = mobile.locator('section[data-builder-section="builtin:personal:main"]');
+    const mobileItems = mobileCard.locator('[data-builder-item]');
+    const first = mobileItems.first();
+    const mobileId = await first.getAttribute('data-builder-item');
+    await first.locator('[data-builder-drag]').scrollIntoViewIfNeeded();
+    const start = await first.locator('[data-builder-drag]').boundingBox();
+    const target = await mobileItems.nth(1).boundingBox();
+    const cdp = await context.newCDPSession(mobile);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: start.x + start.width / 2, y: start.y + start.height / 2 }] });
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: target.x + target.width / 2, y: target.y + target.height - 8 }] });
+    assert.equal(await mobile.locator('.iew-drag-ghost').count(), 1);
+    assert.equal(await mobile.locator('.iew-drag-ghost').evaluate(el => getComputedStyle(el).opacity), '1');
+    assert.equal(await first.evaluate(el => getComputedStyle(el).order), '1');
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    assert.equal(await mobile.locator('.iew-drag-ghost').count(), 0);
+    assert.equal(await mobileItems.nth(1).getAttribute('data-builder-item'), mobileId);
+    assert.deepEqual(mobileErrors, []);
+    await context.close();
+    console.log('IEP drag preview, cancellation, persistence and mobile touch passed');
+  } finally {
+    await browser.close();
+  }
+})().catch(error => { console.error(error); process.exitCode = 1; });

@@ -2455,11 +2455,43 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   document.addEventListener('keydown',e=>{if(e.target.matches('#score-template-title, [id^="score-domain-title-"]')&&e.key==='Enter'&&!e.isComposing){e.preventDefault();if(e.target.id.startsWith('score-domain-title-'))e.target.blur();else finishScoreTitle(e.target);}});
   document.addEventListener('focusout',e=>{const time=e.target.closest('.timefield');if(!time||time.contains(e.relatedTarget))return;const parts=$$('input[type="number"]',time),hasValue=parts.some(input=>input.value!==''),invalid=hasValue&&parts.some(input=>input.value===''||!input.checkValidity());parts.forEach(input=>{if(invalid&&(input.value===''||!input.checkValidity()))input.setAttribute('aria-invalid','true');else input.removeAttribute('aria-invalid');});$('.timefield-error',time).hidden=!invalid;});
   document.addEventListener('keydown',e=>{if(e.key===' '&&e.target.matches('.journal-choice-chips input[type="radio"]:checked')){e.preventDefault();e.target.checked=false;e.target.dispatchEvent(new Event('change',{bubbles:true}));return;}const handle=e.target.closest('[data-quick-move]');if(handle&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();const index=Number(handle.dataset.quickMove);moveQuick(index,index+(['ArrowUp','ArrowLeft'].includes(e.key)?-1:1));}});
-  let draggedQuickIndex=null;
-  document.addEventListener('dragstart',e=>{const card=e.target.closest('[data-quick-order]');if(card)draggedQuickIndex=Number(card.dataset.quickOrder);});
-  document.addEventListener('dragover',e=>{if(draggedQuickIndex!==null&&e.target.closest('[data-quick-order]'))e.preventDefault();});
-  document.addEventListener('drop',e=>{const card=e.target.closest('[data-quick-order]');if(card&&draggedQuickIndex!==null){e.preventDefault();moveQuick(draggedQuickIndex,Number(card.dataset.quickOrder));}draggedQuickIndex=null;});
-  document.addEventListener('dragend',()=>{draggedQuickIndex=null;});
+  let quickPointer=null;
+  function clearQuickPointer(){
+    if(!quickPointer)return;const drag=quickPointer;
+    if(drag.placeholder){drag.placeholder.remove();drag.card.classList.remove('configuration-drag-moving');if(drag.cardStyle===null)drag.card.removeAttribute('style');else drag.card.setAttribute('style',drag.cardStyle);drag.items.forEach((item,i)=>{item.style.order=drag.orders[i];item.getAnimations().filter(animation=>animation.id==='quick-reorder').forEach(animation=>animation.cancel());});}
+    quickPointer=null;
+  }
+  document.addEventListener('pointerdown',e=>{
+    const handle=e.target.closest('.configuration-drag-handle[data-quick-move]');if(!handle||!e.isPrimary||e.button!==0)return;
+    const card=handle.closest('[data-quick-order]');if(!card)return;
+    quickPointer={pointer:e.pointerId,handle,card,index:Number(card.dataset.quickOrder),x:e.clientX,y:e.clientY,placeholder:null};handle.setPointerCapture(e.pointerId);
+  });
+  document.addEventListener('pointermove',e=>{
+    if(!quickPointer||quickPointer.pointer!==e.pointerId)return;
+    if(!quickPointer.placeholder&&Math.hypot(e.clientX-quickPointer.x,e.clientY-quickPointer.y)>8){
+      const drag=quickPointer,rect=drag.card.getBoundingClientRect(),parent=drag.card.parentElement,placeholder=document.createElement('div');
+      placeholder.className='configuration-drag-placeholder';placeholder.setAttribute('aria-hidden','true');placeholder.style.height=`${rect.height}px`;
+      drag.items=Array.from(parent.querySelectorAll(':scope > [data-quick-order]'));drag.orders=drag.items.map(item=>item.style.order);drag.cardStyle=drag.card.getAttribute('style');
+      drag.card.before(placeholder);drag.placeholder=placeholder;drag.preview=drag.items.map(item=>item===drag.card?placeholder:item);drag.offsetX=drag.x-rect.left;drag.offsetY=drag.y-rect.top;
+      drag.card.classList.add('configuration-drag-moving');Object.assign(drag.card.style,{width:`${rect.width}px`,height:`${rect.height}px`,left:`${rect.left}px`,top:`${rect.top}px`});
+    }
+    const drag=quickPointer;if(!drag.placeholder)return;
+    drag.card.style.left=`${e.clientX-drag.offsetX}px`;drag.card.style.top=`${e.clientY-drag.offsetY}px`;
+    const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-quick-order]');if(!target||target===drag.card||target.parentElement!==drag.placeholder.parentElement)return;
+    const rect=target.getBoundingClientRect(),place=drag.placeholder.getBoundingClientRect(),sameRow=Math.abs(place.top-rect.top)<Math.min(place.height,rect.height)/2;
+    const after=sameRow?e.clientX>=rect.left+rect.width/2:e.clientY>=rect.top+rect.height/2,next=drag.preview.filter(item=>item!==drag.placeholder);
+    next.splice(next.indexOf(target)+(after?1:0),0,drag.placeholder);if(next.every((item,i)=>item===drag.preview[i]))return;
+    const before=new Map(next.map(item=>[item,item.getBoundingClientRect()]));drag.preview=next;next.forEach((item,i)=>{item.style.order=String(i);});
+    if(!matchMedia('(prefers-reduced-motion: reduce)').matches)next.forEach(item=>{if(item===drag.placeholder)return;const old=before.get(item),now=item.getBoundingClientRect(),dx=old.left-now.left,dy=old.top-now.top;if(dx||dy){item.getAnimations().filter(animation=>animation.id==='quick-reorder').forEach(animation=>animation.cancel());const animation=item.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'translate(0,0)'}],{duration:140,easing:'ease-out'});animation.id='quick-reorder';}});
+  });
+  document.addEventListener('pointerup',e=>{
+    if(!quickPointer||quickPointer.pointer!==e.pointerId)return;
+    const drag=quickPointer,under=document.elementFromPoint(e.clientX,e.clientY),target=under?.closest('[data-quick-order],.configuration-drag-placeholder');
+    const valid=!!drag.placeholder&&!!target&&target!==drag.card&&target.parentElement===drag.placeholder.parentElement,to=valid?drag.preview.indexOf(drag.placeholder):-1;
+    clearQuickPointer();if(valid)moveQuick(drag.index,to);
+  });
+  document.addEventListener('pointercancel',e=>{if(quickPointer?.pointer===e.pointerId)clearQuickPointer();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&quickPointer?.placeholder){e.preventDefault();clearQuickPointer();}});
   let recipientSwipeStart=null;
   document.addEventListener('touchstart',e=>{
     if(route!=='/recipients'||!matchMedia('(max-width:767px)').matches||e.touches.length!==1||!e.target.closest('.recipients-page')||e.target.closest('input,textarea,select,dialog,.mockup-popup')){recipientSwipeStart=null;return;}
@@ -2503,7 +2535,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     $('[data-config-labels]').innerHTML=labels.map((label,i)=>`<div class="field"><span class="field-heading"><label for="configuration-label-${i}">항목 ${i+1}</label> <small class="field-limit" id="configuration-label-${i}-limit">${label.length}/12자</small></span><input id="configuration-label-${i}" maxlength="12" aria-describedby="configuration-label-${i}-limit" value="${escapeHTML(label)}"></div>`).join('');
     const dragIcon='<svg viewBox="30 -930 900 900" fill="currentColor" aria-hidden="true"><path d="M200-360q-17 0-28.5-11.5T160-400q0-17 11.5-28.5T200-440h560q17 0 28.5 11.5T800-400q0 17-11.5 28.5T760-360H200Zm0-160q-17 0-28.5-11.5T160-560q0-17 11.5-28.5T200-600h560q17 0 28.5 11.5T800-560q0 17-11.5 28.5T760-520H200Z"/></svg>';
     const plusIcon='<svg viewBox="30 -930 900 900" fill="currentColor" aria-hidden="true"><path d="M440-440v120q0 17 11.5 28.5T480-280q17 0 28.5-11.5T520-320v-120h120q17 0 28.5-11.5T680-480q0-17-11.5-28.5T640-520H520v-120q0-17-11.5-28.5T480-680q-17 0-28.5 11.5T440-640v120H320q-17 0-28.5 11.5T280-480q0 17 11.5 28.5T320-440h120Zm40 360q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Z"/></svg>';
-    $('[data-config-quick]').innerHTML=configurationQuickChecks().map((q,i)=>`<article class="configuration-card" draggable="true" data-quick-order="${i}"><button class="configuration-drag-handle" type="button" aria-label="${escapeHTML(q.name)} 순서 바꾸기" aria-description="${i+1}번째예요. 끌어서 옮기거나 방향키로 옮길 수 있어요." data-quick-move="${i}">${dragIcon}</button><header><div><strong>${escapeHTML(q.name)}</strong></div><div class="configuration-card-actions"><button class="button secondary" type="button" data-action="edit-quick-check" data-index="${i}">편집</button></div></header><fieldset class="journal-quick-checks configuration-preview">${quickPreview(q,i,true)}</fieldset></article>`).join('')+`<button class="configuration-create-card" type="button" aria-label="새로 만들기" data-action="new-quick-check">${plusIcon}</button>`;
+    $('[data-config-quick]').innerHTML=configurationQuickChecks().map((q,i)=>`<article class="configuration-card" data-quick-order="${i}"><button class="configuration-drag-handle" type="button" aria-label="${escapeHTML(q.name)} 순서 바꾸기" aria-description="${i+1}번째예요. 끌어서 옮기거나 방향키로 옮길 수 있어요." data-quick-move="${i}">${dragIcon}</button><header><div><strong>${escapeHTML(q.name)}</strong></div><div class="configuration-card-actions"><button class="button secondary" type="button" data-action="edit-quick-check" data-index="${i}">편집</button></div></header><fieldset class="journal-quick-checks configuration-preview">${quickPreview(q,i,true)}</fieldset></article>`).join('')+`<button class="configuration-create-card" type="button" aria-label="새로 만들기" data-action="new-quick-check">${plusIcon}</button>`;
     $$('.configuration-card').forEach(card=>{const legend=$('legend',card),actions=$('.configuration-card-actions',card),clear=legend?.querySelector('.quick-check-clear-slot'),counter=card.querySelector('.quick-check-text-field .field-heading');if(clear)actions.prepend(clear);if(counter)actions.prepend(counter.querySelector('small'));counter?.remove();legend?.remove();});
     configSnapshot=JSON.stringify(labels);
     $('#configuration-form button[type=submit]').disabled=true;

@@ -1924,3 +1924,6 @@ html[data-ai-embed]:not([data-ai-embed=""]) .app-layout > main { width:100%; min
   .ai-preview-header { padding-top:calc(8px + env(safe-area-inset-top)); }
   body.mobile-app-preview .ai-chat-page { height:calc(100dvh - 150px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); min-height:0; }
 }
+
+.configuration-drag-moving { position:fixed!important; z-index:9999!important; box-sizing:border-box; margin:0!important; pointer-events:none!important; opacity:1; box-shadow:var(--shadow-ui); transition:none!important; }
+.configuration-drag-placeholder { min-width:0; }

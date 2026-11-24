@@ -604,7 +604,7 @@ function createCareitSemesterIEP({state,persist,toast,dialog,escapeHTML:esc,regi
   }
   const domain=name=>({id:uid(),name,strength:'',needs:'',current:'',longGoal:'',goals:[goal()]});
   const planFor=(recipient,year,term)=>({id:uid(),recipient,year,term,domains:areas.map(domain),support:{},meeting:{},references:[],revision:0,savedRevision:null});
-  let root,index,plan,section='personal',recordsFrom='personal',domainId,goalId,month,saving=false,formEditing=false,draggedStep=null,dragScrollTimer=null,dragScrollDirection=0,stageObserver=null,builderDragging=null;
+  let root,index,plan,section='personal',recordsFrom='personal',domainId,goalId,month,saving=false,formEditing=false,draggedStep=null,dragScrollTimer=null,dragScrollDirection=0,stageObserver=null;
   state.iep.semesterPlans ||= [];
   const activeDomain=()=>plan.domains.find(item=>item.id===domainId)||plan.domains[0];
   const activeGoal=()=>activeDomain()?.goals.find(item=>item.id===goalId)||activeDomain()?.goals[0];
@@ -711,7 +711,7 @@ function createCareitSemesterIEP({state,persist,toast,dialog,escapeHTML:esc,regi
     const configs={personal:['인적사항',plan.personal,personalFields,'personal',''],placement:['배치·지원계획',s,placementFields,'support',''],services:['관련서비스',s,supportFields,'support',''],meeting:['지원팀 회의록',m,meetingFields,'meeting','']};
     const [title,obj,items,scope,help]=configs[kind];
     if(kind==='meeting')return `<section class="iep-card"><div class="iep-card-heading"><div><h2 data-iew-step="${kind}">${title}</h2></div></div><div class="iep-two-col">${fields(items.slice(0,4),obj,scope)}</div></section><section class="iep-card"><div class="iep-card-heading"><h2>의견과 논의</h2></div><div class="iep-two-col">${fields(items.slice(4,10),obj,scope)}</div></section><section class="iep-card"><div class="iep-card-heading"><h2>합의와 후속 조치</h2></div><div class="iep-two-col">${fields(items.slice(10),obj,scope)}</div></section>`;
-    return `<section class="iep-card"><div class="iep-card-heading"><div><h2 data-iew-step="${kind}">${title}</h2>${help?`<p class="iep-help">${esc(help)}</p>`:''}</div>${['placement','services'].includes(kind)?`<button type="button" class="button tertiary" data-action="iep-ai-help" data-iep-help="${kind}">AI에게 작성 요청</button>`:''}</div><div class="iep-two-col${kind==='personal'?' iew-personal-fields':kind==='placement'?' iew-placement-fields':''}">${fields(items,obj,scope)}</div></section>`;
+    return `<section class="iep-card"><div class="iep-card-heading"><div><h2 data-iew-step="${kind}">${title}</h2>${help?`<p class="iep-help">${esc(help)}</p>`:''}</div></div><div class="iep-two-col${kind==='personal'?' iew-personal-fields':kind==='placement'?' iew-placement-fields':''}">${fields(items,obj,scope)}</div></section>`;
   }
   function customStepHTML(id){
     const item=plan.customSteps?.find(step=>step.id===id);
@@ -728,15 +728,14 @@ function createCareitSemesterIEP({state,persist,toast,dialog,escapeHTML:esc,regi
     const options=d.goals.length>1?d.goals.map((item,i)=>`<button type="button" class="iew-goal-tab ${item.id===g.id?'active':''}" data-iew-action="goal" data-iew-id="${esc(item.id)}" aria-pressed="${item.id===g.id}">${esc(item.text.trim()||`목표 ${i+1}`)}</button>`).join(''):'';
     const monthsHTML=months().map(n=>`<option value="${n}" ${n===month?'selected':''}>${n}월</option>`).join('');
     const monthly=g.months?.[month]||{};
-    const sectionButton=(label,kind)=>`<button type="button" class="button tertiary" data-action="iep-ai-help" data-iep-help="${kind}">${label}</button>`;
     const areasNav=`<aside class="iep-card iew-domains"><div class="iew-row"><h2>영역</h2></div><div class="iew-domain-list">${plan.domains.map(item=>`<div class="iew-domain-row ${item.id===d.id?'active':''}"><button type="button" class="iew-domain ${item.id===d.id?'active':''}" data-iew-action="domain" data-iew-id="${esc(item.id)}" aria-pressed="${item.id===d.id}"><span>${esc(item.name)}</span></button>${formEditing?`<div class="iew-domain-actions"><button type="button" class="iew-form-edit-control" data-iew-action="rename-domain" data-iew-id="${esc(item.id)}" aria-label="${esc(item.name)} 영역 이름 수정">${editIcon}</button><button type="button" class="iew-form-edit-control iew-form-delete" data-iew-action="remove-domain" data-iew-id="${esc(item.id)}" aria-label="${esc(item.name)} 영역 삭제">${deleteIcon}</button></div>`:""}</div>`).join('')}</div><button type="button" class="button secondary iew-add-area" data-iew-action="add-domain">영역 추가</button></aside>`;
-    const current=`<section class="iep-card"><div class="iep-card-heading"><h2 data-iew-step="current">${esc(d.name)} · ${esc(stepTitle("current"))}</h2><div class="iep-inline-actions">${sectionButton('AI에게 작성 요청','current')}</div></div><div class="iep-two-col">${field('강점',d,'strength','data-iew-scope="domain" data-iew-key="strength"')}${field('지도점',d,'needs','data-iew-scope="domain" data-iew-key="needs"')}</div></section>`;
+    const current=`<section class="iep-card"><div class="iep-card-heading"><h2 data-iew-step="current">${esc(d.name)} · ${esc(stepTitle("current"))}</h2></div><div class="iep-two-col">${field('강점',d,'strength','data-iew-scope="domain" data-iew-key="strength"')}${field('지도점',d,'needs','data-iew-scope="domain" data-iew-key="needs"')}</div></section>`;
     const planning=`<section class="iep-card"><div class="iep-card-heading"><div><h2 data-iew-step="plan">${esc(d.name)} · ${esc(stepTitle("plan"))}</h2></div></div><div class="iew-section-divider">${field('장기목적',d,'longGoal','data-iew-scope="domain" data-iew-key="longGoal"')}</div></section>
-      <section class="iep-card"><div class="iep-card-heading"><h2>단기목표</h2><div class="iep-inline-actions"><button type="button" class="button secondary iew-secondary" data-iew-action="add-goal" ${d.goals.length>=goalLimit?'disabled':''}>목표 추가 (${d.goals.length}/${goalLimit})</button>${sectionButton('AI에게 목표 작성 요청','goal')}${options?'<button type="button" class="button danger" data-iew-action="remove-goal">삭제</button>':''}</div></div>${options?`<div class="iew-goals">${options}</div>`:''}<div class="iep-two-col iew-goal-fields">${field('단기목표',g,'goal-text','data-iew-scope="goal" data-iew-key="text"','text')}${field('평가 기준',g,'criterion','data-iew-scope="goal" data-iew-key="criterion"')}</div></section>
+      <section class="iep-card"><div class="iep-card-heading"><h2>단기목표</h2><div class="iep-inline-actions"><button type="button" class="button secondary iew-secondary" data-iew-action="add-goal" ${d.goals.length>=goalLimit?'disabled':''}>목표 추가 (${d.goals.length}/${goalLimit})</button>${options?'<button type="button" class="button danger" data-iew-action="remove-goal">삭제</button>':''}</div></div>${options?`<div class="iew-goals">${options}</div>`:''}<div class="iep-two-col iew-goal-fields">${field('단기목표',g,'goal-text','data-iew-scope="goal" data-iew-key="text"','text')}${field('평가 기준',g,'criterion','data-iew-scope="goal" data-iew-key="criterion"')}</div></section>
       `;
     const observationView=kind==='assessment'?observationState(g):null,singleObservation=observationView?.order.length===1?observationView.order[0]:null;
     const unassigned=kind==='assessment'?g.observations.filter(item=>!months().includes(Number(item.month))):[];
-    const assessment=kind==='assessment'?`<section class="iep-card"><div class="iep-card-heading iew-assessment-heading"><h2 data-iew-step="assessment">${esc(d.name)} · ${esc(stepTitle("assessment"))}</h2></div>${options?`<div class="iew-goals">${options}</div>`:`<div class="iew-assessment-goal"><span>단기목표</span><p>${esc(g.text.trim()||'작성한 단기목표가 없어요.')}</p></div>`}</section><section class="iep-card"><div class="iep-card-heading"><h2>평가 계획</h2>${sectionButton('AI에게 평가 계획 작성 요청','assessment')}</div><div class="iep-two-col">${field('평가 방법',g,'assessment-method','data-iew-scope="goal" data-iew-key="evaluation"','evaluation')}${field('평가 기준',g,'assessment-criterion','data-iew-scope="goal" data-iew-key="criterion"','criterion')}${field('평가 기간',g,'assessment-period','data-iew-scope="goal" data-iew-key="period"','period','text')}</div></section><section class="iep-card"><div class="iep-card-heading"><h2>월별 계획과 평가</h2><label class="iew-month"><span class="sr-only">월 선택</span><select data-iew-switch="month">${monthsHTML}</select></label></div><div class="iep-two-col">${field('월 목표',monthly,'monthly-goal','data-iew-scope="month" data-iew-key="goal"','goal')}${field('월 실행계획',monthly,'monthly-plan','data-iew-scope="month" data-iew-key="plan"','plan')}${field('월 평가',monthly,'monthly-evaluation','data-iew-scope="month" data-iew-key="evaluation"','evaluation')}</div></section>
+    const assessment=kind==='assessment'?`<section class="iep-card"><div class="iep-card-heading iew-assessment-heading"><h2 data-iew-step="assessment">${esc(d.name)} · ${esc(stepTitle("assessment"))}</h2></div>${options?`<div class="iew-goals">${options}</div>`:`<div class="iew-assessment-goal"><span>단기목표</span><p>${esc(g.text.trim()||'작성한 단기목표가 없어요.')}</p></div>`}</section><section class="iep-card"><div class="iep-card-heading"><h2>평가 계획</h2></div><div class="iep-two-col">${field('평가 방법',g,'assessment-method','data-iew-scope="goal" data-iew-key="evaluation"','evaluation')}${field('평가 기준',g,'assessment-criterion','data-iew-scope="goal" data-iew-key="criterion"','criterion')}${field('평가 기간',g,'assessment-period','data-iew-scope="goal" data-iew-key="period"','period','text')}</div></section><section class="iep-card"><div class="iep-card-heading"><h2>월별 계획과 평가</h2><label class="iew-month"><span class="sr-only">월 선택</span><select data-iew-switch="month">${monthsHTML}</select></label></div><div class="iep-two-col">${field('월 목표',monthly,'monthly-goal','data-iew-scope="month" data-iew-key="goal"','goal')}${field('월 실행계획',monthly,'monthly-plan','data-iew-scope="month" data-iew-key="plan"','plan')}${field('월 평가',monthly,'monthly-evaluation','data-iew-scope="month" data-iew-key="evaluation"','evaluation')}</div></section>
       <section class="iep-card"><div class="iep-card-heading"><h2>${month}월 관찰</h2><div class="iep-inline-actions"><button type="button" class="button secondary iew-secondary" data-iew-action="add-observation">관찰 추가</button>${singleObservation?`<button type="button" class="button danger" data-iew-action="remove-observation" data-iew-id="${esc(singleObservation)}" ${observationView.drafts.some(item=>item.id===singleObservation)?'hidden':''}>삭제</button>`:''}</div></div>${observationView.order.map(id=>{const item=g.observations.find(row=>row.id===id)||observationView.drafts.find(row=>row.id===id);return item?observationHTML(item,!!singleObservation):'';}).join('')}</section>${unassigned.length?`<section class="iep-card"><div class="iep-card-heading"><h2>월 미지정 관찰</h2></div><p class="iep-help iew-unassigned-help">기존 관찰의 월을 선택하면 해당 월로 이동해요.</p>${unassigned.map(item=>`<div class="iew-unassigned"><label class="iew-assign-month"><span>관찰 월${item.date?` · ${esc(item.date)}`:''}</span><select data-iew-assign-month="${esc(item.id)}"><option value="">선택해 주세요</option>${months().map(n=>`<option value="${n}">${n}월</option>`).join('')}</select></label>${observationHTML(item)}</div>`).join('')}</section>`:''}<section class="iep-card"><div class="iep-card-heading"><h2>학기말 평가</h2></div><div class="iep-two-col">${field('영역별 누가기록',d,'cumulative','data-iew-scope="domain" data-iew-key="cumulative"')}${field('학기말 평가 보고',d,'semesterEvaluation','data-iew-scope="domain" data-iew-key="semesterEvaluation"')}</div></section>`:'';
     return `<div class="iew-layout">${areasNav}<div class="iew-content">${kind==='current'?current:kind==='assessment'?assessment:planning}</div></div>`;
   }
@@ -822,7 +821,7 @@ function createCareitSemesterIEP({state,persist,toast,dialog,escapeHTML:esc,regi
     const tabs=orderedSteps().map(id=>[id,stepTitle(id)]);
     const currentStep=tabs.findIndex(([id])=>id===(section==='records'?recordsFrom:section));
     const returnLabel=tabs.find(([id])=>id===recordsFrom)?.[1]||'인적사항';
-    root.innerHTML=`<header class="page-header"><div class="iep-title"><h1>IEP</h1></div></header><section class="iep-card iew-toolbar"><div class="field iep-field"><span>관리대상</span><div class="dropdown"><button type="button" class="dropdown-trigger" data-options="recipients" aria-label="관리대상" aria-haspopup="listbox" aria-expanded="false"><span>${esc(state.recipients[index].name)}</span></button></div></div><div class="field iep-field"><label for="iew-year">학년도</label><div class="iew-select"><select id="iew-year" data-iew-switch="year">${availableYears.map(y=>`<option value="${y}" ${y===plan.year?'selected':''}>${y}년</option>`).join('')}</select></div></div><div class="field iep-field"><label for="iew-term">학기</label><div class="iew-select"><select id="iew-term" data-iew-switch="term"><option value="1" ${plan.term===1?'selected':''}>1학기</option><option value="2" ${plan.term===2?'selected':''}>2학기</option></select></div></div><div class="iew-save"><div class="iew-toolbar-actions"><button type="button" class="button secondary iew-secondary" data-iew-action="section" data-iew-id="records">리포트 연결${plan.references.filter(ref=>ref.kind==='report').length?' '+plan.references.filter(ref=>ref.kind==='report').length:''}</button><button type="button" class="button primary" data-iew-action="save" ${saving||!isDirty()?'disabled':''}>저장</button></div></div></section><div class="iew-stage-bar"><div class="iew-stage-nav"><button type="button" class="iew-stage-arrow" data-iew-action="scroll-steps" data-iew-direction="-1" aria-label="이전 단계 보기" hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4 6 8l4 4"/></svg></button><div class="record-tabs iew-tabs" aria-label="IEP 단계">${tabs.map(([id,label],i)=>`<button type="button" data-iew-action="section" data-iew-id="${esc(id)}" data-iew-reached="${i<=currentStep}" aria-pressed="${i===currentStep}" ${formEditing?'draggable="true" title="끌어서 순서 변경 · Alt와 방향키로 이동"':''}>${formEditing?'<span class="iew-step-handle" aria-hidden="true"><svg viewBox="0 0 16 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 3h10M3 7h10"/></svg></span>':''}${i+1}. ${esc(label)}</button>`).join('')}</div>${formEditing?'<button type="button" class="iew-add-step" data-iew-action="add-step" aria-label="단계 추가" title="단계 추가"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></button>':''}<button type="button" class="iew-stage-arrow" data-iew-action="scroll-steps" data-iew-direction="1" aria-label="다음 단계 보기" hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4l4 4-4 4"/></svg></button></div><div class="iew-stage-actions"><button type="button" class="button ${formEditing?'primary':'secondary'}" data-iew-action="toggle-form-edit">${formEditing?'완료':'양식 편집'}</button></div></div><div id="iew-content">${['plan','current','assessment'].includes(section)?workspaceHTML(section):['personal','placement','services','meeting'].includes(section)?contextFields(section):section==='records'?`<button type="button" class="button tertiary iew-record-back" data-iew-action="section" data-iew-id="${recordsFrom}">← ${esc(returnLabel)}</button>${recordsHTML()}`:section==='document'?documentHTML():customStepHTML(section)}</div>`;
+    root.innerHTML=`<header class="page-header"><div class="iep-title"><h1>IEP</h1></div></header><section class="iep-card iew-toolbar"><div class="field iep-field"><span>관리대상</span><div class="dropdown"><button type="button" class="dropdown-trigger" data-options="recipients" aria-label="관리대상" aria-haspopup="listbox" aria-expanded="false"><span>${esc(state.recipients[index].name)}</span></button></div></div><div class="field iep-field"><label for="iew-year">학년도</label><div class="iew-select"><select id="iew-year" data-iew-switch="year">${availableYears.map(y=>`<option value="${y}" ${y===plan.year?'selected':''}>${y}년</option>`).join('')}</select></div></div><div class="field iep-field"><label for="iew-term">학기</label><div class="iew-select"><select id="iew-term" data-iew-switch="term"><option value="1" ${plan.term===1?'selected':''}>1학기</option><option value="2" ${plan.term===2?'selected':''}>2학기</option></select></div></div><div class="iew-save"><div class="iew-toolbar-actions"><button type="button" class="button secondary iew-secondary" data-iew-action="section" data-iew-id="records">리포트 연결${plan.references.filter(ref=>ref.kind==='report').length?' '+plan.references.filter(ref=>ref.kind==='report').length:''}</button><button type="button" class="button primary" data-iew-action="save" ${saving||!isDirty()?'disabled':''}>저장</button></div></div></section><div class="iew-stage-bar"><div class="iew-stage-nav"><button type="button" class="iew-stage-arrow" data-iew-action="scroll-steps" data-iew-direction="-1" aria-label="이전 단계 보기" hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4 6 8l4 4"/></svg></button><div class="record-tabs iew-tabs" aria-label="IEP 단계">${tabs.map(([id,label],i)=>`<button type="button" data-iew-action="section" data-iew-id="${esc(id)}" data-iew-reached="${i<=currentStep}" aria-pressed="${i===currentStep}" ${formEditing?'draggable="true" title="끌어서 순서 변경 · Alt와 방향키로 이동"':''}>${formEditing?'<span class="iew-step-handle" aria-hidden="true"><svg viewBox="0 0 16 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 3h10M3 7h10"/></svg></span>':''}${i+1}. ${esc(label)}</button>`).join('')}</div>${formEditing?'<button type="button" class="iew-add-step" data-iew-action="add-step" aria-label="단계 추가" title="단계 추가"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></button>':''}<button type="button" class="iew-stage-arrow" data-iew-action="scroll-steps" data-iew-direction="1" aria-label="다음 단계 보기" hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4l4 4-4 4"/></svg></button></div><div class="iew-stage-actions"><button type="button" class="button ${formEditing?'primary':'secondary'}" data-iew-action="toggle-form-edit">${formEditing?'완료':'양식 편집'}</button></div></div><div id="iew-content">${['plan','current','assessment'].includes(section)?workspaceHTML(section):['personal','placement','services','meeting'].includes(section)?contextFields(section):section==='records'?`<button type="button" class="button tertiary iew-record-back" data-iew-action="section" data-iew-id="${recordsFrom}">← ${esc(returnLabel)}</button>${recordsHTML()}`:section==='document'?documentHTML():customStepHTML(section)}</div><button type="button" class="iew-mockup-reset" data-iew-action="reset-iep">IEP 초기화</button>`;
     decorateFormHeadings();decorateBuilder();registerEdits();enhanceSelects();
     const tabBar=$('.iew-tabs'),activeTab=$('button[aria-pressed="true"]',tabBar);tabBar.scrollLeft=previousScroll;
     setupStageScrolling(tabBar);
@@ -876,8 +875,8 @@ function createCareitSemesterIEP({state,persist,toast,dialog,escapeHTML:esc,regi
     else control=`<input id="${esc(id)}" type="text" maxlength="2400" ${attrs} value="${esc(saved)}">`;
     return `<div class="field iep-field iew-builder-item" data-builder-item="custom:${esc(item.id)}">${fieldHeader(id,scope,key,label,false)}${control}<span class="iew-builder-print-value">${esc(builderDisplay(item,saved))}</span></div>`;
   }
-  function builderMoveControls(kind,id,label){
-    return `<span class="iew-builder-move" draggable="true" data-builder-drag="${kind}" data-builder-id="${esc(id)}" title="끌어서 순서 변경"><button type="button" data-iew-action="builder-move" data-builder-kind="${kind}" data-builder-id="${esc(id)}" data-builder-direction="-1" aria-label="${esc(label)} 위로 이동">↑</button><button type="button" data-iew-action="builder-move" data-builder-kind="${kind}" data-builder-id="${esc(id)}" data-builder-direction="1" aria-label="${esc(label)} 아래로 이동">↓</button></span>`;
+  function builderMoveControls(kind,id,label,index,total){
+    return `<button class="iew-builder-move" type="button" data-builder-drag="${kind}" data-builder-id="${esc(id)}" aria-label="${esc(label)} 순서 바꾸기" aria-description="${index+1}번째예요. 끌어서 옮기거나 방향키로 옮길 수 있어요." title="끌어서 순서 변경"><svg viewBox="30 -930 900 900" fill="currentColor" aria-hidden="true"><path d="M200-360q-17 0-28.5-11.5T160-400q0-17 11.5-28.5T200-440h560q17 0 28.5 11.5T800-400q0 17-11.5 28.5T760-360H200Zm0-160q-17 0-28.5-11.5T160-560q0-17 11.5-28.5T200-600h560q17 0 28.5 11.5T800-560q0 17-11.5 28.5T760-520H200Z"/></svg></button>`;
   }
   function decorateBuilder(){
     if(section==='records')return;
@@ -892,7 +891,7 @@ function createCareitSemesterIEP({state,persist,toast,dialog,escapeHTML:esc,regi
     }
     const sectionOrder=data.sectionOrder[section]||[],rank=id=>{const n=sectionOrder.indexOf(id);return n<0?Number.MAX_SAFE_INTEGER:n;};
     cards.sort((a,b)=>rank(a.dataset.builderSection)-rank(b.dataset.builderSection));cards.forEach(card=>host.append(card));
-    cards.forEach(card=>{
+    cards.forEach((card,cardIndex)=>{
       const id=card.dataset.builderSection;
       const sectionHeading=card.querySelector('h2');card.dataset.builderTitle=sectionHeading?.dataset.iewStep?stepTitle(section):sectionHeading?[...sectionHeading.childNodes].filter(node=>node.nodeType===Node.TEXT_NODE).map(node=>node.textContent).join('').trim():stepTitle(section);
       let grid=card.querySelector(':scope > .iep-two-col');
@@ -903,8 +902,8 @@ function createCareitSemesterIEP({state,persist,toast,dialog,escapeHTML:esc,regi
       const items=Array.from(grid.children).filter(el=>el.dataset.builderItem),order=data.fieldOrder[id]||[],itemRank=key=>{const n=order.indexOf(key);return n<0?Number.MAX_SAFE_INTEGER:n;};
       items.sort((a,b)=>itemRank(a.dataset.builderItem)-itemRank(b.dataset.builderItem));items.forEach(item=>grid.append(item));
       if(formEditing){
-        items.forEach(item=>{const header=item.querySelector('.iew-form-label'),label=header?.querySelector('label')?.textContent.trim()||'항목';if(header)header.insertAdjacentHTML('afterbegin',builderMoveControls('field',item.dataset.builderItem,label));});
-        const heading=card.querySelector('.iep-card-heading');if(heading&&cards.length>1)heading.insertAdjacentHTML('afterbegin',builderMoveControls('section',id,card.dataset.builderTitle||'섹션'));
+        items.forEach((item,itemIndex)=>{const header=item.querySelector('.iew-form-label'),label=header?.querySelector('label')?.textContent.trim()||'항목';if(header&&items.length>1)header.insertAdjacentHTML('afterbegin',builderMoveControls('field',item.dataset.builderItem,label,itemIndex,items.length));});
+        const heading=card.querySelector('.iep-card-heading');if(heading&&cards.length>1)heading.insertAdjacentHTML('afterbegin',builderMoveControls('section',id,card.dataset.builderTitle||'섹션',cardIndex,cards.length));
         if(heading&&id.startsWith('builtin:')&&!heading.querySelector('[data-iew-step]'))heading.insertAdjacentHTML('beforeend',`<button type="button" class="iew-form-edit-control iew-form-delete iew-stage-delete" data-iew-action="delete-builtin-section" data-builder-section="${esc(id)}" data-builder-title="${esc(card.dataset.builderTitle)}" aria-label="${esc(card.dataset.builderTitle)} 섹션 삭제">${deleteIcon}</button>`);
         card.insertAdjacentHTML('beforeend',`<button type="button" class="iew-builder-add" data-iew-action="add-builder-field" data-builder-section="${esc(id)}" data-builder-title="${esc(card.dataset.builderTitle)}">+ 항목 추가</button>`);
       }
@@ -983,31 +982,76 @@ function createCareitSemesterIEP({state,persist,toast,dialog,escapeHTML:esc,regi
     const validate=()=>{const type=modal.querySelector('#iew-builder-type')?.value||'text',settings=builderSettings(modal,type);confirm.disabled=!name.value.trim()||!settings.valid;};
     modal.querySelectorAll('input,textarea').forEach(input=>{input.addEventListener('input',validate);input.addEventListener('change',validate);});modal.querySelector('#iew-builder-type-button').addEventListener('click',()=>{const current=modal.querySelector('#iew-builder-type').value,label=builderTypes.find(type=>type[0]===current)?.[1]||'텍스트';openTypePicker({selected:label,onSelect:selected=>{const type=builderTypes.find(item=>item[1]===selected);if(!type)return;modal.querySelector('#iew-builder-type').value=type[0];modal.querySelector('#iew-builder-type-button span').textContent=selected==='시간 길이'?'소요 시간':selected;validate();}});});validate();name.focus();
   }
-  function moveBuilder(button){
-    const kind=button.dataset.builderKind,id=button.dataset.builderId,direction=Number(button.dataset.builderDirection),data=builder();
+  function moveBuilder(button,direction){
+    const kind=button.dataset.builderDrag,id=button.dataset.builderId,data=builder();
     let items,key,orders;
     if(kind==='section'){const host=button.closest('.iep-card')?.parentElement;items=Array.from(host?.children||[]).filter(el=>el.dataset.builderSection);key=section;orders=data.sectionOrder;}
     else {const grid=button.closest('[data-builder-item]')?.parentElement;items=Array.from(grid?.children||[]).filter(el=>el.dataset.builderItem);key=grid?.closest('[data-builder-section]')?.dataset.builderSection;orders=data.fieldOrder;}
     if(!key)return;const values=items.map(item=>kind==='section'?item.dataset.builderSection:item.dataset.builderItem),index=values.indexOf(id),next=index+direction;if(index<0||next<0||next>=values.length)return;
     [values[index],values[next]]=[values[next],values[index]];orders[key]=values;touch();shell();
-    const candidates=$$('[data-iew-action="builder-move"]');candidates.find(item=>item.dataset.builderId===id&&item.dataset.builderDirection===String(direction))?.focus();
+    $$('[data-builder-drag]').find(item=>item.dataset.builderId===id)?.focus();
   }
-  function builderDragStart(e){
-    const grip=e.target.closest('[data-builder-drag]');if(!formEditing||!grip)return;
-    builderDragging={kind:grip.dataset.builderDrag,id:grip.dataset.builderId};e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',builderDragging.id);
+  function beginBuilderDrag(kind,id,x,y){
+    const handle=$$('[data-builder-drag]').find(item=>item.dataset.builderDrag===kind&&item.dataset.builderId===id);
+    const source=handle?.closest(kind==='section'?'[data-builder-section]':'[data-builder-item]'),parent=source?.parentElement;
+    if(!source||!parent)return null;
+    const items=Array.from(parent.children).filter(item=>kind==='section'?item.dataset.builderSection:item.dataset.builderItem);
+    const key=kind==='section'?section:parent.closest('[data-builder-section]')?.dataset.builderSection;if(!key)return null;
+    const rect=source.getBoundingClientRect(),drag={kind,id,key,source,parent,items,order:[...items],initial:[...items],styles:items.map(item=>item.style.order)};
+    {
+      const ghost=source.cloneNode(true);ghost.classList.add('iew-drag-ghost');ghost.setAttribute('aria-hidden','true');ghost.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+      const originalInputs=source.querySelectorAll('input,textarea,select'),ghostInputs=ghost.querySelectorAll('input,textarea,select');originalInputs.forEach((input,i)=>{if(ghostInputs[i]){ghostInputs[i].value=input.value;if('checked' in input)ghostInputs[i].checked=input.checked;}});
+      const padding=kind==='field'?parseFloat(getComputedStyle(source.closest('.iep-card')).paddingTop)||0:0;
+      if(padding){ghost.classList.add('iew-drag-ghost-field');ghost.style.padding=`${padding}px`;}
+      ghost.removeAttribute('data-builder-item');ghost.removeAttribute('data-builder-section');ghost.querySelectorAll('[data-builder-item],[data-builder-section]').forEach(el=>{el.removeAttribute('data-builder-item');el.removeAttribute('data-builder-section');});
+      const left=rect.left-padding,top=rect.top-padding;
+      Object.assign(ghost.style,{width:`${rect.width+padding*2}px`,height:`${rect.height+padding*2}px`,left:`${left}px`,top:`${top}px`});$('#iew-content').append(ghost);drag.ghost=ghost;drag.offsetX=x-left;drag.offsetY=y-top;
+    }
+    parent.classList.toggle('iew-reordering-sections',kind==='section');
+    source.classList.add('iew-drag-placeholder');
+    return drag;
   }
-  function builderDragOver(e){
-    if(!builderDragging)return;const target=e.target.closest(builderDragging.kind==='section'?'[data-builder-section]':'[data-builder-item]');if(!target)return;
-    const source=$$('[data-builder-drag]').find(item=>item.dataset.builderDrag===builderDragging.kind&&item.dataset.builderId===builderDragging.id)?.closest(builderDragging.kind==='section'?'[data-builder-section]':'[data-builder-item]');
-    if(!source||source===target||source.parentElement!==target.parentElement)return;e.preventDefault();e.dataTransfer.dropEffect='move';
+  function restoreBuilderDrag(drag){
+    if(!drag)return;drag.items.forEach((item,i)=>{item.style.order=drag.styles[i];item.getAnimations().filter(animation=>animation.id==='iew-reorder').forEach(animation=>animation.cancel());});
+    drag.source.classList.remove('iew-drag-placeholder');drag.parent.classList.remove('iew-reordering-sections');drag.ghost?.remove();
   }
-  function builderDrop(e){
-    if(!builderDragging)return;const {kind,id}=builderDragging,target=e.target.closest(kind==='section'?'[data-builder-section]':'[data-builder-item]');
-    const source=$$('[data-builder-drag]').find(item=>item.dataset.builderDrag===kind&&item.dataset.builderId===id)?.closest(kind==='section'?'[data-builder-section]':'[data-builder-item]');
-    builderDragging=null;if(!source||!target||source===target||source.parentElement!==target.parentElement)return;e.preventDefault();
-    const parent=source.parentElement,items=Array.from(parent.children).filter(item=>kind==='section'?item.dataset.builderSection:item.dataset.builderItem),values=items.map(item=>kind==='section'?item.dataset.builderSection:item.dataset.builderItem),from=values.indexOf(id),destination=kind==='section'?target.dataset.builderSection:target.dataset.builderItem;
-    values.splice(from,1);const after=e.clientY>=target.getBoundingClientRect().top+target.offsetHeight/2;values.splice(values.indexOf(destination)+(after?1:0),0,id);
-    const data=builder(),key=kind==='section'?section:parent.closest('[data-builder-section]')?.dataset.builderSection;if(!key)return;(kind==='section'?data.sectionOrder:data.fieldOrder)[key]=values;touch();shell();
+  function previewBuilderDrag(drag,target,x,y){
+    if(!target||target===drag.source||target.parentElement!==drag.parent||!drag.items.includes(target))return;
+    const rect=target.getBoundingClientRect(),sourceRect=drag.source.getBoundingClientRect(),sameRow=drag.kind==='field'&&Math.abs(sourceRect.top-rect.top)<Math.min(sourceRect.height,rect.height)/2;
+    const next=drag.order.filter(item=>item!==drag.source),after=sameRow?x>=rect.left+rect.width/2:y>=rect.top+rect.height/2;
+    next.splice(next.indexOf(target)+(after?1:0),0,drag.source);
+    if(next.every((item,i)=>item===drag.order[i]))return;
+    const before=new Map(drag.items.map(item=>[item,item.getBoundingClientRect()]));drag.order=next;next.forEach((item,i)=>{item.style.order=String(i);});
+    if(!matchMedia('(prefers-reduced-motion: reduce)').matches)drag.items.forEach(item=>{if(item===drag.source)return;const old=before.get(item),now=item.getBoundingClientRect(),dx=old.left-now.left,dy=old.top-now.top;if(dx||dy){item.getAnimations().filter(animation=>animation.id==='iew-reorder').forEach(animation=>animation.cancel());const animation=item.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'translate(0,0)'}],{duration:140,easing:'ease-out'});animation.id='iew-reorder';}});
+  }
+  function finishBuilderDrag(drag,commit){
+    if(!drag)return;const changed=drag.order.some((item,i)=>item!==drag.initial[i]),values=drag.order.map(item=>drag.kind==='section'?item.dataset.builderSection:item.dataset.builderItem);
+    restoreBuilderDrag(drag);if(!commit||!changed)return;
+    const data=builder();(drag.kind==='section'?data.sectionOrder:data.fieldOrder)[drag.key]=values;touch();shell();
+    $$('[data-builder-drag]').find(item=>item.dataset.builderId===drag.id)?.focus();
+  }
+  let builderTouch=null;
+  function builderPointerDown(e){
+    const handle=e.target.closest('[data-builder-drag]');if(!formEditing||!handle||!e.isPrimary||e.button!==0)return;
+    builderTouch={kind:handle.dataset.builderDrag,id:handle.dataset.builderId,pointer:e.pointerId,x:e.clientX,y:e.clientY,drag:null};handle.setPointerCapture(e.pointerId);
+  }
+  function builderPointerMove(e){
+    if(!builderTouch||builderTouch.pointer!==e.pointerId)return;
+    if(!builderTouch.drag&&Math.hypot(e.clientX-builderTouch.x,e.clientY-builderTouch.y)>8)builderTouch.drag=beginBuilderDrag(builderTouch.kind,builderTouch.id,builderTouch.x,builderTouch.y);
+    const drag=builderTouch.drag;if(!drag)return;
+    drag.ghost.style.left=`${e.clientX-drag.offsetX}px`;drag.ghost.style.top=`${e.clientY-drag.offsetY}px`;
+    const target=document.elementFromPoint(e.clientX,e.clientY)?.closest(drag.kind==='section'?'[data-builder-section]':'[data-builder-item]');previewBuilderDrag(drag,target,e.clientX,e.clientY);
+  }
+  function builderPointerEnd(e){
+    if(!builderTouch||builderTouch.pointer!==e.pointerId)return;
+    const {drag}=builderTouch;builderTouch=null;if(!drag)return;
+    const target=document.elementFromPoint(e.clientX,e.clientY)?.closest(drag.kind==='section'?'[data-builder-section]':'[data-builder-item]');
+    finishBuilderDrag(drag,e.type!=='pointercancel'&&!!target&&target.parentElement===drag.parent);
+  }
+  function builderKeydown(e){
+    if(e.key==='Escape'&&builderTouch?.drag){e.preventDefault();e.stopPropagation();const drag=builderTouch.drag;builderTouch=null;finishBuilderDrag(drag,false);return;}
+    const handle=e.target.closest('[data-builder-drag]');if(!formEditing||!handle||!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;
+    e.preventDefault();moveBuilder(handle,['ArrowUp','ArrowLeft'].includes(e.key)?-1:1);
   }
   function enhanceSelects(){
     $$('select').forEach((select,i)=>{
@@ -1111,21 +1155,40 @@ function createCareitSemesterIEP({state,persist,toast,dialog,escapeHTML:esc,regi
     if(document.body.classList.contains('mockup-editing'))return;
     const button=e.target.closest('[data-iew-action]');if(!button)return;
     const action=button.dataset.iewAction,id=button.dataset.iewId,d=activeDomain(),g=activeGoal();
-    if(action==='toggle-form-edit'){formEditing=!formEditing;shell();}
+    if(action==='reset-iep'){
+      dialog('IEP를 초기화할까요?', '<p>선택한 관리대상의 이 학기 IEP를 기본 양식으로 되돌려요. 작성한 내용과 연결한 리포트도 이 계획에서 삭제돼요.</p>','초기화',async()=>{
+        if(saving)return;const previous=plan,position=state.iep.semesterPlans.indexOf(previous);if(position<0)return;
+        const fresh=planFor(index,previous.year,previous.term);fresh.personal={};state.iep.semesterPlans[position]=fresh;plan=fresh;
+        let saved=false;try{saved=await persist();}catch{}
+        if(!saved){state.iep.semesterPlans[position]=previous;plan=previous;toast('초기화하지 못했어요. 다시 시도해 주세요.');return;}
+        observationDrafts.clear();section='personal';recordsFrom='personal';domainId=fresh.domains[0]?.id;goalId=activeDomain()?.goals[0]?.id;month=months()[0];formEditing=false;shell();toast('IEP를 초기화했어요.');
+      },true);
+    }
+    else if(action==='toggle-form-edit'){formEditing=!formEditing;shell();}
     else if(action==='builder-scale'){const item=builder().fields.find(field=>field.id===button.dataset.builderId);if(item){const key=builderSlot(item.step),values=(plan.builderValues[item.id] ||= {}),value=button.dataset.builderValue;values[key]=values[key]===value?'':value;touch();shell();}}
     else if(action==='add-builder-section'&&formEditing)addBuilderSection();
     else if(action==='add-builder-field'&&formEditing)addBuilderField(button.dataset.builderSection,button.dataset.builderTitle);
-    else if(action==='builder-move'&&formEditing)moveBuilder(button);
     else if(action==='edit-builder-section'&&formEditing){const item=builder().sections.find(item=>item.id===button.dataset.builderId);if(item)dialog('이름 수정',`<div class="mockup-dialog-fields"><label><span class="sr-only">이름</span><input id="iew-builder-name" maxlength="60" value="${esc(item.title)}"></label></div>`,'저장',()=>{const title=document.getElementById('iew-builder-name')?.value.trim();if(!title){toast('이름을 입력해 주세요.');return;}item.title=title;touch();shell();});}
     else if(action==='delete-builder-section'&&formEditing){const item=builder().sections.find(item=>item.id===button.dataset.builderId);if(item)dialog('섹션을 삭제할까요?',`<p>‘${esc(item.title)}’ 섹션과 항목이 화면과 산출물에서 제외돼요. 기존 내용은 보관돼요.</p>`,'삭제',()=>{item.hidden=true;touch();shell();},true);}
     else if(action==='delete-builtin-section'&&formEditing){const id=button.dataset.builderSection,title=button.dataset.builderTitle;dialog('섹션을 삭제할까요?',`<p>‘${esc(title)}’ 섹션과 항목이 화면과 산출물에서 제외돼요. 기존 내용은 보관돼요.</p>`,'삭제',()=>{if(!builder().hiddenSections.includes(id))builder().hiddenSections.push(id);touch();shell();},true);}
     else if(action==='scroll-steps'){$('.iew-tabs')?.scrollBy({left:Number(button.dataset.iewDirection)*260,behavior:'smooth'});}
     else if(action==='add-step'){
       if(!formEditing)return;
-      dialog('단계 추가','<div class="mockup-dialog-fields"><label><span class="sr-only">단계 이름</span><input id="iew-new-step-name" maxlength="60" placeholder="단계 이름"></label></div>','추가',()=>{
+      const hidden=(plan.formSettings?.hiddenSteps||[]).filter(id=>stepNames.some(([key])=>key===id)||(plan.customSteps||[]).some(item=>item.id===id));
+      const restore=hidden.length?`<div class="iew-restore-steps"><strong>삭제한 단계</strong>${hidden.map(id=>`<button class="button secondary" type="button" data-restore-step="${esc(id)}">${esc(stepTitle(id))} 복원</button>`).join('')}</div>`:'';
+      dialog('단계 추가',`<div class="mockup-dialog-fields"><label><span class="sr-only">단계 이름</span><input id="iew-new-step-name" maxlength="60" placeholder="단계 이름"></label>${restore}</div>`,'추가',()=>{
         const name=document.getElementById('iew-new-step-name')?.value.trim();if(!name){toast('단계 이름을 입력해 주세요.');return;}
         const order=orderedSteps(),item={id:`custom-${uid()}`,name,content:''};(plan.customSteps ||= []).push(item);(plan.formSettings ||= {}).stepOrder=[...order,item.id];section=item.id;touch();shell();
       });
+      const modal=document.getElementById('mockup-dialog');modal.querySelectorAll('[data-restore-step]').forEach(control=>control.addEventListener('click',()=>{
+        const id=control.dataset.restoreStep,settings=plan.formSettings;if(!settings?.hiddenSteps?.includes(id))return;
+        settings.hiddenSteps=settings.hiddenSteps.filter(item=>item!==id);
+        if(settings.stepOrder&&!settings.stepOrder.includes(id)){
+          const defaults=stepNames.map(([key])=>key),position=defaults.indexOf(id),following=position<0?null:defaults.slice(position+1).find(key=>settings.stepOrder.includes(key));
+          const at=following?settings.stepOrder.indexOf(following):settings.stepOrder.length;settings.stepOrder.splice(at,0,id);
+        }
+        modal.close();section=id;touch();shell();toast('단계를 복원했어요.');
+      }));
     }
     else if(action==='edit-step'){
       if(button.dataset.iewStep&&button.dataset.iewStep!=='document')editFormName('steps',button.dataset.iewStep,button.dataset.iewLabel);
@@ -1260,7 +1323,7 @@ function createCareitSemesterIEP({state,persist,toast,dialog,escapeHTML:esc,regi
     touch();shell();return true;
   }
   return {
-    mount(element,recipient){root=element;index=recipient;const date=currentDate().split('-').map(Number),term=date[1]>=3&&date[1]<=8?1:2,year=date[1]<=2?date[0]-1:date[0],selected=state.iep.selectedSemester?.[index];choose(selected?.year||year,selected?.term||term);section=orderedSteps()[0];recordsFrom=section;root.addEventListener('input',edit);root.addEventListener('change',change);root.addEventListener('click',click);root.addEventListener('dragstart',startStepDrag);root.addEventListener('dragstart',builderDragStart);root.addEventListener('dragover',overStep);root.addEventListener('dragover',builderDragOver);root.addEventListener('drop',dropStep);root.addEventListener('drop',builderDrop);root.addEventListener('dragend',()=>{stopStepScroll();draggedStep=null;builderDragging=null;$$('.iew-step-dragging,.iew-step-drop-before,.iew-step-drop-after').forEach(item=>item.classList.remove('iew-step-dragging','iew-step-drop-before','iew-step-drop-after'));});root.addEventListener('keydown',stepKeydown);shell();},
+    mount(element,recipient){root=element;index=recipient;const date=currentDate().split('-').map(Number),term=date[1]>=3&&date[1]<=8?1:2,year=date[1]<=2?date[0]-1:date[0],selected=state.iep.selectedSemester?.[index];choose(selected?.year||year,selected?.term||term);section=orderedSteps()[0];recordsFrom=section;root.addEventListener('input',edit);root.addEventListener('change',change);root.addEventListener('click',click);root.addEventListener('dragstart',startStepDrag);root.addEventListener('dragover',overStep);root.addEventListener('drop',dropStep);root.addEventListener('dragend',()=>{stopStepScroll();draggedStep=null;$$('.iew-step-dragging,.iew-step-drop-before,.iew-step-drop-after').forEach(item=>item.classList.remove('iew-step-dragging','iew-step-drop-before','iew-step-drop-after'));});root.addEventListener('keydown',stepKeydown);root.addEventListener('keydown',builderKeydown);root.addEventListener('pointerdown',builderPointerDown);root.addEventListener('pointermove',builderPointerMove);root.addEventListener('pointerup',builderPointerEnd);root.addEventListener('pointercancel',builderPointerEnd);shell();},
     isDirty(){return isDirty();},
     save(){return saveSemester();},
     proposeFormChange,

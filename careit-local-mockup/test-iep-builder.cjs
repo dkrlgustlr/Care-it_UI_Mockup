@@ -52,7 +52,7 @@ const {chromium}=require('playwright');
   await page.locator('.datefield-panel [data-date]:not(:disabled)').first().click();
   const picked=await extra.locator('input[data-iew-scope="builder"][type="hidden"]').inputValue();
   assert.match(picked,/^\d{4}-\d{2}-\d{2}$/);
-  await extra.getByRole('button',{name:'위로 이동'}).first().click();
+  await extra.getByRole('button',{name:'추가 정보 순서 바꾸기'}).press('ArrowUp');
   assert.equal((await page.locator('#iew-content > .iep-card').first().locator('h2').innerText()).trim(),'추가 정보');
   await page.getByRole('button',{name:'완료',exact:true}).click();
   await page.locator('[data-iew-action="save"]').click();
