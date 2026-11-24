@@ -10,7 +10,7 @@ const {chromium}=require('playwright');
     await page.evaluate(async()=>{const b=window.__careitAiBridge;b.state.savedJournals.unshift({recipient:0,date:'2026-11-05',text:'가상 검증 일지: 파란나비 그림을 관찰했다.'});await b.store.save(JSON.stringify(b.state));});
     await page.locator('.sidebar [data-action="ai-toggle"]').click();
     await page.waitForTimeout(1200);
-    await page.locator('#ai-chat-input').fill('가상 사례야. IEP 화면을 열고 4번 현재학습수행수준의 현재 수행 모습에 "그림을 가리켰다."라고 입력해줘.');
+    await page.locator('#ai-chat-input').fill('가상 사례야. IEP 화면을 열고 4번 현행수준의 현재 수행 모습에 "그림을 가리켰다."라고 입력해줘.');
     await page.locator('#ai-chat-form').evaluate(form=>form.requestSubmit());
     await page.locator('.ai-chat-message.assistant').last().waitFor();
     await page.waitForFunction(()=>!document.querySelector('.ai-chat-loading'),null,{timeout:120000});

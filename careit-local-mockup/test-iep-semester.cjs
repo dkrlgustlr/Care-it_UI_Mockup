@@ -14,7 +14,7 @@ const {chromium}=require('playwright');
     await page.goto(url+'#/');
     await page.evaluate(async()=>{const b=window.__careitAiBridge,s=b.state;s.savedJournals.unshift({recipient:0,date:'2026-11-05',text:'그림을 보여주면 도움 그림을 가리킨다.'},{recipient:1,date:'2026-11-04',text:'다른 대상의 비공개 일지'});(s.generatedReports||=[]).unshift({id:'iep-test',recipient:0,from:'2026-11-01',to:'2026-11-07',generated:'2026-11-08',version:1,mock:true});await b.store.save(JSON.stringify(s));});
     await page.locator('.sidebar [data-route="/iep"]').click();
-    assert.deepEqual(await page.locator('.iew-tabs button').allTextContents(),['1. 인적사항','2. 배치·지원계획','3. 관련서비스','4. 현재학습수행수준','5. 학기별 IEP','6. 지원팀 회의록','7. 학기별 평가','8. 종합보고서·내보내기']);
+    assert.deepEqual(await page.locator('.iew-tabs button').allTextContents(),['1. 인적사항','2. 배치·지원계획','3. 관련서비스','4. 현행수준','5. 학기별 IEP','6. 지원팀 회의록','7. 학기별 평가','8. 종합보고서·내보내기']);
     await page.locator('[data-iep-select="iew-sex"]').click();
     assert.equal(await page.getByRole('option',{name:'기타',exact:true}).count(),0);
     await page.getByRole('option',{name:'여성',exact:true}).click();

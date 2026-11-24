@@ -1799,6 +1799,7 @@ body[data-theme=dark] .app-content .settings-page .social-login-action[data-conn
 .ai-chat-suggestions button:hover { background:var(--neutral-soft); }
 .ai-chat-suggestions button span:last-child { color:var(--muted); font-size:20px; }
 .ai-chat-composer { display:flex; flex:none; flex-direction:column; width:100%; margin-top:24px; padding:10px; border:1px solid var(--line); border-radius:9999px; background:var(--surface); box-shadow:0 4px 16px rgba(18,32,42,.06); }
+.ai-chat-composer.is-expanded { border-radius:24px; }
 .ai-attach-menu[popover] { width:260px; padding:8px; border:1px solid var(--line); border-radius:12px; }
 .ai-attach-option { display:flex; align-items:center; gap:10px; width:100%; min-height:44px; padding:10px; border:0; border-radius:8px; background:transparent; color:var(--text); font:600 14px/1.4 var(--font-sans); text-align:left; cursor:pointer; }
 .ai-attach-option:hover,.ai-attach-option:focus-visible { background:var(--neutral-soft); }
@@ -1808,7 +1809,7 @@ body[data-theme=dark] .app-content .settings-page .social-login-action[data-conn
 .ai-weekly-summary strong { color:var(--text); font-weight:700; }
 .ai-weekly-usage small { display:block; margin-top:5px; color:var(--muted); font:400 12px/1.4 var(--font-sans); }
 .ai-chat-input-row { display:flex; align-items:end; gap:8px; width:100%; }
-.ai-chat-composer textarea { flex:1; min-width:0; max-height:120px; min-height:44px; padding:11px 0; resize:none; border:0; outline:0; background:transparent; color:var(--text); font:400 16px/1.4 var(--font-sans); }
+.ai-chat-composer textarea { box-sizing:border-box; flex:1; min-width:0; max-height:min(180px,30dvh); min-height:44px; padding:11px 0; overflow-y:hidden; resize:none; border:0; outline:0; background:transparent; color:var(--text); font:400 16px/1.4 var(--font-sans); }
 .ai-chat-input-row button { display:grid; place-items:center; position:relative; flex:none; width:44px; height:44px; padding:0; border:0; background:transparent; cursor:pointer; }
 .ai-chat-input-row button svg { position:relative; width:20px; height:20px; }
 .ai-chat-attach { color:var(--muted); border-radius:50%; }

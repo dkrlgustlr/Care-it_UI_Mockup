@@ -10,7 +10,7 @@ const {chromium}=require('playwright');
    await page.route('**/careit-mockup.html',r=>r.fulfill({status:200,contentType:'text/html',body:fs.readFileSync('careit-mockup.html')}));
    await page.route('**/api/local-ai/**',r=>r.fulfill({status:200,contentType:'application/json',body:'{"connected":false}'}));
    await page.goto('http://127.0.0.1:8767/careit-mockup.html#/iep');
-   const sections=[['personal','인적사항'],['placement','배치·지원계획'],['services','관련서비스'],['current','현재학습수행수준'],['plan','학기별 IEP'],['meeting','지원팀 회의록'],['assessment','학기별 평가'],['document','종합보고서·내보내기']];
+   const sections=[['personal','인적사항'],['placement','배치·지원계획'],['services','관련서비스'],['current','현행수준'],['plan','학기별 IEP'],['meeting','지원팀 회의록'],['assessment','학기별 평가'],['document','종합보고서·내보내기']];
    for(const [id,label] of sections){
     await page.locator(`.iew-tabs [data-iew-id="${id}"]`).click();
     const button=page.locator('.iew-toolbar [data-iew-id="records"]');

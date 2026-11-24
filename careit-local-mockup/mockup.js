@@ -710,7 +710,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
       if(aiWork?.iepHelp){
         const current=iepContext(),anchor=aiWork.iepAnchor;
         if(!current||!anchor||current.selection!==anchor.selection||current.revision!==anchor.revision)return {ok:false,message:'계획이나 선택한 단계가 바뀌어 입력하지 않았어요. 다시 요청해 주세요.'};
-        const permitted={placement:['support:special','support:integrated','support:specialTeacher','support:integratedTeacher'],services:['support:therapy','support:therapyDetails','support:afterSchool','support:transport','support:personnel','support:assistive','support:family'],current:['domain:strength','domain:needs','domain:current'],goal:['domain:longGoal','goal:text','goal:criterion','goal:period','goal:supportLevel'],education:['goal:activity','goal:method','goal:evaluation'],assessment:['goal:evaluation','goal:criterion','goal:period']}[aiWork.iepHelp]||[];
+        const permitted={placement:['support:special','support:integrated','support:specialTeacher','support:integratedTeacher'],services:['support:therapy','support:therapyDetails','support:afterSchool','support:transport','support:personnel','support:assistive','support:family'],current:['domain:strength','domain:needs'],goal:['domain:longGoal','goal:text','goal:criterion'],education:['goal:activity','goal:method','goal:evaluation'],assessment:['goal:evaluation','goal:criterion','goal:period']}[aiWork.iepHelp]||[];
         if(!permitted.includes(`${el.dataset.iewScope}:${el.dataset.iewKey}`))return {ok:false,message:'요청한 항목만 작성할 수 있어요.'};
       }
       if(el.readOnly||el.type==='file'||el.type==='checkbox'||el.type==='radio'||el.tagName==='SELECT')return {ok:false,message:'이 항목은 직접 선택하거나 입력해 주세요.'};
@@ -805,6 +805,15 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(open){renderAiChat();aiSplitObserver.observe($('.app-layout'));updateAiSplit();if(focus)$('#ai-chat-input')?.focus();}
     else {aiSplitObserver.disconnect();updateAiSplit();if(focus){const rect=aiDockOpener?.getBoundingClientRect(),visible=rect&&rect.width&&rect.height&&rect.right>0&&rect.left<innerWidth;const fallback=$('.app-layout').classList.contains('mockup-nav-collapsed')?$('.ai-dock-launcher'):$('[data-action="ai-toggle"]:not(.ai-dock-launcher)');(visible?aiDockOpener:fallback)?.focus();}}
   }
+  function sizeAiChatInput(){
+    const input=$('#ai-chat-input');if(!input||!input.clientWidth)return;
+    input.style.height='auto';input.style.overflowY='hidden';input.style.height=`${input.scrollHeight}px`;
+    input.style.overflowY=input.scrollHeight>input.clientHeight?'auto':'hidden';
+    input.closest('.ai-chat-composer')?.classList.toggle('is-expanded',input.clientHeight>46);
+  }
+  function clearAiChatInput(){const input=$('#ai-chat-input');if(input){input.value='';sizeAiChatInput();}}
+  const aiChatInput=$('#ai-chat-input');let aiInputWidth=0;
+  if(aiChatInput)new ResizeObserver(entries=>{const width=entries[0].contentRect.width;if(width&&width!==aiInputWidth){aiInputWidth=width;sizeAiChatInput();}}).observe(aiChatInput);
   const aiSplitObserver=new ResizeObserver(()=>updateAiSplit());
   function syncAiDockAccessibility(){
     const dock=$('#ai-dock');if(!dock||aiEmbed)return;
@@ -1295,10 +1304,20 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   }
   function sendAiChat(text,suggestion=-1,iepHelp=''){
     text=text.trim();if((!text&&!aiPendingFiles.length)||aiWork)return;
+    if(text&&!iepHelp&&!aiPendingFiles.length&&route==='/iep'&&activeIep===semesterIep){
+      const proposal=semesterIep.proposeFormChange(text);
+      if(proposal){
+        aiChat.messages.push({role:'user',text});clearAiChatInput();
+        if(proposal.error){aiReply(proposal.error);return;}
+        aiChat.flow={type:'iep-form',stage:'form-review',proposal};
+        const summary=proposal.changes.map(item=>{const title=item.before===item.after?item.before:`${item.before} → ${item.after}`;return `• ${title}`;}).join('\n');
+        aiReply(`양식 변경 제안이에요. 확인 후 적용해 주세요.\n${summary}`,[aiButton('변경 적용','form-apply',proposal.id),aiButton('취소','form-cancel',proposal.id)]);return;
+      }
+    }
     if(aiLocal.connected&&aiLocal.mode==='live'){
       if(aiPendingFiles.length){toast('실제 대화 시험은 텍스트만 지원해요. 첨부를 제거한 뒤 보내 주세요.');return;}
       if(!text)return;if(!aiLocal.model){toast('사용 가능한 모델을 먼저 확인해 주세요.');return;}
-      aiChat.flow=null;aiChat.messages.push({role:'user',text});$('#ai-chat-input').value='';aiLocal.history.push({role:'user',content:text});
+      aiChat.flow=null;aiChat.messages.push({role:'user',text});clearAiChatInput();aiLocal.history.push({role:'user',content:text});
       const currentIep=route==='/iep'&&activeIep===semesterIep?semesterIep.assistanceContext():null;
       const previousAnswer=aiLocal.history.at(-2)?.content||'';
       const followup=aiLocal.iepHelp&&currentIep?.selection===aiLocal.iepHelp.selection&&/[?？]|알려\s*주|말씀해|입력해|선택해/.test(previousAnswer)&&!/(일지|기록|리포트|홈|템플릿).*(열어|이동|찾|검색)/.test(text);
@@ -1312,7 +1331,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     if(iepHelp&&!['goal','education'].includes(iepHelp)){aiChat.messages.push({role:'user',text});aiReply('AI 연결 후 현재 단계의 작성 도움을 받을 수 있어요.');return;}
     const selected=aiPendingFiles.splice(0),files=selected.map(file=>({name:file.name,type:file.type}));
     if(selected.some(file=>file.url))aiFilePreviews.set(aiChat.messages.length,selected.map(file=>file.url));
-    aiChat.messages.push({role:'user',text,files});$('#ai-chat-input').value='';
+    aiChat.messages.push({role:'user',text,files});clearAiChatInput();
     aiRun(text,files);
   }
   window.addEventListener('unload',()=>{aiPendingFiles.forEach(file=>file.url&&URL.revokeObjectURL(file.url));aiFilePreviews.forEach(urls=>urls.forEach(url=>url&&URL.revokeObjectURL(url)));});
@@ -1322,9 +1341,16 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   }
   async function aiChoose(messageIndex,choiceIndex,recordChoice=true){
     const message=aiChat.messages[messageIndex],choice=message?.choices?.[choiceIndex];if(!choice||message.chosen||aiWork)return;
-    const flow=aiChat.flow,stages={recipient:['recipient'],week:['week'],record:['record'],'delete-confirm':['delete-confirm'],'report-view':['report-choice'],'report-offer':['report-choice'],'report-generate':['report-confirm'],'add-confirm':['add-confirm'],'template-select':['template-select'],'template-confirm':['template-confirm'],'ai-report-template':['report-select'],'ai-journal-template':['journal-select'],'resume-draft':['draft-conflict'],'edit-existing':['existing-confirm'],'apply-proposal':['editing'],'cancel-proposal':['editing'],'iep-example':['input'],'iep-apply':['review'],'iep-cancel':['review']};
+    const flow=aiChat.flow,stages={recipient:['recipient'],week:['week'],record:['record'],'delete-confirm':['delete-confirm'],'report-view':['report-choice'],'report-offer':['report-choice'],'report-generate':['report-confirm'],'add-confirm':['add-confirm'],'template-select':['template-select'],'template-confirm':['template-confirm'],'ai-report-template':['report-select'],'ai-journal-template':['journal-select'],'resume-draft':['draft-conflict'],'edit-existing':['existing-confirm'],'apply-proposal':['editing'],'cancel-proposal':['editing'],'iep-example':['input'],'iep-apply':['review'],'iep-cancel':['review'],'form-apply':['form-review'],'form-cancel':['form-review']};
     if(stages[choice.action]&&!stages[choice.action].includes(flow?.stage)){message.chosen=true;aiReply('이전 요청이 바뀌었어요. 현재 작업에서 다시 선택해 주세요.');return;}
     message.chosen=true;if(recordChoice&&!['example','retry'].includes(choice.action))aiChat.messages.push({role:'user',text:choice.label});aiSave();
+    if(choice.action==='form-apply'||choice.action==='form-cancel'){
+      if(flow?.type!=='iep-form'||choice.value!==flow.proposal?.id){aiReply('이전 변경 제안이에요. 다시 요청해 주세요.');return;}
+      aiChat.flow=null;
+      if(choice.action==='form-cancel'){aiReply('양식을 변경하지 않았어요.');return;}
+      if(route!=='/iep'||activeIep!==semesterIep||!semesterIep.applyFormProposal(flow.proposal)){aiReply('계획이 변경되어 적용하지 않았어요. 현재 계획에서 다시 요청해 주세요.');return;}
+      aiReply('이 계획의 양식에 반영했어요. 확인하고 저장해 주세요.');return;
+    }
     if(choice.action==='iep-example'){
       if(flow?.type!=='iep-assist'||choice.value!==flow.example?.id||!flow.example.value){aiReply('이전 예시예요. 현재 계획에서 다시 요청해 주세요.');return;}
       aiIepPropose(flow,flow.example.value,true);return;
@@ -2298,7 +2324,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
     }
     else if(action==='ai-local-refresh'){button.disabled=true;aiLocal.notice='';await refreshLocalAi();}
     else if(action==='ai-chat-suggest'){const i=Number(button.dataset.index);if(aiSuggestions[i])sendAiChat(aiSuggestions[i][0],i);}
-    else if(action==='iep-ai-help'){if($('#ai-dock').hidden){aiDockOpener=button;setAiDock(true,true);}if(aiWork)return;aiChat.flow=null;const kind=button.dataset.iepHelp;sendAiChat(({placement:'인적사항과 이미 작성한 내용을 바탕으로 배치·지원계획 작성을 도와줘. 필요한 정보가 없으면 물어봐.',services:'인적사항과 이미 작성한 내용을 바탕으로 관련서비스 작성을 도와줘. 확인되지 않은 서비스는 만들지 말고 필요한 정보를 물어봐.',current:'선택한 영역의 현재 모습을 작성하도록 도와줘. 연결한 리포트는 출처와 함께 참고하고, 실제 관찰이 부족하면 물어봐.',goal:'현재 모습과 연결한 리포트를 참고해 목표 작성 초안을 만들어줘. 근거가 부족하면 물어봐.',education:'현재 모습과 목표를 바탕으로 교육계획 초안을 작성해줘. 필요한 정보가 부족하면 물어봐.',assessment:'작성된 교육계획을 바탕으로 평가 방법, 기준과 기간의 초안을 작성해줘. 관찰 결과나 목표 달성 여부는 판단하지 마.'})[kind]||'IEP 작성 도와줘',-1,kind);}
+    else if(action==='iep-ai-help'){if($('#ai-dock').hidden){aiDockOpener=button;setAiDock(true,true);}if(aiWork)return;aiChat.flow=null;const kind=button.dataset.iepHelp;sendAiChat(({placement:'인적사항과 이미 작성한 내용을 바탕으로 학기 동안 학급별 참여 시간과 필요한 지원 계획 작성을 도와줘. 확인되지 않은 배치나 시간은 만들지 말고 필요한 정보를 물어봐.',services:'인적사항과 이미 작성한 내용을 바탕으로 학기 동안 제공할 관련서비스와 지원 계획 작성을 도와줘. 치료지원 종류와 기관·일정, 방과후과정 지원과 지원인력 배치는 확인된 내용만 쓰고 필요한 정보를 물어봐.',current:'선택한 영역의 강점과 지도점 작성을 도와줘. 연결한 리포트는 출처와 함께 참고하고, 실제 관찰이 부족하면 물어봐.',goal:'현재 모습과 연결한 리포트를 참고해 목표 작성 초안을 만들어줘. 근거가 부족하면 물어봐.',education:'현재 모습과 목표를 바탕으로 교육계획 초안을 작성해줘. 필요한 정보가 부족하면 물어봐.',assessment:'작성된 교육계획을 바탕으로 평가 방법, 기준과 기간의 초안을 작성해줘. 관찰 결과나 목표 달성 여부는 판단하지 마.'})[kind]||'IEP 작성 도와줘',-1,kind);}
     else if(action==='coupon-tab'){const tab=button.dataset.tab;$$('[data-action="coupon-tab"]').forEach(item=>item.setAttribute('aria-pressed',String(item.dataset.tab===tab)));$$('[data-coupon-panel]').forEach(panel=>panel.hidden=panel.dataset.couponPanel!==tab);}
     else if(action==='coupon-preview')useCoupon(Number(button.dataset.index));
     else if(action==='edit-journal-title'){const input=document.getElementById(button.getAttribute('aria-controls'));input.focus();input.select();}
@@ -2398,6 +2424,7 @@ function mockupHomeJournalStatus(state, index, today, checks) {
   document.addEventListener('beforeinput',e=>{if(e.target.matches('.timefield input[type="number"]')&&e.inputType==='insertText'&&e.data&&!/^\d+$/.test(e.data))e.preventDefault();});
   document.addEventListener('input',async e=>{
     const el=e.target;
+    if(el.id==='ai-chat-input')sizeAiChatInput();
     if(el.closest('#mock-password-form')){el.removeAttribute('aria-invalid');const message=$('[data-password-message]',el.form);message.hidden=true;message.textContent='';}
     if(el.matches('.timefield input[type="number"]')){if(!allowedTimeInput(el))el.value=timeInputValues.get(el)??'';else timeInputValues.set(el,el.value);syncTimeInput(el.closest('.timefield'));}
     if(el.matches('.quick-check-duration input[type="number"]')){el.removeAttribute('aria-invalid');const duration=el.closest('.quick-check-duration');if($$('input',duration).every(input=>input.checkValidity()))$('.quick-check-duration-error',duration).hidden=true;}
