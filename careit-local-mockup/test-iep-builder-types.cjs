@@ -57,7 +57,7 @@ const {chromium}=require('playwright');
   assert.equal(await page.getByRole('button',{name:'지원 수준 3'}).getAttribute('aria-pressed'),'false');
   await page.getByRole('button',{name:'지원 수준 3'}).click();
   assert.equal(await page.getByRole('button',{name:'지원 수준 3'}).getAttribute('aria-pressed'),'true');
-  await page.getByRole('button',{name:'완료',exact:true}).click();await page.locator('[data-iew-action="save"]').click();await page.reload();
+  await page.getByRole('button',{name:'완료',exact:true}).click();await page.waitForFunction(()=>!window.__careitAiBridge.store.pending);await page.reload();
   assert.equal(await page.getByLabel('별명',{exact:true}).inputValue(),'하늘');
   assert.equal(await page.getByLabel('시각 자료',{exact:true}).isChecked(),true);
   assert.equal(await page.getByLabel('말로 안내',{exact:true}).isChecked(),true);

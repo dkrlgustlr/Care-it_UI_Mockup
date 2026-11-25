@@ -31,7 +31,7 @@ const {chromium}=require('playwright');
     await page.locator('[data-iew-key="behavior"]').fill('손을 들었다');
     await choose('[data-iew-switch="month"]',`${firstMonth}월`);
     assert.equal(await page.locator('[data-iew-key="behavior"]').inputValue(),'그림을 가리켰다');
-    await page.locator('[data-iew-action="save"]').click();
+    await page.waitForFunction(()=>!window.__careitAiBridge.store.pending);
     await page.reload();
     await page.locator('[data-iew-id="assessment"]').click();
     assert.equal(await page.locator('#iew-monthly-goal').inputValue(),'이번 달 도움을 요청한다');

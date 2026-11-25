@@ -32,7 +32,7 @@ const { chromium } = require('playwright');
     await page.mouse.move(to.x + to.width - 12, to.y + 10, { steps: 15 });
     await page.mouse.up();
     assert.notEqual(await items.first().getAttribute('data-builder-item'), id);
-    await page.locator('[data-iew-action="save"]').click();
+    await page.waitForFunction(()=>!window.__careitAiBridge.store.pending);
     await page.reload();
     await page.getByRole('button', { name: '양식 편집', exact: true }).click();
     assert.notEqual(await card.locator('[data-builder-item]').first().getAttribute('data-builder-item'), id);

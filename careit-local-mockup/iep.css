@@ -120,6 +120,7 @@
 .iep-page .iew-add-area { width:100%; color:var(--muted); }
 .iep-page [data-iew-action="rename-domain"] { color:var(--muted); }
 .iep-page .iew-secondary { color:var(--muted); }
+.iep-page .iew-toolbar-actions .iew-secondary { color:var(--primary-dark); }
 .iew-section-divider { padding-top:20px; border-top:1px solid var(--line); }
 .iew-section-divider>.iep-field { margin-bottom:0; }
 .iew-content h3 { margin:0 0 16px; font-size:16px; }

@@ -55,7 +55,7 @@ const {chromium}=require('playwright');
   await extra.getByRole('button',{name:'추가 정보 순서 바꾸기'}).press('ArrowUp');
   assert.equal((await page.locator('#iew-content > .iep-card').first().locator('h2').innerText()).trim(),'추가 정보');
   await page.getByRole('button',{name:'완료',exact:true}).click();
-  await page.locator('[data-iew-action="save"]').click();
+  await page.waitForFunction(()=>!window.__careitAiBridge.store.pending);
   await page.reload();
   assert.equal(await page.getByLabel('보호자 연락처',{exact:true}).inputValue(),'010-0000-0000');
   assert.equal(await page.locator('.iew-builder-section').getByLabel('상담',{exact:true}).isChecked(),true);

@@ -64,7 +64,7 @@ const {chromium}=require('playwright');
     await page.locator('.iew-goal-tab').first().click();
     assert.equal(await page.locator('#iew-monthly-plan').inputValue(),'그림 카드 사용');
     assert.equal(await page.locator('[data-iew-key="behavior"]').inputValue(),'그림을 가리킴');
-    await page.locator('[data-iew-action="save"]').click();
+    await page.waitForFunction(()=>!window.__careitAiBridge.store.pending);
     await page.waitForFunction(()=>document.querySelector('[data-iew-status]')?.textContent==='저장됨');
     await page.reload();
     assert.equal(await page.locator('#iew-className').inputValue(),'햇살반');

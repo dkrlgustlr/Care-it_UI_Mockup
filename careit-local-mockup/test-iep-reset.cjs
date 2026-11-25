@@ -14,7 +14,7 @@ const { chromium } = require('playwright');
     await page.getByRole('option', { name: '1학기', exact: true }).click();
     await page.locator('[data-iew-id="current"]').click();
     await page.getByLabel('강점', { exact: true }).fill('다른 학기 보존');
-    await page.locator('[data-iew-action="save"]').click();
+    await page.waitForFunction(()=>!window.__careitAiBridge.store.pending);
     await page.getByRole('button', { name: '학기', exact: true }).click();
     await page.getByRole('option', { name: '2학기', exact: true }).click();
     await page.locator('[data-iew-id="current"]').click();
