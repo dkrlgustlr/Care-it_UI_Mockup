@@ -25,6 +25,12 @@ try {
   assert.equal(ledger.get('account-a',sunday+week).remaining,WEEKLY_LIMIT);
   assert.equal(ledger.add('account-a',500001,sunday+week).remaining,0);
   assert.equal(ledger.get('account-a',sunday+2*week).remaining,WEEKLY_LIMIT);
+  ledger.record('account-a',{activity:'qa-test',input:10,output:5});
+  const reset=ledger.reset('account-a',sunday+2*week);
+  assert.equal(reset.used,0);
+  assert.equal(reset.resetAt,new Date(sunday+3*week).toISOString());
+  assert.equal(ledger.history('account-a')[0].activity,'qa-test');
+  assert.equal(ledger.get('account-b',sunday).used,0);
   assert.throws(()=>ledger.add('account-a',-1,monday));
   assert.doesNotMatch(readFileSync(file,'utf8'),/account-a|account-b/);
   const legacyKey=createHash('sha256').update('legacy').digest('hex');

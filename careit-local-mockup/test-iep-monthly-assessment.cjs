@@ -47,6 +47,7 @@ const {chromium}=require('playwright');
     await choose('[data-iew-assign-month="legacy-observation"]',secondMonth);
     assert.equal(await page.getByText('월 미지정 관찰').count(),0);
     await choose('[data-iew-switch="month"]',secondMonth);
+    await page.getByRole('button',{name:'관찰 2',exact:true}).click();
     assert.equal(await page.locator('#iew-observation-behavior-legacy-observation').inputValue(),'기존 관찰');
     await page.locator('[data-iew-id="document"]').click();
     assert.match(await page.locator('#iew-content').innerText(),/이번 달 도움을 요청한다/);

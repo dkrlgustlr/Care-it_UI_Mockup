@@ -4,72 +4,45 @@ const {chromium}=require('playwright');
 (async()=>{
  const browser=await chromium.launch({channel:'chrome',headless:true});
  const page=await browser.newPage({viewport:{width:1600,height:900}});
- let calls=[],outputs=[],developer='',step=0,done=0,reply=''; const errors=[];
- page.on('pageerror',e=>errors.push(e.message));
- await page.route('**/careit-mockup.html',r=>r.fulfill({status:200,contentType:'text/html',body:fs.readFileSync('careit-mockup.html')}));
- await page.route('**/api/local-ai/**',async r=>{
-  const path=new URL(r.request().url()).pathname; let result={};
-  if(path.endsWith('/status'))result={connected:true,usage:{limit:500000,remaining:450000}};
-  else if(path.endsWith('/models'))result={models:[{slug:'gpt-6-luna'}]};
-  else if(path.endsWith('/respond')){
-   const turn=r.request().postDataJSON().turn;
-   if(!step)developer=turn.filter(x=>x.role==='developer').map(x=>x.content).join('\n');
-   outputs.push(...turn.filter(x=>x.type==='function_call_output').slice(-1).map(x=>JSON.parse(x.output)));
-   if(step<calls.length){const [name,args]=calls[step++];result={output:[{type:'function_call',name,call_id:`call_${step}`,arguments:JSON.stringify(args)}]};}
-   else {done++;result={text:reply||`시험 완료 ${done}`,output:[]};}
-  }
-  await r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(result)});
- });
- const request=async(kind,actions)=>{calls=actions;outputs=[];step=0;const expected=done+1;await page.locator(`[data-iep-help="${kind}"]`).click();await page.getByText(`시험 완료 ${expected}`,{exact:true}).waitFor();};
- const fill=(target,value)=>['interact',{action:'fill',target,value}];
+ const requests=[];
  try{
+  await page.route('**/careit-mockup.html',r=>r.fulfill({status:200,contentType:'text/html',body:fs.readFileSync('careit-mockup.html')}));
+  await page.route('**/api/local-ai/**',r=>{
+   const url=r.request().url();let result={};
+   if(url.endsWith('/status'))result={connected:true};
+   else if(url.endsWith('/models'))result={models:[{slug:'gpt-6-luna'}]};
+   else if(url.endsWith('/respond')){
+    requests.push(r.request().postDataJSON());
+    result=requests.length===2?{output:[{type:'function_call',name:'interact',call_id:'test-call',arguments:JSON.stringify({action:'fill',target:'단기목표',value:'자동 변경 시도'})}]}:{text:'어떤 도움을 받나요?',output:[]};
+   }
+   return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(result)});
+  });
   await page.goto('http://127.0.0.1:8767/careit-mockup.html#/iep');
-  await page.waitForTimeout(500);
-  await page.locator('[data-iew-id="placement"]').click();
-  await request('placement',[fill('특수학급 참여 계획','기존 기록 기반 지원')]);
-  assert.equal(await page.locator('#iew-special').inputValue(),'기존 기록 기반 지원');
-  await page.locator('[data-iew-id="services"]').click();
-  await request('services',[fill('보조공학','그림 의사소통판')]);
-  assert.equal(await page.locator('#iew-assistive').inputValue(),'그림 의사소통판');
+  await page.waitForFunction(()=>document.querySelector('[data-ai-local-controls]')?.hidden);
   await page.locator('[data-iew-id="current"]').click();
-  calls=[];outputs=[];step=0;reply='관찰한 모습을 알려주세요?';
-  await page.locator('[data-iep-help="current"]').click();await page.getByText(reply,{exact:true}).waitFor();
-  reply='';calls=[fill('강점','그림을 가리킴')];outputs=[];step=0;const expected=done+1;
-  await page.locator('#ai-chat-input').fill('그림을 가리킴');await page.locator('#ai-chat-form').evaluate(form=>form.requestSubmit());
-  await page.getByText(`시험 완료 ${expected}`,{exact:true}).waitFor();
-  assert.equal(await page.locator('#iew-strength').inputValue(),'그림을 가리킴');
-  assert.match(developer,/IEP 작성 규칙/);
-  await page.evaluate(()=>{const s=window.__careitAiBridge.state;(s.generatedReports||=[]).unshift({id:'ai-selected',recipient:0,from:'2026-10-01',to:'2026-10-07',generated:'2026-10-08',version:1,mock:true},{id:'ai-unselected',recipient:0,from:'2026-09-01',to:'2026-09-07',generated:'2026-09-08',version:1,mock:true});});
+  await page.getByLabel('강점',{exact:true}).fill('가상: 그림을 선택한다');
   await page.locator('[data-iew-id="plan"]').click();
-  await page.locator('[data-iew-id="records"]').click();
-  await page.locator('[data-iew-record="report:ai-selected"]').check();
-  await page.locator('[data-iew-action="attach"]').click();
-  await page.locator('.iew-record-back').click();
-  await request('goal',[fill('단기목표','그림으로 도움 요청')]);
-  assert.equal(await page.locator('#iew-goal-text').inputValue(),'그림으로 도움 요청');
-  assert.match(developer,/2026-10-01/);assert.doesNotMatch(developer,/2026-09-01/);
-  await page.evaluate(()=>{(window.__careitAiBridge.state.hiddenReportIds||=[]).push('0:ai-selected');});
-  await request('education',[fill('교육내용과 활동','그림 카드를 사용한다'),fill('교육방법과 지원','카드를 보여준다')]);
-  assert.doesNotMatch(developer,/2026-10-01/);assert.match(developer,/unavailableSources\":1/);
-  assert.equal(await page.locator('#iew-activity').inputValue(),'그림 카드를 사용한다');
-  await page.locator('[data-iew-id="assessment"]').click();
-  await request('assessment',[fill('평가 방법','놀이 중 요청을 관찰한다'),fill('평가 기준','3회 중 2회 요청한다'),fill('평가 기간','3월~5월'),fill('월 목표','임의 목표'),fill('월 평가','목표를 달성했다'),fill('실제 행동','실제로 했음'),fill('학기말 평가 보고','목표를 달성했다')]);
-  assert.equal(await page.locator('#iew-assessment-method').inputValue(),'놀이 중 요청을 관찰한다');
-  assert.equal(await page.locator('#iew-assessment-criterion').inputValue(),'3회 중 2회 요청한다');
-  assert.equal(await page.locator('#iew-assessment-period').inputValue(),'3월~5월');
-  assert.equal(await page.locator('#iew-monthly-goal').inputValue(),'');
-  assert.equal(await page.locator('#iew-monthly-evaluation').inputValue(),'');
-  assert.equal(await page.locator('#iew-semesterEvaluation').inputValue(),'');
-  assert.equal(await page.locator('[data-iew-key="behavior"]').inputValue(),'');
-  assert(outputs.slice(-4).every(o=>!o.ok),JSON.stringify(outputs));
-  assert.match(developer,/관찰 결과나 달성 여부/);
-  await request('assessment',[fill('평가 방법','기존 내용 덮어쓰기')]);
-  assert.equal(await page.locator('#iew-assessment-method').inputValue(),'놀이 중 요청을 관찰한다');
-  assert.equal(outputs.at(-1).ok,false);
-  await page.locator('[data-iew-id="plan"]').click();
-  assert.equal(await page.locator('#iew-evaluation').inputValue(),'놀이 중 요청을 관찰한다');
-  assert.equal(await page.locator('#iew-criterion').inputValue(),'3회 중 2회 요청한다');
-  assert.deepEqual(errors,[]);
-  console.log('IEP AI steps and evaluation guard: passed');
+  await page.locator('#iew-longGoal').fill('가상: 원하는 활동을 표현한다');
+  await page.locator('#iew-goal-text').fill('가상: 그림을 가리킨다');
+  async function menu(){await page.getByRole('button',{name:'AI 작성 도움'}).click();return page.locator('.ai-chat-message.assistant').last();}
+  let m=await menu();
+  for(const label of ['목표 구체화하기','우선 목표 찾기','단기목표 나누기'])assert.equal(await m.getByRole('button',{name:label,exact:true}).count(),1);
+  assert.equal(requests.length,0);
+  await m.getByRole('button',{name:'목표 구체화하기'}).click();
+  await page.waitForFunction(()=>!document.querySelector('.ai-chat-loading'));
+  assert(JSON.stringify(requests[0]).includes('한 기회의 시작과 끝'));
+  assert(JSON.stringify(requests[0]).includes('가상: 그림을 가리킨다'));
+  await page.locator('#ai-chat-input').fill('언어적 도움을 받습니다');
+  await page.locator('#ai-chat-input').press('Enter');
+  await page.waitForFunction(()=>!document.querySelector('.ai-chat-loading'));
+  assert(JSON.stringify(requests[1]).includes('목표 구체화'));
+  assert(JSON.stringify(requests[2]).includes('입력란은 변경하지 않았어요'));
+  assert.equal(await page.locator('#iew-goal-text').inputValue(),'가상: 그림을 가리킨다');
+  m=await menu();await m.getByRole('button',{name:'우선 목표 찾기'}).click();await page.waitForFunction(()=>!document.querySelector('.ai-chat-loading'));
+  assert(JSON.stringify(requests[3]).includes('가족의 바람'));
+  m=await menu();await m.getByRole('button',{name:'단기목표 나누기'}).click();await page.waitForFunction(()=>!document.querySelector('.ai-chat-loading'));
+  assert(JSON.stringify(requests[4]).includes('시간적 순서나 도움 정도'));
+  assert.equal(await page.locator('#iew-longGoal').inputValue(),'가상: 원하는 활동을 표현한다');
+  console.log('IEP guidance: three tasks, follow-up, no-token menu and no overwrite passed');
  }finally{await browser.close();}
-})().catch(e=>{console.error(e);process.exitCode=1;});
+})().catch(error=>{console.error(error);process.exitCode=1});

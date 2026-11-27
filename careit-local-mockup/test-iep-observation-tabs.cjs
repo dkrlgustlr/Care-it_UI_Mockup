@@ -1,0 +1,8 @@
+const assert=require('node:assert/strict'),path=require('node:path'),{pathToFileURL}=require('node:url'),{chromium}=require('playwright');
+(async()=>{const browser=await chromium.launch({channel:'chrome',headless:true});const page=await browser.newPage();try{
+await page.goto(pathToFileURL(path.join(__dirname,'careit-mockup.html')).href+'#/iep');await page.locator('[data-iew-id="assessment"]').click();
+const behavior=page.locator('[data-iew-key="behavior"]');await behavior.fill('첫 관찰');await page.locator('[data-iew-action="add-observation"]').click();assert.equal(await behavior.count(),1);assert.equal(await behavior.inputValue(),'');await behavior.fill('두 번째 관찰');
+await page.getByRole('button',{name:'관찰 1',exact:true}).click();assert.equal(await behavior.inputValue(),'첫 관찰');await page.getByRole('button',{name:'관찰 2',exact:true}).click();assert.equal(await behavior.inputValue(),'두 번째 관찰');
+await page.locator('[data-iew-action="remove-observation"]').click();await page.locator('#mockup-dialog').getByRole('button',{name:'삭제',exact:true}).click();assert.equal(await behavior.inputValue(),'첫 관찰');await page.waitForFunction(()=>!window.__careitAiBridge.store.pending);await page.reload();await page.locator('[data-iew-id="assessment"]').click();assert.equal(await behavior.inputValue(),'첫 관찰');
+await page.locator('[data-iew-action="add-observation"]').click();await page.locator('[data-iew-action="remove-observation"]').click();assert.equal(await behavior.inputValue(),'첫 관찰');console.log('Observation tabs, selection, deletion and persistence passed');
+}finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

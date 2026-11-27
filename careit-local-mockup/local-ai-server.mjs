@@ -5,6 +5,7 @@ import { extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash, createPublicKey, randomBytes, randomUUID, verify } from 'node:crypto';
 import { createWeeklyUsage, weightedUsage } from './weekly-ai-usage.mjs';
+import { spawn } from 'node:child_process';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 const host = '127.0.0.1', port = 8767, origin = `http://${host}:${port}`;
@@ -112,16 +113,16 @@ const uiTools = [{type:'namespace',name:'careit',description:'케어릿의 현�
   {type:'function',name:'inspect_screen',description:'현재 화면의 입력 항목과 사용 가능한 버튼을 확인합니다. 입력값은 포함하지 않습니다.',parameters:{type:'object',properties:{},required:[],additionalProperties:false},strict:true},
   {type:'function',name:'read_field',description:'사용자가 기존 내용을 읽거나 정리해 달라고 요청한 경우, 현재 화면의 해당 입력란 내용을 확인합니다.',parameters:{type:'object',properties:{target:{type:'string',description:'현재 화면의 입력란 이름'}},required:['target'],additionalProperties:false},strict:true},
   {type:'function',name:'interact',description:'케어릿 페이지 이동, 화면의 버튼 클릭, 입력란 입력 및 선택을 합니다. 먼저 현재 화면을 확인하고 정확한 이름을 사용하세요.',parameters:{type:'object',properties:{action:{type:'string',enum:['navigate','click','fill','select']},target:{type:'string',description:'메뉴명, 버튼명 또는 입력란 이름'},value:{type:'string',description:'입력 내용 또는 선택 항목. 그 외에는 빈 문자열'}},required:['action','target','value'],additionalProperties:false},strict:true},
+  {type:'function',name:'fill_fields',description:'현재 화면에서 사용자 요청에 따라 여러 입력란을 함께 작성합니다. 입력란 이름을 확인하고 각 항목의 내용을 준비한 뒤 사용하세요. 기존 내용과 평가 결과 보호 규칙은 각 항목에 적용됩니다.',parameters:{type:'object',properties:{fields:{type:'array',items:{type:'object',properties:{target:{type:'string'},value:{type:'string'}},required:['target','value'],additionalProperties:false}}},required:['fields'],additionalProperties:false},strict:true},
   {type:'function',name:'search_journals',description:'사용자가 요청한 단어가 들어간 일지를 로컬에서 찾아 날짜와 일부 문맥을 돌려줍니다. 단어는 실제 사용자의 요청에서 가져옵니다.',parameters:{type:'object',properties:{query:{type:'string',description:'찾을 핵심 단어'},person:{type:'string',description:'관리대상 이름. 지정하지 않았으면 빈 문자열'}},required:['query','person'],additionalProperties:false},strict:true},
   {type:'function',name:'open_journal',description:'방금 검색한 일지 중 하나를 오른쪽 화면에 엽니다. 결과가 여러 개면 사용자에게 확인하세요.',parameters:{type:'object',properties:{id:{type:'string',description:'검색 결과의 id'}},required:['id'],additionalProperties:false},strict:true}
 ]}];
 async function infer(body, signal) {
   const token = await accessToken();
   const subject=session.subject,started=Date.now();
-  if (!weeklyUsage.get(subject,started).remaining) throw fail('AI 사용량을 모두 사용했어요. 초기화 후 다시 이용할 수 있어요.', 'weekly_limit', 429);
   if (body.model !== 'gpt-6-luna' || !models.some(m => m.slug === 'gpt-6-luna')) throw fail('GPT-6 Luna 사용 권한을 확인해 주세요.', 'invalid_model');
   if (!Array.isArray(body.messages) || !body.messages.length || body.messages.length > 20 || body.messages.some(m => !['user','assistant'].includes(m.role) || typeof m.content !== 'string' || m.content.length > 2000)) throw fail('대화 내용을 확인해 주세요.', 'invalid_message');
-  if (!Array.isArray(body.turn || []) || (body.turn || []).length > 40 || JSON.stringify(body.turn || []).length > 40000) throw fail('작업 내용을 확인해 주세요.', 'invalid_turn');
+  if (!Array.isArray(body.turn || []) || (body.turn || []).length > 40 || Buffer.byteLength(JSON.stringify(body.turn || [])) > 1400000) throw fail('작업 내용이 너무 길어요. 연결한 자료 수를 줄여 주세요.', 'invalid_turn');
   weeklyUsage.begin(subject,started);
   const instructions = '당신은 케어릿의 로컬 시험용 AI입니다. 사용자의 요청에 따라 careit 도구로 오른쪽 화면을 조작할 수 있습니다. 버튼을 누르거나 입력하기 전에 화면을 확인하고, 도구 결과가 성공일 때만 작업했다고 말하세요. 검색 결과가 여러 개면 대상과 날짜를 보여주고 선택을 요청하세요. 대화와 도구에 나온 사실만 사용하고 관찰, 진단, 교육 결과를 지어내지 마세요. 일지는 사용자 관찰을 대신 만들어내지 말고 요청받은 내용만 입력하거나 정리하세요. 저장이나 삭제는 사용자의 명시적 요청 없이 하지 마세요.';
   const input=[...body.messages.map(m=>({role:m.role,content:m.content})),...(body.turn||[])];
@@ -140,6 +141,8 @@ async function infer(body, signal) {
       if (['response.completed','response.failed','response.incomplete'].includes(data.type) && data.response?.usage) {
         let amount;try { amount=weightedUsage(data.response.usage); } catch { throw fail('AI 사용량을 확인하지 못했어요.', 'invalid_usage', 502); }
         try { weeklyUsage.add(subject,amount,started); } catch { throw fail('AI 사용량을 기록하지 못했어요.', 'usage_save_failed', 500); }
+        const raw=data.response.usage, cached=raw.input_tokens_details?.cached_tokens;
+        try { weeklyUsage.record(subject,{activity:typeof body.activity==='string'&&/^[a-zA-Z0-9-]{1,80}$/.test(body.activity)?body.activity:randomUUID(),kind:['chat','iep'].includes(body.kind)?body.kind:'chat',time:new Date(started).toISOString(),input:raw.input_tokens,output:raw.output_tokens,cached:Number.isSafeInteger(cached)&&cached>=0&&cached<=raw.input_tokens?cached:null,weighted:amount,status:data.type}); } catch {}
       }
       if (data.type === 'response.failed' || data.type === 'response.incomplete' || data.type === 'error') {
         const code = data.response?.error?.code || data.error?.code || data.code || data.type;
@@ -150,10 +153,10 @@ async function infer(body, signal) {
     if (done) break;
   }
   if (!complete) throw fail('응답이 완료되기 전에 연결이 끊겼어요.', 'incomplete', 502);
-  return {text:output,output:items,usage:weeklyUsage.get(subject)};
+  return {text:output,output:items,usage:{...weeklyUsage.get(subject),unlimited:true}};
 }
-async function readBody(req) {
-  let body = ''; for await (const chunk of req) { body += chunk; if (body.length > 50000) throw fail('요청이 너무 길어요.', 'too_large', 413); }
+async function readBody(req, limit=50000) {
+  let body = ''; for await (const chunk of req) { body += chunk; if (body.length > limit) throw fail('요청이 너무 길어요.', 'too_large', 413); }
   try { return JSON.parse(body || '{}'); } catch { throw fail('요청 형식을 확인해 주세요.', 'invalid_json'); }
 }
 const types = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.webp':'image/webp', '.png':'image/png', '.svg':'image/svg+xml', '.woff2':'font/woff2', '.txt':'text/plain; charset=utf-8' };
@@ -165,9 +168,22 @@ const server = http.createServer(async (req, res) => {
   if (url.pathname.startsWith('/api/local-ai/')) {
     if (req.method === 'POST' && (req.headers.origin !== origin || !String(req.headers['content-type'] || '').startsWith('application/json'))) return send(res, 403, { error:'허용되지 않은 요청이에요.' });
     try {
-      if (req.method === 'GET' && url.pathname === '/api/local-ai/status') return send(res, 200, { connected:!!session, account:session?.email || '', models, usage:session?weeklyUsage.get(session.subject):null });
+      if (req.method === 'GET' && url.pathname === '/api/local-ai/status') return send(res, 200, { connected:!!session, account:session?.email || '', models, usage:session?{...weeklyUsage.get(session.subject),unlimited:true}:null });
+      if (req.method === 'GET' && url.pathname === '/api/local-ai/qa-usage') return send(res, 200, {items:session?weeklyUsage.history(session.subject):[]});
       if (req.method !== 'POST') return send(res, 404, { error:'요청을 찾을 수 없어요.' });
-      const body = await readBody(req);
+      const body = await readBody(req,url.pathname==='/api/local-ai/extract-reference'?5500000:url.pathname==='/api/local-ai/respond'?1600000:50000);
+      if (url.pathname === '/api/local-ai/qa-reset-usage') {
+        if(!session)throw fail('AI 계정을 먼저 연결해 주세요.','not_connected',401);
+        if(busy)throw fail('진행 중인 AI 요청이 끝난 뒤 초기화해 주세요.','busy',409);
+        return send(res,200,{usage:{...weeklyUsage.reset(session.subject),unlimited:true}});
+      }
+      if (url.pathname === '/api/local-ai/extract-reference') {
+        if(typeof body.name!=='string'||body.name.length>255||typeof body.data!=='string'||body.data.length>5400000)throw fail('파일을 확인해 주세요.');
+        const child=spawn('python',[join(root,'extract-reference.py')],{windowsHide:true,stdio:['pipe','pipe','ignore'],env:{...process.env,PYTHONUTF8:'1'}});
+        let output='';child.stdout.setEncoding('utf8');child.stdout.on('data',chunk=>{output+=chunk;if(output.length>4000000)child.kill();});
+        const result=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>child.kill(),30000);child.on('error',reject);child.on('close',()=>{clearTimeout(timer);try{resolve(JSON.parse(output));}catch{reject(fail('문서를 읽지 못했어요.'));}});child.stdin.on('error',()=>{});child.stdin.end(JSON.stringify(body));});
+        if(result.error)throw fail(result.error);return send(res,200,result);
+      }
       if (url.pathname === '/api/local-ai/connect') {
         saveRegistration();
         const verifier = random(), state = random(), nonce = random(), clientId = registration.clientId || 'dynamic_agent_client';

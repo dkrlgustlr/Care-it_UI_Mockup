@@ -52,5 +52,16 @@ export function createWeeklyUsage(file) {
     data[account]={...previous,cycle,used:used+tokens};write(data);
     return get(subject,now);
   }
-  return {get,begin,add};
+  function record(subject, entry) {
+    const data=read(),account=key(subject);if(!data[account])throw new Error('사용량 기록을 찾을 수 없어요.');
+    const log=data[account].qaLog ||= [];
+    log.push(entry);if(log.length>500)log.splice(0,log.length-500);write(data);
+  }
+  function history(subject){return (read()[key(subject)]?.qaLog||[]).slice(-100).reverse();}
+  function reset(subject, now=Date.now()){
+    const data=read(),account=key(subject),qaLog=data[account]?.qaLog;
+    data[account]={version:2,start:new Date(now).toISOString(),cycle:0,used:0,...(qaLog?{qaLog}:{})};write(data);
+    return get(subject,now);
+  }
+  return {get,begin,add,record,history,reset};
 }

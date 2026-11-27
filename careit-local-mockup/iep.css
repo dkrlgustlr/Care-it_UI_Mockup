@@ -123,9 +123,17 @@
 .iep-page .iew-toolbar-actions .iew-secondary { color:var(--primary-dark); }
 .iew-section-divider { padding-top:20px; border-top:1px solid var(--line); }
 .iew-section-divider>.iep-field { margin-bottom:0; }
+.iew-current-preview { margin:-4px 0 20px; color:var(--muted); font-size:14px; }
+.iew-current-preview summary { width:max-content; color:var(--primary-dark); font-weight:600; cursor:pointer; }
+.iew-current-preview-content { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-top:16px; }
+.iew-current-preview-content strong { color:var(--text); }
+.iew-current-preview-content p { margin:6px 0 0; white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.6; }
+.iew-assessment-context { display:flex; align-items:center; gap:12px; color:var(--muted); font-size:14px; font-weight:600; }
+@media(max-width:767px) { .iew-current-preview-content { grid-template-columns:minmax(0,1fr); } }
 .iew-content h3 { margin:0 0 16px; font-size:16px; }
 .iew-goals { display:flex; gap:6px; overflow-x:auto; margin-bottom:20px; }
 .iew-assessment-heading:last-child,.iep-card>.iew-goals:last-child { margin-bottom:0; }
+.iep-card:has(> .iew-assessment-heading) > .iew-goals:not(:last-child) { margin-bottom:20px; }
 .iew-assessment-goal { padding-top:16px; border-top:1px solid var(--line); }
 .iew-assessment-goal span { color:var(--muted); font-size:14px; font-weight:600; }
 .iew-assessment-goal p { margin:8px 0 0; color:var(--text); line-height:1.6; overflow-wrap:anywhere; }
@@ -376,6 +384,7 @@
 .iew-restore-steps strong { font-size:14px; }
 .iew-restore-steps .button { justify-content:flex-start; }
 
-.iew-mockup-reset { position:fixed; z-index:80; right:20px; bottom:18px; padding:var(--space-nav-gap) var(--space-4); border:1px solid #d5dfe1; border-radius:30px; background:var(--surface); color:var(--text); box-shadow:var(--shadow-ui); font:600 var(--fs-button)/1.3 var(--font-sans); cursor:pointer; }
+.iew-mockup-reset { position:fixed; z-index:80; right:20px; bottom:18px; display:flex; gap:8px; }
+.iew-mockup-reset button { padding:var(--space-nav-gap) var(--space-4); border:1px solid #d5dfe1; border-radius:30px; background:var(--surface); color:var(--text); box-shadow:var(--shadow-ui); font:600 var(--fs-button)/1.3 var(--font-sans); cursor:pointer; }
 @media(max-width:767px) { .iew-mockup-reset { right:12px; bottom:calc(72px + env(safe-area-inset-bottom)); } }
 @media print { .iew-mockup-reset { display:none!important; } }
